@@ -48,6 +48,7 @@ import org.antlr.v4.runtime.misc.Tuple;
 import org.antlr.v4.runtime.misc.Tuple2;
 
 import java.util.ArrayDeque;
+import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collection;
 import java.util.Deque;
@@ -79,7 +80,19 @@ public class ParserInterpreter extends Parser {
 	@NotNull
 	private final Vocabulary vocabulary;
 
-	/** Tracks LR rules for adjusting the contexts */
+	/** This stack corresponds to the _parentctx, _parentState pair of locals
+	 *  that would exist on call stack frames with a recursive descent parser;
+	 *  in the generated function for a left-recursive rule you'd see:
+	 *
+	 *  private EContext e(int _p) throws RecognitionException {
+	 *      ParserRuleContext _parentctx = _ctx;    // Pair.a
+	 *      int _parentState = getState();          // Pair.b
+	 *      ...
+	 *  }
+	 *
+	 *  Those values are used to create new recursive rule invocation contexts
+	 *  associated with left operand of an alt like "expr '*' expr".
+	 */
 	protected final Deque<Tuple2<ParserRuleContext, Integer>> _parentContextStack =
 		new ArrayDeque<Tuple2<ParserRuleContext, Integer>>();
 
@@ -177,7 +190,7 @@ public class ParserInterpreter extends Parser {
 	public ParserRuleContext parse(int startRuleIndex) {
 		RuleStartState startRuleStartState = atn.ruleToStartState[startRuleIndex];
 
-		InterpreterRuleContext rootContext = new InterpreterRuleContext(null, ATNState.INVALID_STATE_NUMBER, startRuleIndex);
+		InterpreterRuleContext rootContext = createInterpreterRuleContext(null, ATNState.INVALID_STATE_NUMBER, startRuleIndex);
 		if (startRuleStartState.isPrecedenceRule) {
 			enterRecursionRule(rootContext, startRuleStartState.stateNumber, startRuleIndex, 0);
 		}
@@ -233,31 +246,26 @@ public class ParserInterpreter extends Parser {
 	}
 
 	protected void visitState(ATNState p) {
-		int altNum;
+		int edge = 1;
 		if (p.getNumberOfTransitions() > 1) {
-			getErrorHandler().sync(this);
-			int decision = ((DecisionState) p).decision;
-			if ( decision == overrideDecision && _input.index() == overrideDecisionInputIndex ) {
-				altNum = overrideDecisionAlt;
-			}
-			else {
-				altNum = getInterpreter().adaptivePredict(_input, decision, _ctx);
-			}
-		}
-		else {
-			altNum = 1;
+			edge = visitDecisionsState((DecisionState) p);
 		}
 
-		Transition transition = p.transition(altNum - 1);
+		Transition transition = p.transition(edge - 1);
 		switch (transition.getSerializationType()) {
 		case Transition.EPSILON:
 			if ( pushRecursionContextStates.get(p.stateNumber) &&
 				 !(transition.target instanceof LoopEndState))
 			{
 				// We are at the start of a left recursive rule's (...)* loop
-				// but it's not the exit branch of loop.
-				InterpreterRuleContext ctx = new InterpreterRuleContext(_parentContextStack.peek().getItem1(), _parentContextStack.peek().getItem2(), _ctx.getRuleIndex());
-				pushNewRecursionContext(ctx, atn.ruleToStartState[p.ruleIndex].stateNumber, _ctx.getRuleIndex());
+				// and we're not taking the exit branch of loop.
+				InterpreterRuleContext localctx =
+					createInterpreterRuleContext(_parentContextStack.peek().getItem1(),
+												 _parentContextStack.peek().getItem2(),
+												 _ctx.getRuleIndex());
+				pushNewRecursionContext(localctx,
+										atn.ruleToStartState[p.ruleIndex].stateNumber,
+										_ctx.getRuleIndex());
 			}
 			break;
 
@@ -281,12 +289,12 @@ public class ParserInterpreter extends Parser {
 		case Transition.RULE:
 			RuleStartState ruleStartState = (RuleStartState)transition.target;
 			int ruleIndex = ruleStartState.ruleIndex;
-			InterpreterRuleContext ctx = new InterpreterRuleContext(_ctx, p.stateNumber, ruleIndex);
+			InterpreterRuleContext newctx = createInterpreterRuleContext(_ctx, p.stateNumber, ruleIndex);
 			if (ruleStartState.isPrecedenceRule) {
-				enterRecursionRule(ctx, ruleStartState.stateNumber, ruleIndex, ((RuleTransition)transition).precedence);
+				enterRecursionRule(newctx, ruleStartState.stateNumber, ruleIndex, ((RuleTransition)transition).precedence);
 			}
 			else {
-				enterRule(ctx, transition.target.stateNumber, ruleIndex);
+				enterRule(newctx, transition.target.stateNumber, ruleIndex);
 			}
 			break;
 
@@ -314,6 +322,28 @@ public class ParserInterpreter extends Parser {
 		}
 
 		setState(transition.target.stateNumber);
+	}
+
+	protected int visitDecisionsState(DecisionState p) {
+		int predictedAlt;
+		getErrorHandler().sync(this);
+		int decision = p.decision;
+		if (decision == overrideDecision && _input.index() == overrideDecisionInputIndex) {
+			predictedAlt = overrideDecisionAlt;
+		}
+		else {
+			predictedAlt = getInterpreter().adaptivePredict(_input, decision, _ctx);
+		}
+		return predictedAlt;
+	}
+
+	/** Provide simple "factory" for InterpreterRuleContext's. */
+	protected InterpreterRuleContext createInterpreterRuleContext(
+		ParserRuleContext parent,
+		int invokingStateNumber,
+		int ruleIndex)
+	{
+		return new InterpreterRuleContext(parent, invokingStateNumber, ruleIndex);
 	}
 
 	protected void visitRuleStopState(ATNState p) {

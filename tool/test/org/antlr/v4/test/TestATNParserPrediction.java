@@ -42,11 +42,15 @@ import org.antlr.v4.runtime.dfa.DFA;
 import org.antlr.v4.runtime.misc.IntegerList;
 import org.antlr.v4.tool.DOTGenerator;
 import org.antlr.v4.tool.Grammar;
+import org.antlr.v4.tool.LeftRecursiveRule;
 import org.antlr.v4.tool.LexerGrammar;
 import org.antlr.v4.tool.Rule;
 import org.junit.Test;
 
+import java.util.Arrays;
+
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 	// NOTICE: TOKENS IN LEXER, PARSER MUST BE SAME OR TOKEN TYPE MISMATCH
 	// NOTICE: TOKENS IN LEXER, PARSER MUST BE SAME OR TOKEN TYPE MISMATCH
@@ -446,6 +450,61 @@ public class TestATNParserPrediction extends BaseTest {
 		int decision = 0;
 		checkPredictedAlt(lg, g, decision, "a", 1);
 		checkPredictedAlt(lg, g, decision, "a;", 3);
+	}
+
+	@Test public void testAltsForLRRuleComputation() throws Exception {
+		Grammar g = new Grammar(
+		"grammar T;\n" +
+		"e : e '*' e\n" +
+		"  | INT\n" +
+		"  | e '+' e\n" +
+		"  | ID\n" +
+		"  ;\n" +
+		"ID : [a-z]+ ;\n" +
+		"INT : [0-9]+ ;\n" +
+		"WS : [ \\r\\t\\n]+ ;");
+		Rule e = g.getRule("e");
+		assertTrue(e instanceof LeftRecursiveRule);
+		LeftRecursiveRule lr = (LeftRecursiveRule)e;
+		assertEquals("[0, 2, 4]", Arrays.toString(lr.getPrimaryAlts()));
+		assertEquals("[0, 1, 3]", Arrays.toString(lr.getRecursiveOpAlts()));
+	}
+
+	@Test public void testAltsForLRRuleComputation2() throws Exception {
+		Grammar g = new Grammar(
+		"grammar T;\n" +
+		"e : INT\n" +
+		"  | e '*' e\n" +
+		"  | ID\n" +
+		"  ;\n" +
+		"ID : [a-z]+ ;\n" +
+		"INT : [0-9]+ ;\n" +
+		"WS : [ \\r\\t\\n]+ ;");
+		Rule e = g.getRule("e");
+		assertTrue(e instanceof LeftRecursiveRule);
+		LeftRecursiveRule lr = (LeftRecursiveRule)e;
+		assertEquals("[0, 1, 3]", Arrays.toString(lr.getPrimaryAlts()));
+		assertEquals("[0, 2]", Arrays.toString(lr.getRecursiveOpAlts()));
+	}
+
+	@Test public void testAltsForLRRuleComputation3() throws Exception {
+		Grammar g = new Grammar(
+		"grammar T;\n" +
+		"random : 'blort';\n" + // should have no effect
+		"e : '--' e\n" +
+		"  | e '*' e\n" +
+		"  | e '+' e\n" +
+		"  | e '--'\n" +
+		"  | ID\n" +
+		"  ;\n" +
+		"ID : [a-z]+ ;\n" +
+		"INT : [0-9]+ ;\n" +
+		"WS : [ \\r\\t\\n]+ ;");
+		Rule e = g.getRule("e");
+		assertTrue(e instanceof LeftRecursiveRule);
+		LeftRecursiveRule lr = (LeftRecursiveRule)e;
+		assertEquals("[0, 1, 5]", Arrays.toString(lr.getPrimaryAlts()));
+		assertEquals("[0, 2, 3, 4]", Arrays.toString(lr.getRecursiveOpAlts()));
 	}
 
 	/** first check that the ATN predicts right alt.
