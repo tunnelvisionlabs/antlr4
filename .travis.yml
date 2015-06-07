@@ -1,7 +1,7 @@
 sudo: false
 language: java
 script:
-  - mvn test
+  - mvn test -Dantlr.testinprocess=true
 jdk:
   - openjdk6
   - oraclejdk7
