@@ -1,0 +1,8 @@
+sudo: false
+language: java
+script:
+  - mvn test -Dantlr.testinprocess=true -DJDK_SOURCE_ROOT=../runtime/Java/src -Dperformance.package=
+jdk:
+  - openjdk6
+  - oraclejdk7
+  - oraclejdk8

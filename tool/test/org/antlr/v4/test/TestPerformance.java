@@ -119,7 +119,16 @@ public class TestPerformance extends BaseTest {
      * Parse all java files under this package within the JDK_SOURCE_ROOT
      * (environment variable or property defined on the Java command line).
      */
-    private static final String TOP_PACKAGE = "java.lang";
+    private static final String TOP_PACKAGE;
+	static {
+		String packageForTesting = System.getProperty("performance.package");
+		if (packageForTesting == null) {
+			packageForTesting = "java.lang";
+		}
+
+		TOP_PACKAGE = packageForTesting;
+	}
+
     /**
      * {@code true} to load java files from sub-packages of
      * {@link #TOP_PACKAGE}.
