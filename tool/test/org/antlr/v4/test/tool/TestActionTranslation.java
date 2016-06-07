@@ -30,6 +30,7 @@
 
 package org.antlr.v4.test.tool;
 
+import org.antlr.v4.tool.Grammar;
 import org.junit.Test;
 
 /** */
@@ -178,6 +179,15 @@ public class TestActionTranslation extends BaseTest {
 		testActions(attributeTemplate, "inline", action, expected);
 		testActions(attributeTemplate, "finally", action, expected);
     }
+
+    @Test public void testEmptyActions() throws Exception {
+	    String gS =
+	   		"grammar A;\n"+
+	   		"a[] : 'a' ;\n" +
+	   		"c : a[] c[] ;\n";
+	    Grammar g = new Grammar(gS);
+    }
+
 
     @Test public void testDynamicRuleScopeRefInSubrule() throws Exception {
         String action = "$a::n;";

@@ -33,7 +33,9 @@ package org.antlr.v4.runtime.tree;
 import org.antlr.v4.runtime.CommonToken;
 import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.atn.ATN;
 import org.antlr.v4.runtime.misc.Interval;
 import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.misc.Nullable;
@@ -69,7 +71,7 @@ public class Trees {
 	/** Print out a whole tree in LISP form. {@link #getNodeText} is used on the
 	 *  node payloads to get the text for the nodes.
 	 */
-	public static String toStringTree(@NotNull final Tree t, @NotNull final List<String> ruleNames) {
+	public static String toStringTree(@NotNull final Tree t, @Nullable final List<String> ruleNames) {
 		String s = Utils.escapeWhitespace(getNodeText(t, ruleNames), false);
 		if ( t.getChildCount()==0 ) return s;
 		StringBuilder buf = new StringBuilder();
@@ -94,8 +96,13 @@ public class Trees {
 	public static String getNodeText(@NotNull Tree t, @Nullable List<String> ruleNames) {
 		if ( ruleNames!=null ) {
 			if ( t instanceof RuleNode ) {
-				int ruleIndex = ((RuleNode)t).getRuleContext().getRuleIndex();
+				RuleContext ruleContext = ((RuleNode)t).getRuleContext();
+				int ruleIndex = ruleContext.getRuleIndex();
 				String ruleName = ruleNames.get(ruleIndex);
+				int altNumber = ruleContext.getAltNumber();
+				if ( altNumber!=ATN.INVALID_ALT_NUMBER ) {
+					return ruleName+":"+altNumber;
+				}
 				return ruleName;
 			}
 			else if ( t instanceof ErrorNode ) {
