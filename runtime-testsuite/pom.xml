@@ -38,19 +38,12 @@
     </dependencies>
     
     <build>
-
         <sourceDirectory>src</sourceDirectory>
-        <defaultGoal>install</defaultGoal>
         <resources>
             <resource>
                 <directory>resources</directory>
             </resource>
         </resources>
-
-        <plugins>
-
-        </plugins>
-
     </build>
 
 </project>
