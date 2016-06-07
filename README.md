@@ -17,13 +17,13 @@ ANTLR project lead and supreme dictator for life
 ## Useful information
 
 * [Release notes](https://github.com/tunnelvisionlabs/antlr4/releases)
-* [Getting started with v4](https://theantlrguy.atlassian.net/wiki/display/ANTLR4/Getting+Started+with+ANTLR+v4)
+* [Getting started with v4](https://raw.githubusercontent.com/antlr/antlr4/master/doc/getting-started.md)
 * [Official site](http://www.antlr.org/)
-* [Documentation](https://theantlrguy.atlassian.net/wiki/display/ANTLR4/ANTLR+4+Documentation)
-* [FAQ](https://theantlrguy.atlassian.net/wiki/display/ANTLR4/ANTLR+v4+FAQ)
+* [Documentation](https://raw.githubusercontent.com/antlr/antlr4/master/doc/index.md)
+* [FAQ](https://raw.githubusercontent.com/antlr/antlr4/master/doc/faq/index.md)
 * [API](http://www.antlr.org/api/Java/index.html)
 * [ANTLR v3](http://www.antlr3.org/)
-* [v3 to v4 Migration guide, differences](https://theantlrguy.atlassian.net/wiki/pages/viewpage.action?pageId=1900596)
+* [v3 to v4 Migration, differences](https://raw.githubusercontent.com/antlr/antlr4/master/doc/faq/general.md)
 
 ## The Definitive ANTLR 4 Reference
 
@@ -32,7 +32,6 @@ Programmers run into parsing problems all the time. Whether it’s a data format
 You can buy the book [The Definitive ANTLR 4 Reference](http://amzn.com/1934356999) at amazon or an [electronic version at the publisher's site](https://pragprog.com/book/tpantlr2/the-definitive-antlr-4-reference).
 
 You will find the [Book source code](http://pragprog.com/titles/tpantlr2/source_code) useful.
-
 
 ## Additional grammars
 [This repository](https://github.com/antlr/grammars-v4) is a collection of grammars without actions where the

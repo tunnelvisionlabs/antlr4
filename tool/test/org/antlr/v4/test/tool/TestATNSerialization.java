@@ -631,7 +631,7 @@ public class TestATNSerialization extends BaseTest {
 			"lexer grammar L;\n"+
 			"A : 'a'\n ;\n" +
 			"B : 'b';\n" +
-			"mode A;\n" +
+			"mode M;\n" +
 			"C : 'c';\n"+
 			"D : 'd';\n");
 		String expecting =
