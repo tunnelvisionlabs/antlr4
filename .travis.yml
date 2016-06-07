@@ -1,5 +1,8 @@
 sudo: false
 language: java
+env:
+  # Give Maven 1GB of memory to work with
+  - MAVEN_OPTS=-Xmx1g
 script:
   - mvn test -Dantlr.testinprocess=true -DJDK_SOURCE_ROOT=../runtime/Java/src -Dperformance.package=
 jdk:
