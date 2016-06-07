@@ -16,9 +16,9 @@ nbactions*.xml
 */nbproject/private/
 
 # IntelliJ projects
-*.iml
 *.ipr
 *.iws
+*.iml
 .idea/
 
 # Eclipse projects
