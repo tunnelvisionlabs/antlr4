@@ -1,14 +1,14 @@
 TestFile(file) ::= <<
 package org.antlr.v4.test.runtime;
 
-import org.antlr.v4.test.BaseTest;
+import org.antlr.v4.test.tool.BaseTest;
 import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
 
 <if(file.Options.("ImportErrorQueue"))>
-import org.antlr.v4.test.ErrorQueue;
+import org.antlr.v4.test.tool.ErrorQueue;
 <endif>
 <if(file.Options.("ImportGrammar"))>
 import org.antlr.v4.tool.Grammar;

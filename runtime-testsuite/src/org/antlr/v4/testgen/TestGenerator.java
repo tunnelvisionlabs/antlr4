@@ -29,11 +29,6 @@
  */
 package org.antlr.v4.testgen;
 
-import org.stringtemplate.v4.ST;
-import org.stringtemplate.v4.STGroup;
-import org.stringtemplate.v4.STGroupFile;
-import org.stringtemplate.v4.gui.STViz;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -44,8 +39,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import org.stringtemplate.v4.ST;
+import org.stringtemplate.v4.STGroup;
+import org.stringtemplate.v4.STGroupFile;
+import org.stringtemplate.v4.gui.STViz;
+
 public class TestGenerator {
-	public static final String antlrRoot = "."; // assume antlr4 root dir is current working dir
+	public final static String[] targets = {"CSharp", "Java", "Python2", "Python3", "JavaScript"};
 
 	// This project uses UTF-8, but the plugin might be used in another project
 	// which is not. Always load templates with UTF-8, but write using the
