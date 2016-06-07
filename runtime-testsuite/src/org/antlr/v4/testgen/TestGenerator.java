@@ -44,8 +44,6 @@ import org.stringtemplate.v4.STGroupFile;
 import org.stringtemplate.v4.gui.STViz;
 
 public class TestGenerator {
-	public final static String[] targets = {"CSharp", "Java", "Python2", "Python3", "JavaScript"};
-
 	// This project uses UTF-8, but the plugin might be used in another project
 	// which is not. Always load templates with UTF-8, but write using the
 	// specified encoding.
