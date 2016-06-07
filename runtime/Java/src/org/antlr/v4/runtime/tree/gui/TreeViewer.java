@@ -717,7 +717,7 @@ public class TreeViewer extends JComponent {
 		if ( root!=null ) {
 			boolean useIdentity = true; // compare node identity
 			this.treeLayout =
-				new TreeLayout<Tree>(new TreeLayoutAdaptor(root),
+				new TreeLayout<Tree>(getTreeLayoutAdaptor(root),
 									 new TreeViewer.VariableExtentProvide(this),
 									 new DefaultConfiguration<Tree>(gapBetweenLevels,
 																	gapBetweenNodes),
@@ -729,6 +729,12 @@ public class TreeViewer extends JComponent {
 			this.treeLayout = null;
 			repaint();
 		}
+	}
+
+	/** Get an adaptor for root that indicates how to walk ANTLR trees.
+	 *  Override to change the adapter from the default of {@link TreeLayoutAdaptor}  */
+	public TreeForTreeLayout<Tree> getTreeLayoutAdaptor(Tree root) {
+		return new TreeLayoutAdaptor(root);
 	}
 
 	public double getScale() {
