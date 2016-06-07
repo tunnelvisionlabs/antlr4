@@ -36,7 +36,6 @@ import org.antlr.v4.runtime.TokenStream;
 import org.antlr.v4.runtime.dfa.DFA;
 import org.antlr.v4.runtime.dfa.DFAState;
 import org.antlr.v4.runtime.misc.NotNull;
-import org.antlr.v4.runtime.misc.Nullable;
 import org.antlr.v4.runtime.misc.Tuple2;
 
 import java.util.BitSet;
@@ -266,5 +265,9 @@ public class ProfilingATNSimulator extends ParserATNSimulator {
 
 	public DecisionInfo[] getDecisionInfo() {
 		return decisions;
+	}
+
+	public SimulatorState getCurrentState() {
+		return currentState;
 	}
 }

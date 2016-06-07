@@ -192,6 +192,21 @@ public class Trees {
 		return ancestors;
 	}
 
+	/** Return true if t is u's parent or a node on path to root from u.
+	 *  Use == not equals().
+	 *
+	 *  @since 4.5.1
+	 */
+	public static boolean isAncestorOf(Tree t, Tree u) {
+		if ( t==null || u==null || t.getParent()==null ) return false;
+		Tree p = u.getParent();
+		while ( p!=null ) {
+			if ( t == p ) return true;
+			p = p.getParent();
+		}
+		return false;
+	}
+
 	public static Collection<ParseTree> findAllTokenNodes(ParseTree t, int ttype) {
 		return findAllNodes(t, ttype, true);
 	}

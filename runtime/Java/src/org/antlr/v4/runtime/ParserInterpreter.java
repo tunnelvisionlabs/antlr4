@@ -101,6 +101,16 @@ public class ParserInterpreter extends Parser {
 	protected int overrideDecision = -1;
 	protected int overrideDecisionInputIndex = -1;
 	protected int overrideDecisionAlt = -1;
+	protected boolean overrideDecisionReached = false; // latch and only override once; error might trigger infinite loop
+
+	/** What is the current context when we override a decisions?  This tells
+	 *  us what the root of the parse tree is when using override
+	 *  for an ambiguity/lookahead check.
+	 */
+	protected InterpreterRuleContext overrideDecisionRoot = null;
+
+
+	protected InterpreterRuleContext rootContext;
 
 	/** A copy constructor that creates a new parser interpreter by reusing
 	 *  the fields of a previous interpreter.
@@ -160,6 +170,13 @@ public class ParserInterpreter extends Parser {
 	}
 
 	@Override
+	public void reset() {
+		super.reset();
+		overrideDecisionReached = false;
+		overrideDecisionRoot = null;
+	}
+
+	@Override
 	public ATN getATN() {
 		return atn;
 	}
@@ -189,7 +206,7 @@ public class ParserInterpreter extends Parser {
 	public ParserRuleContext parse(int startRuleIndex) {
 		RuleStartState startRuleStartState = atn.ruleToStartState[startRuleIndex];
 
-		InterpreterRuleContext rootContext = createInterpreterRuleContext(null, ATNState.INVALID_STATE_NUMBER, startRuleIndex);
+		rootContext = createInterpreterRuleContext(null, ATNState.INVALID_STATE_NUMBER, startRuleIndex);
 		if (startRuleStartState.isPrecedenceRule) {
 			enterRecursionRule(rootContext, startRuleStartState.stateNumber, startRuleIndex, 0);
 		}
@@ -245,12 +262,12 @@ public class ParserInterpreter extends Parser {
 	}
 
 	protected void visitState(ATNState p) {
-		int edge = 1;
+		int predictedAlt = 1;
 		if (p.getNumberOfTransitions() > 1) {
-			edge = visitDecisionsState((DecisionState) p);
+			predictedAlt = visitDecisionState((DecisionState) p);
 		}
 
-		Transition transition = p.transition(edge - 1);
+		Transition transition = p.transition(predictedAlt - 1);
 		switch (transition.getSerializationType()) {
 		case Transition.EPSILON:
 			if ( pushRecursionContextStates.get(p.stateNumber) &&
@@ -323,12 +340,18 @@ public class ParserInterpreter extends Parser {
 		setState(transition.target.stateNumber);
 	}
 
-	protected int visitDecisionsState(DecisionState p) {
+	/** Method visitDecisionState() is called when the interpreter reaches
+	 *  a decision state (instance of DecisionState). It gives an opportunity
+	 *  for subclasses to track interesting things.
+	 */
+	protected int visitDecisionState(DecisionState p) {
+		int edge = 1;
 		int predictedAlt;
 		getErrorHandler().sync(this);
 		int decision = p.decision;
-		if (decision == overrideDecision && _input.index() == overrideDecisionInputIndex) {
+		if (decision == overrideDecision && _input.index() == overrideDecisionInputIndex && !overrideDecisionReached) {
 			predictedAlt = overrideDecisionAlt;
+			overrideDecisionReached = true;
 		}
 		else {
 			predictedAlt = getInterpreter().adaptivePredict(_input, decision, _ctx);
@@ -336,7 +359,9 @@ public class ParserInterpreter extends Parser {
 		return predictedAlt;
 	}
 
-	/** Provide simple "factory" for InterpreterRuleContext's. */
+	/** Provide simple "factory" for InterpreterRuleContext's.
+	 *  @since 4.5.1
+	 */
 	protected InterpreterRuleContext createInterpreterRuleContext(
 		ParserRuleContext parent,
 		int invokingStateNumber,
@@ -406,6 +431,10 @@ public class ParserInterpreter extends Parser {
 		overrideDecisionAlt = forcedAlt;
 	}
 
+	public InterpreterRuleContext getOverrideDecisionRoot() {
+		return overrideDecisionRoot;
+	}
+
 	/** Rely on the error handler for this parser but, if no tokens are consumed
 	 *  to recover, add an error node. Otherwise, nothing is seen in the parse
 	 *  tree.
@@ -419,14 +448,6 @@ public class ParserInterpreter extends Parser {
 				InputMismatchException ime = (InputMismatchException)e;
 				Token tok = e.getOffendingToken();
 				int expectedTokenType = ime.getExpectedTokens().getMinElement(); // get any element
-				String tokenText;
-				if ( expectedTokenType== Token.EOF ) {
-					tokenText = "<missing EOF>";
-				}
-				else {
-					tokenText = "<mismatched "+tok.getText()+">";
-				}
-
 				Token errToken =
 					getTokenFactory().create(Tuple.create(tok.getTokenSource(), tok.getTokenSource().getInputStream()),
 				                             expectedTokenType, tok.getText(),
@@ -450,5 +471,17 @@ public class ParserInterpreter extends Parser {
 
 	protected Token recoverInline() {
 		return _errHandler.recoverInline(this);
+	}
+
+	/** Return the root of the parse, which can be useful if the parser
+	 *  bails out. You still can access the top node. Note that,
+	 *  because of the way left recursive rules add children, it's possible
+	 *  that the root will not have any children if the start rule immediately
+	 *  called and left recursive rule that fails.
+	 *
+	 * @since 4.5.1
+	 */
+	public InterpreterRuleContext getRootContext() {
+		return rootContext;
 	}
 }
