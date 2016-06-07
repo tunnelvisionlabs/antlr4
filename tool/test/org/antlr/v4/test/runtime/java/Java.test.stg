@@ -171,7 +171,7 @@ Concat(a,b) ::= "<a><b>"
 
 DeclareLocal(s,v) ::= "Object <s> = <v>;"
 
-DeclareListLocal(s,v) ::= "List <s> = <v>;"
+AssertIsList(v) ::= "List\<?> __ttt__ = <v>;" // just use static type system
 
 AssignLocal(s,v) ::= "<s> = <v>;"
 
