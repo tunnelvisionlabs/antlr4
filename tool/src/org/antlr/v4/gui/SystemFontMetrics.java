@@ -1,7 +1,7 @@
 /*
  * [The "BSD license"]
- *  Copyright (c) 2013 Terence Parr
- *  Copyright (c) 2013 Sam Harwell
+ *  Copyright (c) 2012 Terence Parr
+ *  Copyright (c) 2012 Sam Harwell
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -27,40 +27,39 @@
  *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  *  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package org.antlr.v4.runtime.misc;
 
-import javax.swing.JFileChooser;
-import javax.swing.JOptionPane;
+package org.antlr.v4.gui;
 
-import java.io.File;
+import java.awt.Font;
+import java.awt.Graphics2D;
+import java.awt.GraphicsEnvironment;
+import java.awt.font.FontRenderContext;
+import java.awt.font.TextLayout;
+import java.awt.image.BufferedImage;
 
 /**
  *
  * @author Sam Harwell
  */
-@SuppressWarnings("serial")
-public class JFileChooserConfirmOverwrite extends JFileChooser {
+public class SystemFontMetrics extends BasicFontMetrics {
+	protected final Font font;
 
-	public JFileChooserConfirmOverwrite() {
-		setMultiSelectionEnabled(false);
-	}
-
-	@Override
-	public void approveSelection() {
-		File selectedFile = getSelectedFile();
-
-		if (selectedFile.exists()) {
-			int answer = JOptionPane.showConfirmDialog(this,
-													   "Overwrite existing file?",
-													   "Overwrite?",
-													   JOptionPane.YES_NO_OPTION);
-			if (answer != JOptionPane.YES_OPTION) {
-				// do not call super.approveSelection
-				return;
-			}
+	public SystemFontMetrics(String fontName) {
+		BufferedImage img = new BufferedImage(40, 40, BufferedImage.TYPE_4BYTE_ABGR);
+		Graphics2D graphics = GraphicsEnvironment.getLocalGraphicsEnvironment().createGraphics(img);
+		FontRenderContext fontRenderContext = graphics.getFontRenderContext();
+		this.font = new Font(fontName, Font.PLAIN, 1000);
+		double maxHeight = 0;
+		for (int i = 0; i < 255; i++) {
+			TextLayout layout = new TextLayout(Character.toString((char)i), font, fontRenderContext);
+			maxHeight = Math.max(maxHeight, layout.getBounds().getHeight());
+			super.widths[i] = (int)layout.getAdvance();
 		}
 
-		super.approveSelection();
+		super.maxCharHeight = (int)Math.round(maxHeight);
 	}
 
+	public Font getFont() {
+		return font;
+	}
 }

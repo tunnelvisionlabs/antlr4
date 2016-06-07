@@ -21,13 +21,6 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.abego.treelayout</groupId>
-            <artifactId>org.abego.treelayout.core</artifactId>
-            <version>1.0.1</version>
-            <scope>compile</scope>
-        </dependency>
-
-        <dependency>
             <groupId>com.tunnelvisionlabs</groupId>
             <artifactId>antlr4-annotations</artifactId>
             <version>${project.version}</version>

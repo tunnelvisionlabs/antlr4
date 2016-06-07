@@ -44,6 +44,12 @@
             <version>4.0.8</version>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>org.abego.treelayout</groupId>
+            <artifactId>org.abego.treelayout.core</artifactId>
+            <version>1.0.1</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
 
     <profiles>

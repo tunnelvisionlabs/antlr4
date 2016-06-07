@@ -1,5 +1,6 @@
 package org.antlr.v4.test.tool;
 
+import org.antlr.v4.gui.Trees;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.LexerInterpreter;
@@ -7,16 +8,14 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.atn.DecisionInfo;
 import org.antlr.v4.runtime.atn.LookaheadEventInfo;
 import org.antlr.v4.runtime.tree.ParseTree;
-import org.antlr.v4.runtime.tree.Trees;
 import org.antlr.v4.tool.Grammar;
 import org.antlr.v4.tool.GrammarParserInterpreter;
 import org.antlr.v4.tool.LexerGrammar;
+import static org.junit.Assert.assertEquals;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.List;
-
-import static org.junit.Assert.assertEquals;
-import org.junit.Ignore;
 
 public class TestLookaheadTrees {
 	public static final String lexerText =
