@@ -116,7 +116,7 @@
             <id>jacoco</id>
             <activation>
                 <property>
-                    <name>Env.ENABLE_JACOCO</name>
+                    <name>ENABLE_JACOCO</name>
                     <value>true</value>
                 </property>
             </activation>
@@ -130,6 +130,13 @@
                             <execution>
                                 <goals>
                                     <goal>prepare-agent</goal>
+                                </goals>
+                            </execution>
+                            <execution>
+                                <id>report</id>
+                                <phase>test</phase>
+                                <goals>
+                                    <goal>report</goal>
                                 </goals>
                             </execution>
                             <execution>
