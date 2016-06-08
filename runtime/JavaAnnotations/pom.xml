@@ -13,6 +13,7 @@
 
     <name>ANTLR 4 Runtime Annotations</name>
     <description>A set of annotations used within the ANTLR 4 Runtime</description>
+    <packaging>bundle</packaging>
 
     <build>
         <sourceDirectory>src</sourceDirectory>
