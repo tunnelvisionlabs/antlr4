@@ -17,8 +17,12 @@
     <url>http://www.antlr.org</url>
     <inceptionYear>1992</inceptionYear>
     <organization>
-        <name>ANTLR</name>
-        <url>http://www.antlr.org</url>
+        <!--
+          The organization name is used in the manifests of the Jar files. Set to Tunnel Vision Labs for this custom
+          build.
+        -->
+        <name>Tunnel Vision Laboratories, LLC</name>
+        <url>http://tunnelvisionlabs.com</url>
     </organization>
 
     <licenses>

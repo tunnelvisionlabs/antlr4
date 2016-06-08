@@ -11,8 +11,9 @@
 
     <artifactId>antlr4-runtime</artifactId>
 
-    <name>ANTLR 4 Runtime</name>
-    <description>The ANTLR 4 Runtime</description>
+    <name>ANTLR 4 Runtime (Optimized)</name>
+    <description>The ANTLR 4 Runtime (Optimized)</description>
+    <packaging>bundle</packaging>
 
     <properties>
         <!-- Assumes dot is in the system path, or specified for the build. -->
@@ -128,35 +129,8 @@
             <plugin>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-bundle-plugin</artifactId>
-                <version>2.5.4</version>
-                <executions>
-                    <execution>
-                        <id>bundle-manifest</id>
-                        <phase>process-classes</phase>
-                        <configuration>
-                            <instructions>
-                                <Bundle-SymbolicName>com.tunnelvisionlabs.antlr4-runtime-osgi</Bundle-SymbolicName>
-                                <Implementation-Title>ANTLR 4 Runtime (Optimized)</Implementation-Title>
-                                <Implementation-Vendor>Tunnel Vision Laboratories, LLC</Implementation-Vendor>
-                                <Implementation-Vendor-Id>com.tunnelvisionlabs</Implementation-Vendor-Id>
-                                <Implementation-Version>${project.version}</Implementation-Version>
-                            </instructions>
-                        </configuration>
-                        <goals>
-                            <goal>manifest</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <plugin>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>2.4</version>
-                <configuration>
-                    <archive>
-                        <manifestFile>${project.build.outputDirectory}/META-INF/MANIFEST.MF</manifestFile>
-                    </archive>
-                </configuration>
+                <version>3.0.1</version>
+                <extensions>true</extensions>
             </plugin>
         </plugins>
     </build>
