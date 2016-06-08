@@ -1,4 +1,4 @@
-sudo: false
+sudo: true
 language: java
 env:
   # Give Maven 1GB of memory to work with
@@ -9,3 +9,5 @@ jdk:
   - openjdk6
   - oraclejdk7
   - oraclejdk8
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
