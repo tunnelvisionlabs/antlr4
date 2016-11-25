@@ -2,6 +2,8 @@
 
 **ANTLR** (ANother Tool for Language Recognition) is a powerful parser generator for reading, processing, executing, or translating structured text or binary files. It's widely used to build languages, tools, and frameworks. From a grammar, ANTLR generates a parser that can build parse trees and also generates a listener interface (or visitor) that makes it easy to respond to the recognition of phrases of interest.
 
+This is the "optimized" fork of ANTLR 4, which contains many features and optimizations not present in the reference release. For information about these features, see [doc/optimized-fork.md](doc/optimized-fork.md).
+
 ## Build Status
 
 [![Build Status](https://travis-ci.org/sharwell/antlr4.svg?branch=optimized)](https://travis-ci.org/sharwell/antlr4)
