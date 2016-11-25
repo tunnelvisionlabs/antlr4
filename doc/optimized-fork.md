@@ -56,6 +56,22 @@ simpleStmt
 
 This release has the ability to eliminate indirect left recursion (reported by the reference release as "mutual" left recursion). This feature is an early expansion of the ability to automatically left factor a grammar.
 
+### Backwards compatibility
+
+**Reason for exclusion:** Implementation complexity (quite constraining to the benefit of only a few users)
+
+The optimized fork releases have a stronger emphasis on preserving compatibility. Unlike the reference release, grammars typically do not need to be regenerated when upgrading the runtime. However, we still recommend that grammars be generated using the new version as it may improve performance or the available features at runtime.
+
+### `@Nullable` and `@NotNull` annotations
+
+**Reason for exclusion:** Implementation complexity
+
+### Rule versioning
+
+**Reason for exclusion:** Implementation complexity
+
+The optimized fork includes the [rule versioning](https://github.com/sharwell/antlr4/wiki/Rule-Versioning) feature.
+
 ## Optimizations
 
 ### Improved SLL termination condition
