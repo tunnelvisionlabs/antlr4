@@ -43,7 +43,7 @@
 
         <developer>
             <name>Terence Parr</name>
-            <url>http://antlr.org/wiki/display/~admin/Home</url>
+            <url>http://parrt.cs.usfca.edu</url>
             <roles>
                 <role>Project lead - ANTLR</role>
             </roles>
@@ -185,7 +185,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.3</version>
+                <version>3.6.0</version>
                 <configuration>
                     <showWarnings>true</showWarnings>
                     <showDeprecation>true</showDeprecation>
