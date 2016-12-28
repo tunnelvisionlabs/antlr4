@@ -413,7 +413,7 @@ public class Grammar implements AttributeResolver {
 		if ( ast==null ) return;
         GrammarAST i = (GrammarAST)ast.getFirstChildWithType(ANTLRParser.IMPORT);
         if ( i==null ) return;
-	    Set<String> visited = new HashSet<>();
+	    Set<String> visited = new HashSet<String>();
 	    visited.add(this.name);
         importedGrammars = new ArrayList<Grammar>();
         for (Object c : i.getChildren()) {
