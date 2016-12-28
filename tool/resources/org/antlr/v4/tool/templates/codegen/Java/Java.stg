@@ -684,6 +684,11 @@ setState(<m.stateNumber>);
 if ( <if(invert)><m.varName> \<= 0 || <else>!<endif>(<expr>) ) {
 	<if(m.labels)><m.labels:{l | <labelref(l)> = }><endif>_errHandler.recoverInline(this);
 } else {
+	if (_input.LA(1) == Token.EOF) {
+		matchedEOF = true;
+	}
+
+	_errHandler.reportMatch(this);
 	consume();
 }
 >>
