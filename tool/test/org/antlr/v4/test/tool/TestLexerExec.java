@@ -519,7 +519,7 @@ public class TestLexerExec extends BaseTest {
 		String grammar =
 			"lexer grammar L;\n"+
 			"I : [0-9]+ {System.out.println(\"I\");} ;\n"+
-			"WS : [ \\u]+ -> skip ;";
+			"WS : [ \\n]+ -> skip ;";
 		String found = execLexer("L.g4", grammar, "L", "34 ");
 		String expecting =
 			"I\n" +
@@ -532,7 +532,7 @@ public class TestLexerExec extends BaseTest {
 		String grammar =
 			"lexer grammar L;\n"+
 			"DASHBRACK : [\\-\\]]+ {System.out.println(\"DASHBRACK\");} ;\n"+
-			"WS : [ \\u]+ -> skip ;";
+			"WS : [ \\n]+ -> skip ;";
 		String found = execLexer("L.g4", grammar, "L", "- ] ");
 		String expecting =
 			"DASHBRACK\n" +
@@ -540,19 +540,6 @@ public class TestLexerExec extends BaseTest {
 			"[@0,0:0='-',<1>,1:0]\n" +
 			"[@1,2:2=']',<1>,1:2]\n" +
 			"[@2,4:3='<EOF>',<-1>,1:4]\n";
-		assertEquals(expecting, found);
-	}
-
-	@Test public void testCharSetWithReversedRange() throws Exception {
-		String grammar =
-			"lexer grammar L;\n"+
-			"A : [z-a9]+ {System.out.println(\"A\");} ;\n"+
-			"WS : [ \\u]+ -> skip ;";
-		String found = execLexer("L.g4", grammar, "L", "9");
-		String expecting =
-			"A\n" +
-			"[@0,0:0='9',<1>,1:0]\n" +
-			"[@1,1:0='<EOF>',<-1>,1:1]\n";
 		assertEquals(expecting, found);
 	}
 
