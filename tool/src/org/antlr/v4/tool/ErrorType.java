@@ -1035,6 +1035,46 @@ public enum ErrorType {
 	 * <pre>C: 'test' '';</pre>
 	 */
 	EMPTY_STRINGS_NOT_ALLOWED(174, "string literals cannot be empty", ErrorSeverity.ERROR),
+	/**
+	 * Compiler Error 175.
+	 *
+	 * <p>'<em>name</em>' is not a recognized token name</p>
+	 *
+	 * <pre>TOKEN: 'a' -> type(CHANNEL1); // warning 175</pre>
+	 */
+	CONSTANT_VALUE_IS_NOT_A_RECOGNIZED_TOKEN_NAME(175, "'<arg>' is not a recognized token name", ErrorSeverity.WARNING),
+	/**
+	 * Compiler Error 176.
+	 *
+	 * <p>'<em>name</em>' is not a recognized mode name</p>
+	 *
+	 * <pre>TOKEN: 'a' -> mode(MODE1); // warning 176</pre>
+	 */
+	CONSTANT_VALUE_IS_NOT_A_RECOGNIZED_MODE_NAME(176, "'<arg>' is not a recognized mode name", ErrorSeverity.WARNING),
+	/**
+	 * Compiler Error 177.
+	 *
+	 * <p>'<em>name</em>' is not a recognized channel name</p>
+	 *
+	 * <pre>TOKEN: 'a' -> channel(TOKEN1); // warning 177</pre>
+	 */
+	CONSTANT_VALUE_IS_NOT_A_RECOGNIZED_CHANNEL_NAME(177, "'<arg>' is not a recognized channel name", ErrorSeverity.WARNING),
+	/*
+	* Compiler Warning 178.
+	*
+	* <p>duplicated command '<em>command</em>'</p>
+	*
+	* <p>TOKEN: 'asdf' -> mode(MODE1), mode(MODE2);</p>
+	* */
+	DUPLICATED_COMMAND(178, "duplicated command '<arg>'", ErrorSeverity.WARNING),
+	/*
+	* Compiler Waring 179.
+	*
+	* <p>incompatible commands '<em>command1</em>' and '<em>command2</em>'</p>
+	*
+	* <p>T00: 'a00' -> skip, more;</p>
+	 */
+	INCOMPATIBLE_COMMANDS(179, "incompatible commands '<arg>' and '<arg2>'", ErrorSeverity.WARNING),
 
 	/*
 	 * Backward incompatibility errors

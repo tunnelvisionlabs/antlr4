@@ -36,7 +36,6 @@ import org.antlr.v4.runtime.TokenStreamRewriter;
 import org.antlr.v4.runtime.misc.Interval;
 import org.antlr.v4.tool.LexerGrammar;
 import org.junit.Test;
-import org.junit.Ignore;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -884,8 +883,7 @@ public class TestTokenStreamRewriter extends BaseTest {
 
 	// Test for https://github.com/antlr/antlr4/issues/550
 	@Test 
-	@Ignore
-	public void testPreservesOrderOfContiguousInserts() throws Exception {
+	public void testDistinguishBetweenInsertAfterAndInsertBeforeToPreserverOrder() throws Exception {
 		LexerGrammar g = new LexerGrammar(
 											 "lexer grammar T;\n"+
 											 "A : 'a';\n" +
@@ -902,6 +900,54 @@ public class TestTokenStreamRewriter extends BaseTest {
 		tokens.insertAfter(1, "</b>");
 		String result = tokens.getText();
 		String expecting = "<b>a</b><b>a</b>"; // fails with <b>a<b></b>a</b>"
+		assertEquals(expecting, result);
+	}
+
+	@Test
+	public void testDistinguishBetweenInsertAfterAndInsertBeforeToPreserverOrder2() throws Exception {
+		LexerGrammar g = new LexerGrammar(
+											 "lexer grammar T;\n"+
+											 "A : 'a';\n" +
+											 "B : 'b';\n" +
+											 "C : 'c';\n");
+		String input = "aa";
+		LexerInterpreter lexEngine = g.createLexerInterpreter(new ANTLRInputStream(input));
+		CommonTokenStream stream = new CommonTokenStream(lexEngine);
+		stream.fill();
+		TokenStreamRewriter tokens = new TokenStreamRewriter(stream);
+		tokens.insertBefore(0, "<p>");
+		tokens.insertBefore(0, "<b>");
+		tokens.insertAfter(0, "</p>");
+		tokens.insertAfter(0, "</b>");
+		tokens.insertBefore(1, "<b>");
+		tokens.insertAfter(1, "</b>");
+		String result = tokens.getText();
+		String expecting = "<b><p>a</p></b><b>a</b>";
+		assertEquals(expecting, result);
+	}
+
+	// Test for https://github.com/antlr/antlr4/issues/550
+	@Test
+	public void testPreservesOrderOfContiguousInserts() throws Exception {
+		LexerGrammar g = new LexerGrammar(
+											 "lexer grammar T;\n"+
+											 "A : 'a';\n" +
+											 "B : 'b';\n" +
+											 "C : 'c';\n");
+		String input = "ab";
+		LexerInterpreter lexEngine = g.createLexerInterpreter(new ANTLRInputStream(input));
+		CommonTokenStream stream = new CommonTokenStream(lexEngine);
+		stream.fill();
+		TokenStreamRewriter tokens = new TokenStreamRewriter(stream);
+		tokens.insertBefore(0, "<p>");
+		tokens.insertBefore(0, "<b>");
+		tokens.insertBefore(0, "<div>");
+		tokens.insertAfter(0, "</p>");
+		tokens.insertAfter(0, "</b>");
+		tokens.insertAfter(0, "</div>");
+		tokens.insertBefore(1, "!");
+		String result = tokens.getText();
+		String expecting = "<div><b><p>a</p></b></div>!b";
 		assertEquals(expecting, result);
 	}
 

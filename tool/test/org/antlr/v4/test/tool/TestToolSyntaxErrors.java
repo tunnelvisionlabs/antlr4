@@ -590,7 +590,7 @@ public class TestToolSyntaxErrors extends BaseTest {
 			"Something : 'something' -> channel(CUSTOM);";
 		String expected =
 			"error(" + ErrorType.CANNOT_CREATE_TARGET_GENERATOR.code + "):  ANTLR cannot generate 'org.antlr.v4.codegen.target.FooTarget' code as of version " + Tool.VERSION + "\n" +
-			"warning(" + ErrorType.UNKNOWN_LEXER_CONSTANT.code + "): T.g4:4:35: rule 'Something' contains a lexer command with an unrecognized constant value; lexer interpreters may produce incorrect output\n";
+			"warning(" + ErrorType.CONSTANT_VALUE_IS_NOT_A_RECOGNIZED_CHANNEL_NAME.code + "): T.g4:4:35: 'CUSTOM' is not a recognized channel name\n";
 
 		String[] pair = new String[] {
 			grammar,
@@ -651,8 +651,8 @@ public class TestToolSyntaxErrors extends BaseTest {
 			"WHITESPACE: [ \\t]+      -> channel(WHITESPACE_CHANNEL);\n";
 
 		String expected =
-			"warning(" + ErrorType.UNKNOWN_LEXER_CONSTANT.code + "): T.g4:10:35: rule 'COMMENT' contains a lexer command with an unrecognized constant value; lexer interpreters may produce incorrect output\n" +
-			"warning(" + ErrorType.UNKNOWN_LEXER_CONSTANT.code + "): T.g4:11:35: rule 'WHITESPACE' contains a lexer command with an unrecognized constant value; lexer interpreters may produce incorrect output\n" +
+			"warning(" + ErrorType.CONSTANT_VALUE_IS_NOT_A_RECOGNIZED_CHANNEL_NAME.code + "): T.g4:10:35: 'COMMENT_CHANNEL' is not a recognized channel name\n" +
+			"warning(" + ErrorType.CONSTANT_VALUE_IS_NOT_A_RECOGNIZED_CHANNEL_NAME.code + "): T.g4:11:35: 'WHITESPACE_CHANNEL' is not a recognized channel name\n" +
 			"error(" + ErrorType.CHANNELS_BLOCK_IN_COMBINED_GRAMMAR.code + "): T.g4:3:0: custom channels are not supported in combined grammars\n";
 
 		String[] pair = { grammar, expected };
@@ -680,7 +680,7 @@ public class TestToolSyntaxErrors extends BaseTest {
 
 		// WHITESPACE_CHANNEL and COMMENT_CHANNEL are defined, but NEWLINE_CHANNEL is not
 		String expected =
-			"warning(" + ErrorType.UNKNOWN_LEXER_CONSTANT.code + "): T.g4:10:34: rule 'NEWLINE' contains a lexer command with an unrecognized constant value; lexer interpreters may produce incorrect output\n";
+			"warning(" + ErrorType.CONSTANT_VALUE_IS_NOT_A_RECOGNIZED_CHANNEL_NAME.code + "): T.g4:10:34: 'NEWLINE_CHANNEL' is not a recognized channel name\n";
 
 		String[] pair = { grammar, expected };
 		super.testErrors(pair, true);

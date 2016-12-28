@@ -6,7 +6,7 @@
 
 ## Build Status
 
-[![Build Status](https://travis-ci.org/sharwell/antlr4.svg?branch=optimized)](https://travis-ci.org/sharwell/antlr4)
+[![Build Travis-CI Status](https://travis-ci.org/sharwell/antlr4.svg?branch=optimized)](https://travis-ci.org/sharwell/antlr4)
 
 [![codecov](https://codecov.io/gh/sharwell/antlr4/branch/optimized/graph/badge.svg)](https://codecov.io/gh/sharwell/antlr4)
 
