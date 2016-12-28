@@ -125,7 +125,7 @@ public class TestParseErrors extends BaseTest {
 	@Test public void testSingleTokenDeletionBeforeLoop() throws Exception {
 		String grammar =
 			"grammar T;\n" +
-			"a : 'a' 'b'*;";
+			"a : 'a' 'b'* EOF ;";
 		String found = execParser("T.g4", grammar, "TParser", "TLexer", "a", "aabc", false);
 		String expecting = "line 1:1 extraneous input 'a' expecting {<EOF>, 'b'}\n" +
 			"line 1:3 token recognition error at: 'c'\n";
@@ -172,7 +172,7 @@ public class TestParseErrors extends BaseTest {
 	@Test public void testSingleTokenDeletionBeforeLoop2() throws Exception {
 		String grammar =
 			"grammar T;\n" +
-			"a : 'a' ('b'|'z'{;})*;";
+			"a : 'a' ('b'|'z'{;})* EOF ;";
 		String found = execParser("T.g4", grammar, "TParser", "TLexer", "a", "aabc", false);
 		String expecting = "line 1:1 extraneous input 'a' expecting {<EOF>, 'b', 'z'}\n" +
 			"line 1:3 token recognition error at: 'c'\n";
@@ -249,7 +249,7 @@ public class TestParseErrors extends BaseTest {
 		String result = execParser("T.g4", grammar, "TParser", "TLexer", "start", "", true);
 		String expecting = "";
 		assertEquals(expecting, result);
-		assertEquals("line 1:0 missing ID at '<EOF>'\n", this.stderrDuringParse);
+		assertEquals("line 1:0 mismatched input '<EOF>' expecting ID\n", this.stderrDuringParse);
 	}
 
 	/**
