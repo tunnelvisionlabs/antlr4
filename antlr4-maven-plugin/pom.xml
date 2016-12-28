@@ -123,7 +123,44 @@
         </dependency>
 
     </dependencies>
-    
+
+    <profiles>
+        <profile>
+            <id>maven-plugin-no-tests</id>
+            <activation>
+                <jdk>1.6</jdk>
+            </activation>
+            <properties>
+                <skipTests>true</skipTests>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>maven-plugin-tests</id>
+            <activation>
+                <jdk>!1.6</jdk>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>io.takari.maven.plugins</groupId>
+                        <artifactId>takari-lifecycle-plugin</artifactId>
+                        <version>1.11.12</version>
+                        <executions>
+                            <execution>
+                                <id>testProperties</id>
+                                <phase>process-test-resources</phase>
+                                <goals>
+                                    <goal>testProperties</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
     <build>
 
         <defaultGoal>install</defaultGoal>
@@ -183,20 +220,6 @@
                 </configuration>
             </plugin>
 
-            <plugin>
-                <groupId>io.takari.maven.plugins</groupId>
-                <artifactId>takari-lifecycle-plugin</artifactId>
-                <version>1.11.12</version>
-                <executions>
-                    <execution>
-                        <id>testProperties</id>
-                        <phase>process-test-resources</phase>
-                        <goals>
-                            <goal>testProperties</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
         </plugins>
 
     </build>
