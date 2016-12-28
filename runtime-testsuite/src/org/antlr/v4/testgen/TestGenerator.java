@@ -43,6 +43,7 @@ import org.stringtemplate.v4.STGroup;
 import org.stringtemplate.v4.STGroupFile;
 import org.stringtemplate.v4.StringRenderer;
 import org.stringtemplate.v4.gui.STViz;
+import org.stringtemplate.v4.misc.ErrorBuffer;
 
 public class TestGenerator {
 	// This project uses UTF-8, but the plugin might be used in another project
@@ -102,10 +103,13 @@ public class TestGenerator {
 									String testdir,
 									Collection<String> testTemplates)
 	{
+		ErrorBuffer errors = new ErrorBuffer();
+		targetGroup.setListener(errors);
+
 		File targetFolder = getOutputDir(testdir);
 		String testName = testdir.substring(testdir.lastIndexOf('/') + 1);
 		File targetFile = new File(targetFolder, "Test" + testName + ".java");
-		info("Generating file "+targetFile.getAbsolutePath());
+//		System.out.println("Generating file "+targetFile.getAbsolutePath());
 		List<ST> templates = new ArrayList<ST>();
 		for (String template : testTemplates) {
 			STGroup testGroup = new STGroupFile(testdir + "/" + template + STGroup.GROUP_FILE_EXTENSION);
@@ -127,7 +131,10 @@ public class TestGenerator {
 		}
 
 		ST testFileTemplate = targetGroup.getInstanceOf("TestFile");
-		testFileTemplate.addAggr("file.{Options,name,tests}", index.rawGetDictionary("Options"), testName, templates);
+		testFileTemplate.addAggr("file.{Options,name,tests}",
+		                         index.rawGetDictionary("Options"),
+		                         testName,
+		                         templates);
 
 		if (visualize) {
 			STViz viz = testFileTemplate.inspect();
@@ -138,7 +145,11 @@ public class TestGenerator {
 		}
 
 		try {
-			writeFile(targetFile, testFileTemplate.render());
+			String output = testFileTemplate.render();
+			if ( errors.errors.size()>0 ) {
+				System.err.println("errors in "+targetGroup.getName()+": "+errors);
+			}
+			writeFile(targetFile, output);
 		}
 		catch (IOException ex) {
 			error(String.format("Failed to write output file: %s", targetFile), ex);
@@ -186,6 +197,7 @@ public class TestGenerator {
 	}
 
 	protected void info(String message) {
+		System.out.println("INFO: " + message);
 	}
 
 	protected void warn(String message) {
