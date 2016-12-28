@@ -35,7 +35,8 @@ public class AnalysisPipeline {
 
 		if (g.isLexer()) {
 			processLexer();
-		} else {
+		}
+		else {
 			// BUILD DFA FOR EACH DECISION
 			processParser();
 		}
