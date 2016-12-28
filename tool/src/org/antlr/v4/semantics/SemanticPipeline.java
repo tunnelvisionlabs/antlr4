@@ -98,11 +98,13 @@ public class SemanticPipeline {
 		}
 
 		// DO BASIC / EASY SEMANTIC CHECKS
+		int prevErrors = g.tool.errMgr.getNumErrors();
 		BasicSemanticChecks basics = new BasicSemanticChecks(g, ruleCollector);
 		basics.process();
+		if ( g.tool.errMgr.getNumErrors()>prevErrors ) return;
 
 		// TRANSFORM LEFT-RECURSIVE RULES
-		int prevErrors = g.tool.errMgr.getNumErrors();
+		prevErrors = g.tool.errMgr.getNumErrors();
 		LeftRecursiveRuleTransformer lrtrans =
 			new LeftRecursiveRuleTransformer(g.ast, ruleCollector.rules.values(), g);
 		lrtrans.translateLeftRecursiveRules();

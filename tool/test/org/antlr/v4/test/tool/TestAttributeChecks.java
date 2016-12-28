@@ -56,7 +56,7 @@ public class TestAttributeChecks extends BaseTest {
         "c   :   ;\n";
 
     String[] membersChecks = {
-		"$a",			"error(" + ErrorType.UNKNOWN_SIMPLE_ATTRIBUTE.code + "): A.g4:2:11: unknown attribute reference 'a' in '$a'\n",
+	    "$a",			"error(" + ErrorType.UNKNOWN_SIMPLE_ATTRIBUTE.code + "): A.g4:2:11: unknown attribute reference 'a' in '$a'\n",
         "$a.y",			"error(" + ErrorType.UNKNOWN_SIMPLE_ATTRIBUTE.code + "): A.g4:2:11: unknown attribute reference 'a' in '$a.y'\n",
     };
 
