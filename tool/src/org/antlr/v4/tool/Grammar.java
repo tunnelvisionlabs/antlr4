@@ -86,6 +86,7 @@ public class Grammar implements AttributeResolver {
 		parserOptions.add("abstract");
 		parserOptions.add("tokenVocab");
 		parserOptions.add("language");
+		parserOptions.add("exportMacro");
 	}
 
 	public static final Set<String> lexerOptions = parserOptions;
