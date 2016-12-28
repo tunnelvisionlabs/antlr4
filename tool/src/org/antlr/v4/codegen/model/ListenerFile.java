@@ -63,12 +63,15 @@ public class ListenerFile extends OutputFile {
 	public Map<String, String> listenerLabelRuleNames = new LinkedHashMap<String, String>();
 
 	@ModelElement public Action header;
+	@ModelElement public Map<String, Action> namedActions;
 
 	public ListenerFile(OutputModelFactory factory, String fileName) {
 		super(factory, fileName);
 		Grammar g = factory.getGrammar();
 		parserName = g.getRecognizerName();
 		grammarName = g.name;
+
+		namedActions = buildNamedActions(factory.getGrammar());
 
 		for (Map.Entry<String, List<RuleAST>> entry : g.contextASTs.entrySet()) {
 			for (RuleAST ruleAST : entry.getValue()) {

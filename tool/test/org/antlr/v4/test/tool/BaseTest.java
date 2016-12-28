@@ -1035,7 +1035,7 @@ public abstract class BaseTest {
 			g.atn = factory.createATN();
 
 			CodeGenerator gen = new CodeGenerator(g);
-			ST outputFileST = gen.generateParser();
+			ST outputFileST = gen.generateParser(false);
 			String output = outputFileST.render();
 			//System.out.println(output);
 			String b = "#" + actionName + "#";

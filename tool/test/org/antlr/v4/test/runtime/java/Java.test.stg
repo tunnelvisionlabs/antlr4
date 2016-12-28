@@ -163,8 +163,8 @@ string(text) ::= <<
 writeBoolean(o) ::= "<if(o && !isEmpty.(o))>true<else>false<endif>"
 
 writeln(s) ::= <<System.out.println(<s>);>>
-
 write(s) ::= <<System.out.print(<s>);>>
+writeList(s) ::= <<System.out.println(<s; separator="+">);>>
 
 False() ::= "false"
 
@@ -256,6 +256,8 @@ boolean Property() {
 }
 >>
 
+ParserPropertyCall(p, call) ::= "<p>.<call>"
+
 PositionAdjustingLexer() ::= <<
 
 @Override
@@ -338,10 +340,12 @@ protected static class PositionAdjustingLexerATNSimulator extends LexerATNSimula
 >>
 
 BasicListener(X) ::= <<
+@parser::members {
 public static class LeafListener extends TBaseListener {
 	public void visitTerminal(TerminalNode node) {
 		System.out.println(node.getSymbol().getText());
 	}
+}
 }
 >>
 
@@ -364,6 +368,7 @@ public static class MyRuleNode extends ParserRuleContext {
 >>
 
 TokenGetterListener(X) ::= <<
+@parser::members {
 public static class LeafListener extends TBaseListener {
 	public void exitA(TParser.AContext ctx) {
 		if (ctx.getChildCount()==2)
@@ -373,9 +378,11 @@ public static class LeafListener extends TBaseListener {
 			System.out.println(ctx.ID().getSymbol());
 	}
 }
+}
 >>
 
 RuleGetterListener(X) ::= <<
+@parser::members {
 public static class LeafListener extends TBaseListener {
 	public void exitA(TParser.AContext ctx) {
 		if (ctx.getChildCount()==2) {
@@ -385,10 +392,12 @@ public static class LeafListener extends TBaseListener {
 			System.out.println(ctx.b(0).start.getText());
 	}
 }
+}
 >>
 
 
 LRListener(X) ::= <<
+@parser::members {
 public static class LeafListener extends TBaseListener {
 	public void exitE(TParser.EContext ctx) {
 		if (ctx.getChildCount()==3) {
@@ -398,9 +407,11 @@ public static class LeafListener extends TBaseListener {
 			System.out.println(ctx.INT().getSymbol().getText());
 	}
 }
+}
 >>
 
 LRWithLabelsListener(X) ::= <<
+@parser::members {
 public static class LeafListener extends TBaseListener {
 	public void exitCall(TParser.CallContext ctx) {
 		System.out.printf("%s %s",ctx.e().start.getText(),ctx.eList());
@@ -408,6 +419,7 @@ public static class LeafListener extends TBaseListener {
 	public void exitInt(TParser.IntContext ctx) {
 		System.out.println(ctx.INT().getSymbol().getText());
 	}
+}
 }
 >>
 
@@ -441,6 +453,10 @@ Declare_pred() ::= <<boolean pred(boolean v) {
 
 Invoke_pred(v) ::= <<this.pred(<v>)>>
 
+ParserTokenType(t) ::= "Parser.<t>"
+ContextRuleFunction(ctx, rule) ::= "<ctx>.<rule>"
+StringType() ::= "String"
+ContextMember(ctx, subctx, member) ::= "<ctx>.<subctx>.<member>"
 isEmpty ::= [
 	"": true,
 	default: false
