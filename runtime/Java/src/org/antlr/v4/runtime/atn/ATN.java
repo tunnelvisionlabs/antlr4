@@ -201,6 +201,13 @@ public class ATN {
 	 * <p>If {@code context} is {@code null}, it is treated as
 	 * {@link ParserRuleContext#EMPTY}.</p>
 	 *
+	 * <p>Note that this does NOT give you the set of all tokens that could
+	 * appear at a given token position.  This function always computes what
+	 * token(s) can come next specific to a single context (call stack), which
+	 * is what you want for error reporting and recovery.  Getting all
+	 * <em>possible</em> tokens given a partial input stream is a separate
+	 * computation. See https://github.com/antlr/antlr4/issues/1428</p>
+	 *
 	 * @param stateNumber the ATN state number
 	 * @param context the full parse context
 	 * @return The set of potentially valid input symbols which could follow the
