@@ -1,31 +1,7 @@
 /*
- * [The "BSD license"]
- *  Copyright (c) 2012 Terence Parr
- *  Copyright (c) 2012 Sam Harwell
- *  All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted provided that the following conditions
- *  are met:
- *
- *  1. Redistributions of source code must retain the above copyright
- *     notice, this list of conditions and the following disclaimer.
- *  2. Redistributions in binary form must reproduce the above copyright
- *     notice, this list of conditions and the following disclaimer in the
- *     documentation and/or other materials provided with the distribution.
- *  3. The name of the author may not be used to endorse or promote products
- *     derived from this software without specific prior written permission.
- *
- *  THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- *  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- *  OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- *  NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- *  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- *  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- *  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) 2012 The ANTLR Project. All rights reserved.
+ * Use of this file is governed by the BSD-3-Clause license that
+ * can be found in the LICENSE.txt file in the project root.
  */
 
 package org.antlr.v4.codegen;
@@ -44,7 +20,9 @@ import org.antlr.v4.codegen.model.LL1OptionalBlockSingleAlt;
 import org.antlr.v4.codegen.model.LL1PlusBlockSingleAlt;
 import org.antlr.v4.codegen.model.LL1StarBlockSingleAlt;
 import org.antlr.v4.codegen.model.LabeledOp;
+import org.antlr.v4.codegen.model.LeftFactoredRuleFunction;
 import org.antlr.v4.codegen.model.LeftRecursiveRuleFunction;
+import org.antlr.v4.codegen.model.LeftUnfactoredRuleFunction;
 import org.antlr.v4.codegen.model.MatchNotSet;
 import org.antlr.v4.codegen.model.MatchSet;
 import org.antlr.v4.codegen.model.MatchToken;
@@ -57,11 +35,13 @@ import org.antlr.v4.codegen.model.SemPred;
 import org.antlr.v4.codegen.model.SrcOp;
 import org.antlr.v4.codegen.model.StarBlock;
 import org.antlr.v4.codegen.model.TestSetInline;
+import org.antlr.v4.codegen.model.Wildcard;
 import org.antlr.v4.codegen.model.decl.Decl;
 import org.antlr.v4.codegen.model.decl.RuleContextDecl;
 import org.antlr.v4.codegen.model.decl.TokenDecl;
 import org.antlr.v4.codegen.model.decl.TokenListDecl;
 import org.antlr.v4.parse.ANTLRParser;
+import org.antlr.v4.runtime.atn.ATNSimulator;
 import org.antlr.v4.runtime.atn.DecisionState;
 import org.antlr.v4.runtime.atn.PlusLoopbackState;
 import org.antlr.v4.runtime.atn.StarLoopEntryState;
@@ -94,6 +74,12 @@ public class ParserFactory extends DefaultOutputModelFactory {
 	public RuleFunction rule(Rule r) {
 		if ( r instanceof LeftRecursiveRule ) {
 			return new LeftRecursiveRuleFunction(this, (LeftRecursiveRule)r);
+		}
+		else if (r.name.contains(ATNSimulator.RULE_LF_VARIANT_MARKER)) {
+			return new LeftFactoredRuleFunction(this, r);
+		}
+		else if (r.name.contains(ATNSimulator.RULE_NOLF_VARIANT_MARKER)) {
+			return new LeftUnfactoredRuleFunction(this, r);
 		}
 		else {
 			RuleFunction rf = new RuleFunction(this, r);
@@ -169,7 +155,7 @@ public class ParserFactory extends DefaultOutputModelFactory {
 	}
 
 	public TokenListDecl getTokenListLabelDecl(String label) {
-		return new TokenListDecl(this, gen.getTarget().getListLabel(label));
+		return new TokenListDecl(this, getTarget().getListLabel(label));
 	}
 
 	@Override
@@ -232,7 +218,7 @@ public class ParserFactory extends DefaultOutputModelFactory {
 			c.label = d;
 			getCurrentRuleFunction().addContextDecl(labelAST.getAltLabel(), d);
 			if ( labelAST.parent.getType() == ANTLRParser.PLUS_ASSIGN  ) {
-				String listLabel = gen.getTarget().getListLabel(label);
+				String listLabel = getTarget().getListLabel(label);
 				TokenListDecl l = new TokenListDecl(this, listLabel);
 				getCurrentRuleFunction().addContextDecl(labelAST.getAltLabel(), l);
 			}
@@ -316,7 +302,7 @@ public class ParserFactory extends DefaultOutputModelFactory {
 
 	@Override
 	public List<SrcOp> getLL1Test(IntervalSet look, GrammarAST blkAST) {
-		return list(new TestSetInline(this, blkAST, look));
+		return list(new TestSetInline(this, blkAST, look, gen.getTarget().getInlineTestSetWordSize()));
 	}
 
 	@Override
@@ -333,20 +319,20 @@ public class ParserFactory extends DefaultOutputModelFactory {
 		Decl d;
 		if ( ast.getType()==ANTLRParser.SET || ast.getType()==ANTLRParser.WILDCARD ) {
 			String implLabel =
-				gen.getTarget().getImplicitSetLabel(String.valueOf(ast.token.getTokenIndex()));
+				getTarget().getImplicitSetLabel(String.valueOf(ast.token.getTokenIndex()));
 			d = getTokenLabelDecl(implLabel);
 			((TokenDecl)d).isImplicit = true;
 		}
 		else if ( ast.getType()==ANTLRParser.RULE_REF ) { // a rule reference?
 			Rule r = g.getRule(ast.getText());
-			String implLabel = gen.getTarget().getImplicitRuleLabel(ast.getText());
+			String implLabel = getTarget().getImplicitRuleLabel(ast.getText());
 			String ctxName =
-				gen.getTarget().getRuleFunctionContextStructName(r);
+				getTarget().getRuleFunctionContextStructName(r);
 			d = new RuleContextDecl(this, implLabel, ctxName);
 			((RuleContextDecl)d).isImplicit = true;
 		}
 		else {
-			String implLabel = gen.getTarget().getImplicitTokenLabel(ast.getText());
+			String implLabel = getTarget().getImplicitTokenLabel(ast.getText());
 			d = getTokenLabelDecl(implLabel);
 			((TokenDecl)d).isImplicit = true;
 		}
@@ -358,7 +344,7 @@ public class ParserFactory extends DefaultOutputModelFactory {
 	public AddToLabelList getAddToListOpIfListLabelPresent(LabeledOp op, GrammarAST label) {
 		AddToLabelList labelOp = null;
 		if ( label!=null && label.parent.getType()==ANTLRParser.PLUS_ASSIGN ) {
-			String listLabel = gen.getTarget().getListLabel(label.getText());
+			String listLabel = getTarget().getListLabel(label.getText());
 			labelOp = new AddToLabelList(this, listLabel, op.getLabels().get(0));
 		}
 		return labelOp;

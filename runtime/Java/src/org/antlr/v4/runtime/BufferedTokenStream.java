@@ -1,31 +1,7 @@
 /*
- * [The "BSD license"]
- *  Copyright (c) 2012 Terence Parr
- *  Copyright (c) 2012 Sam Harwell
- *  All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted provided that the following conditions
- *  are met:
- *
- *  1. Redistributions of source code must retain the above copyright
- *     notice, this list of conditions and the following disclaimer.
- *  2. Redistributions in binary form must reproduce the above copyright
- *     notice, this list of conditions and the following disclaimer in the
- *     documentation and/or other materials provided with the distribution.
- *  3. The name of the author may not be used to endorse or promote products
- *     derived from this software without specific prior written permission.
- *
- *  THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- *  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- *  OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- *  NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- *  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- *  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- *  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) 2012 The ANTLR Project. All rights reserved.
+ * Use of this file is governed by the BSD-3-Clause license that
+ * can be found in the LICENSE.txt file in the project root.
  */
 
 package org.antlr.v4.runtime;
@@ -34,9 +10,8 @@ import org.antlr.v4.runtime.misc.Interval;
 import org.antlr.v4.runtime.misc.NotNull;
 
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.BitSet;
 import java.util.List;
-import java.util.Set;
 
 /**
  * This implementation of {@link TokenStream} loads tokens from a
@@ -206,7 +181,7 @@ public class BufferedTokenStream implements TokenStream {
         return tokens.get(i);
     }
 
-	/** Get all tokens from start..stop inclusively */
+	/** Get all tokens from start..stop inclusively. */
 	public List<Token> get(int start, int stop) {
 		if ( start<0 || stop<0 ) return null;
 		lazyInit();
@@ -286,11 +261,11 @@ public class BufferedTokenStream implements TokenStream {
         return getTokens(start, stop, null);
     }
 
-    /** Given a start and stop index, return a List of all tokens in
-     *  the token type BitSet.  Return null if no tokens were found.  This
+    /** Given a start and stop index, return a {@code List} of all tokens in
+     *  the token type {@code BitSet}.  Return {@code null} if no tokens were found.  This
      *  method looks at both on and off channel tokens.
      */
-    public List<Token> getTokens(int start, int stop, Set<Integer> types) {
+    public List<Token> getTokens(int start, int stop, BitSet types) {
         lazyInit();
 		if ( start<0 || stop>=tokens.size() ||
 			 stop<0  || start>=tokens.size() )
@@ -298,13 +273,14 @@ public class BufferedTokenStream implements TokenStream {
 			throw new IndexOutOfBoundsException("start "+start+" or stop "+stop+
 												" not in 0.."+(tokens.size()-1));
 		}
+
         if ( start>stop ) return null;
 
         // list = tokens[start:stop]:{T t, t.getType() in types}
         List<Token> filteredTokens = new ArrayList<Token>();
         for (int i=start; i<=stop; i++) {
             Token t = tokens.get(i);
-            if ( types==null || types.contains(t.getType()) ) {
+            if ( types==null || types.get(t.getType()) ) {
                 filteredTokens.add(t);
             }
         }
@@ -315,8 +291,8 @@ public class BufferedTokenStream implements TokenStream {
     }
 
     public List<Token> getTokens(int start, int stop, int ttype) {
-		HashSet<Integer> s = new HashSet<Integer>(ttype);
-		s.add(ttype);
+		BitSet s = new BitSet(ttype);
+		s.set(ttype);
 		return getTokens(start,stop, s);
     }
 
@@ -376,8 +352,8 @@ public class BufferedTokenStream implements TokenStream {
 	}
 
 	/** Collect all tokens on specified channel to the right of
-	 *  the current token up until we see a token on DEFAULT_TOKEN_CHANNEL or
-	 *  EOF. If channel is -1, find any non default channel token.
+	 *  the current token up until we see a token on {@link Lexer#DEFAULT_TOKEN_CHANNEL} or
+	 *  EOF. If {@code channel} is {@code -1}, find any non default channel token.
 	 */
 	public List<Token> getHiddenTokensToRight(int tokenIndex, int channel) {
 		lazyInit();
@@ -397,16 +373,16 @@ public class BufferedTokenStream implements TokenStream {
 	}
 
 	/** Collect all hidden tokens (any off-default channel) to the right of
-	 *  the current token up until we see a token on DEFAULT_TOKEN_CHANNEL
-	 *  of EOF.
+	 *  the current token up until we see a token on {@link Lexer#DEFAULT_TOKEN_CHANNEL}
+	 *  or EOF.
 	 */
 	public List<Token> getHiddenTokensToRight(int tokenIndex) {
 		return getHiddenTokensToRight(tokenIndex, -1);
 	}
 
 	/** Collect all tokens on specified channel to the left of
-	 *  the current token up until we see a token on DEFAULT_TOKEN_CHANNEL.
-	 *  If channel is -1, find any non default channel token.
+	 *  the current token up until we see a token on {@link Lexer#DEFAULT_TOKEN_CHANNEL}.
+	 *  If {@code channel} is {@code -1}, find any non default channel token.
 	 */
 	public List<Token> getHiddenTokensToLeft(int tokenIndex, int channel) {
 		lazyInit();
@@ -430,7 +406,7 @@ public class BufferedTokenStream implements TokenStream {
 	}
 
 	/** Collect all hidden tokens (any off-default channel) to the left of
-	 *  the current token up until we see a token on DEFAULT_TOKEN_CHANNEL.
+	 *  the current token up until we see a token on {@link Lexer#DEFAULT_TOKEN_CHANNEL}.
 	 */
 	public List<Token> getHiddenTokensToLeft(int tokenIndex) {
 		return getHiddenTokensToLeft(tokenIndex, -1);
@@ -447,7 +423,7 @@ public class BufferedTokenStream implements TokenStream {
 				if ( t.getChannel()==channel ) hidden.add(t);
 			}
 		}
-		if ( hidden.size()==0 ) return null;
+		if ( hidden.isEmpty() ) return null;
 		return hidden;
 	}
 
@@ -458,18 +434,16 @@ public class BufferedTokenStream implements TokenStream {
 	@NotNull
 	@Override
 	public String getText() {
-        lazyInit();
-		fill();
 		return getText(Interval.of(0,size()-1));
 	}
 
 	@NotNull
-    @Override
-    public String getText(Interval interval) {
+	@Override
+	public String getText(Interval interval) {
 		int start = interval.a;
 		int stop = interval.b;
-        if ( start<0 || stop<0 ) return "";
-        lazyInit();
+		if ( start<0 || stop<0 ) return "";
+		fill();
         if ( stop>=tokens.size() ) stop = tokens.size()-1;
 
 		StringBuilder buf = new StringBuilder();
@@ -489,15 +463,15 @@ public class BufferedTokenStream implements TokenStream {
 
 	@NotNull
     @Override
-    public String getText(Token start, Token stop) {
-        if ( start!=null && stop!=null ) {
-            return getText(Interval.of(start.getTokenIndex(), stop.getTokenIndex()));
+    public String getText(Object start, Object stop) {
+        if ( start instanceof Token && stop instanceof Token ) {
+            return getText(Interval.of(((Token)start).getTokenIndex(), ((Token)stop).getTokenIndex()));
         }
 
 		return "";
     }
 
-    /** Get all tokens from lexer until EOF */
+    /** Get all tokens from lexer until EOF. */
     public void fill() {
         lazyInit();
 		final int blockSize = 1000;

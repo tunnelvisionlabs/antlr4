@@ -1,31 +1,7 @@
 /*
- * [The "BSD license"]
- *  Copyright (c) 2012 Terence Parr
- *  Copyright (c) 2012 Sam Harwell
- *  All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted provided that the following conditions
- *  are met:
- *
- *  1. Redistributions of source code must retain the above copyright
- *     notice, this list of conditions and the following disclaimer.
- *  2. Redistributions in binary form must reproduce the above copyright
- *     notice, this list of conditions and the following disclaimer in the
- *     documentation and/or other materials provided with the distribution.
- *  3. The name of the author may not be used to endorse or promote products
- *     derived from this software without specific prior written permission.
- *
- *  THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- *  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- *  OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- *  NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- *  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- *  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- *  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) 2012 The ANTLR Project. All rights reserved.
+ * Use of this file is governed by the BSD-3-Clause license that
+ * can be found in the LICENSE.txt file in the project root.
  */
 
 package org.antlr.v4.automata;
@@ -94,7 +70,7 @@ public interface ATNFactory {
 	/** For a non-lexer, just build a simple token reference atom.
 	 *  For a lexer, a string is a sequence of char to match.  That is,
 	 *  "fog" is treated as 'f' 'o' 'g' not as a single transition in
-	 *  the DFA.  Machine== o-'f'->o-'o'->o-'g'->o and has n+1 states
+	 *  the DFA.  Machine== o-'f'-&gt;o-'o'-&gt;o-'g'-&gt;o and has n+1 states
 	 *  for n characters.
 	 */
 	@NotNull
@@ -102,16 +78,16 @@ public interface ATNFactory {
 
 	/** For reference to rule r, build
 	 *
-	 *  o-e->(r)  o
+	 *  o-e-&gt;(r)  o
 	 *
 	 *  where (r) is the start of rule r and the trailing o is not linked
 	 *  to from rule ref state directly (it's done thru the transition(0)
 	 *  RuleClosureTransition.
 	 *
 	 *  If the rule r is just a list of tokens, it's block will be just
-	 *  a set on an edge o->o->o-set->o->o->o, could inline it rather than doing
+	 *  a set on an edge o-&gt;o-&gt;o-set-&gt;o-&gt;o-&gt;o, could inline it rather than doing
 	 *  the rule reference, but i'm not doing this yet as I'm not sure
-	 *  it would help much in the ATN->DFA construction.
+	 *  it would help much in the ATN-&gt;DFA construction.
 	 *
 	 *  TODO add to codegen: collapse alt blks that are sets into single matchSet
 	 * @param node
@@ -119,7 +95,7 @@ public interface ATNFactory {
 	@NotNull
 	Handle ruleRef(@NotNull GrammarAST node);
 
-	/** From an empty alternative build Grip o-e->o */
+	/** From an empty alternative build Grip o-e-&gt;o */
 	@NotNull
 	Handle epsilon(@NotNull GrammarAST node);
 
@@ -144,13 +120,13 @@ public interface ATNFactory {
 
 	/** From A|B|..|Z alternative block build
      *
-     *  o->o-A->o->o (last ATNState is blockEndATNState pointed to by all alts)
+     *  o-&gt;o-A-&gt;o-&gt;o (last ATNState is blockEndATNState pointed to by all alts)
      *  |          ^
-     *  o->o-B->o--|
+     *  o-&gt;o-B-&gt;o--|
      *  |          |
      *  ...        |
      *  |          |
-     *  o->o-Z->o--|
+     *  o-&gt;o-Z-&gt;o--|
      *
      *  So every alternative gets begin ATNState connected by epsilon
      *  and every alt right side points at a block end ATNState.  There is a
@@ -161,7 +137,7 @@ public interface ATNFactory {
      *  begin/end.
      *
      *  Special case: if just a list of tokens/chars/sets, then collapse
-     *  to a single edge'd o-set->o graph.
+     *  to a single edge'd o-set-&gt;o graph.
      *
      *  Set alt number (1..n) in the left-Transition ATNState.
      */
@@ -172,9 +148,9 @@ public interface ATNFactory {
 
 	/** From (A)? build either:
 	 *
-	 *  o--A->o
+	 *  o--A-&gt;o
 	 *  |     ^
-	 *  o---->|
+	 *  o----&gt;|
 	 *
 	 *  or, if A is a block, just add an empty alt to the end of the block
 	 */
@@ -185,7 +161,7 @@ public interface ATNFactory {
 	 *
 	 *     |---|    (Transition 2 from A.right points at alt 1)
 	 *     v   |    (follow of loop is Transition 1)
-	 *  o->o-A-o->o
+	 *  o-&gt;o-A-o-&gt;o
 	 *
 	 *  Meaning that the last ATNState in A points back to A's left Transition ATNState
 	 *  and we add a new begin/end ATNState.  A can be single alternative or
@@ -201,7 +177,7 @@ public interface ATNFactory {
 	 *
 	 *     |---|
 	 *     v   |
-	 *  o->o-A-o--o (Transition 2 from block end points at alt 1; follow is Transition 1)
+	 *  o-&gt;o-A-o--o (Transition 2 from block end points at alt 1; follow is Transition 1)
 	 *  |         ^
 	 *  o---------| (optional branch is 2nd alt of optional block containing A+)
 	 *

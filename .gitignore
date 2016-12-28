@@ -1,11 +1,7 @@
 # Maven build folders
 target/
-
-# Ant build folders
-build/
-dist/
-lib/
-user.build.properties
+# ... but not code generation targets
+!tool/src/org/antlr/v4/codegen/target/
 
 # MacOSX files
 .DS_Store
@@ -16,18 +12,21 @@ nbactions*.xml
 */nbproject/private/
 
 # IntelliJ projects
-*.iml
 *.ipr
 *.iws
+*.iml
 .idea/
 
 # Eclipse projects
 .classpath
 .project
 .settings/
+.metadata/
 
 # Profiler results
 *.hprof
 
 # Playground
 #/tool/playground/
+
+.vscode/

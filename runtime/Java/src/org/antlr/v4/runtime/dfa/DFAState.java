@@ -1,49 +1,26 @@
 /*
- * [The "BSD license"]
- *  Copyright (c) 2012 Terence Parr
- *  Copyright (c) 2012 Sam Harwell
- *  All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted provided that the following conditions
- *  are met:
- *
- *  1. Redistributions of source code must retain the above copyright
- *     notice, this list of conditions and the following disclaimer.
- *  2. Redistributions in binary form must reproduce the above copyright
- *     notice, this list of conditions and the following disclaimer in the
- *     documentation and/or other materials provided with the distribution.
- *  3. The name of the author may not be used to endorse or promote products
- *     derived from this software without specific prior written permission.
- *
- *  THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- *  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- *  OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- *  NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- *  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- *  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- *  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) 2012 The ANTLR Project. All rights reserved.
+ * Use of this file is governed by the BSD-3-Clause license that
+ * can be found in the LICENSE.txt file in the project root.
  */
 
 package org.antlr.v4.runtime.dfa;
 
-import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.atn.ATN;
-import org.antlr.v4.runtime.atn.ATNConfig;
 import org.antlr.v4.runtime.atn.ATNConfigSet;
 import org.antlr.v4.runtime.atn.LexerActionExecutor;
 import org.antlr.v4.runtime.atn.ParserATNSimulator;
+import org.antlr.v4.runtime.atn.PredictionContext;
 import org.antlr.v4.runtime.atn.SemanticContext;
 import org.antlr.v4.runtime.misc.MurmurHash;
 import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.misc.Nullable;
 
 import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.BitSet;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /** A DFA state represents a set of possible ATN configurations.
  *  As Aho, Sethi, Ullman p. 117 says "The DFA uses its state
@@ -73,43 +50,25 @@ public class DFAState {
 	public int stateNumber = -1;
 
 	@NotNull
-	public ATNConfigSet configs = new ATNConfigSet();
+	public final ATNConfigSet configs;
 
-	/** {@code edges[symbol]} points to target of symbol. Shift up by 1 so (-1)
-	 *  {@link Token#EOF} maps to {@code edges[0]}.
+	/** {@code edges.get(symbol)} points to target of symbol.
 	 */
+	@NotNull
+	private volatile AbstractEdgeMap<DFAState> edges;
+
+	private AcceptStateInfo acceptStateInfo;
+
+	/** These keys for these edges are the top level element of the global context. */
+	@NotNull
+	private volatile AbstractEdgeMap<DFAState> contextEdges;
+
+	/** Symbols in this set require a global context transition before matching an input symbol. */
 	@Nullable
-	public DFAState[] edges;
-
-	public boolean isAcceptState = false;
-
-	/** if accept state, what ttype do we match or alt do we predict?
-	 *  This is set to {@link ATN#INVALID_ALT_NUMBER} when {@link #predicates}{@code !=null} or
-	 *  {@link #requiresFullContext}.
-	 */
-	public int prediction;
-
-	public LexerActionExecutor lexerActionExecutor;
+	private BitSet contextSymbols;
 
 	/**
-	 * Indicates that this state was created during SLL prediction that
-	 * discovered a conflict between the configurations in the state. Future
-	 * {@link ParserATNSimulator#execATN} invocations immediately jumped doing
-	 * full context prediction if this field is true.
-	 */
-	public boolean requiresFullContext;
-
-	/** During SLL parsing, this is a list of predicates associated with the
-	 *  ATN configurations of the DFA state. When we have predicates,
-	 *  {@link #requiresFullContext} is {@code false} since full context prediction evaluates predicates
-	 *  on-the-fly. If this is not null, then {@link #prediction} is
-	 *  {@link ATN#INVALID_ALT_NUMBER}.
-	 *
-	 *  <p>We only use these for non-{@link #requiresFullContext} but conflicting states. That
-	 *  means we know from the context (it's $ or we don't dip into outer
-	 *  context) that it's an ambiguity not a conflict.</p>
-	 *
-	 *  <p>This list is computed by {@link ParserATNSimulator#predicateDFAState}.</p>
+	 * This list is computed by {@link ParserATNSimulator#predicateDFAState}.
 	 */
 	@Nullable
 	public PredPrediction[] predicates;
@@ -119,7 +78,7 @@ public class DFAState {
 		@NotNull
 		public SemanticContext pred; // never null; at least SemanticContext.NONE
 		public int alt;
-		public PredPrediction(SemanticContext pred, int alt) {
+		public PredPrediction(@NotNull SemanticContext pred, int alt) {
 			this.alt = alt;
 			this.pred = pred;
 		}
@@ -129,24 +88,128 @@ public class DFAState {
 		}
 	}
 
-	public DFAState() { }
+	public DFAState(@NotNull DFA dfa, @NotNull ATNConfigSet configs) {
+		this(dfa.getEmptyEdgeMap(), dfa.getEmptyContextEdgeMap(), configs);
+	}
 
-	public DFAState(int stateNumber) { this.stateNumber = stateNumber; }
+	public DFAState(@NotNull EmptyEdgeMap<DFAState> emptyEdges, @NotNull EmptyEdgeMap<DFAState> emptyContextEdges, @NotNull ATNConfigSet configs) {
+		this.configs = configs;
+		this.edges = emptyEdges;
+		this.contextEdges = emptyContextEdges;
+	}
 
-	public DFAState(@NotNull ATNConfigSet configs) { this.configs = configs; }
+	public final boolean isContextSensitive() {
+		return contextSymbols != null;
+	}
 
-	/** Get the set of all alts mentioned by all ATN configurations in this
-	 *  DFA state.
-	 */
-	public Set<Integer> getAltSet() {
-		Set<Integer> alts = new HashSet<Integer>();
-		if ( configs!=null ) {
-			for (ATNConfig c : configs) {
-				alts.add(c.alt);
+	public final boolean isContextSymbol(int symbol) {
+		if (!isContextSensitive() || symbol < edges.minIndex) {
+			return false;
+		}
+
+		return contextSymbols.get(symbol - edges.minIndex);
+	}
+
+	public final void setContextSymbol(int symbol) {
+		assert isContextSensitive();
+		if (symbol < edges.minIndex) {
+			return;
+		}
+
+		contextSymbols.set(symbol - edges.minIndex);
+	}
+
+	public void setContextSensitive(ATN atn) {
+		assert !configs.isOutermostConfigSet();
+		if (isContextSensitive()) {
+			return;
+		}
+
+		synchronized (this) {
+			if (contextSymbols == null) {
+				contextSymbols = new BitSet();
 			}
 		}
-		if ( alts.isEmpty() ) return null;
-		return alts;
+	}
+
+	public final AcceptStateInfo getAcceptStateInfo() {
+		return acceptStateInfo;
+	}
+
+	public final void setAcceptState(AcceptStateInfo acceptStateInfo) {
+		this.acceptStateInfo = acceptStateInfo;
+	}
+
+	public final boolean isAcceptState() {
+		return acceptStateInfo != null;
+	}
+
+	public final int getPrediction() {
+		if (acceptStateInfo == null) {
+			return ATN.INVALID_ALT_NUMBER;
+		}
+
+		return acceptStateInfo.getPrediction();
+	}
+
+	public final LexerActionExecutor getLexerActionExecutor() {
+		if (acceptStateInfo == null) {
+			return null;
+		}
+
+		return acceptStateInfo.getLexerActionExecutor();
+	}
+
+	public DFAState getTarget(int symbol) {
+		return edges.get(symbol);
+	}
+
+	public void setTarget(int symbol, DFAState target) {
+		edges = edges.put(symbol, target);
+	}
+
+	public Map<Integer, DFAState> getEdgeMap() {
+		return edges.toMap();
+	}
+
+	public synchronized DFAState getContextTarget(int invokingState) {
+		if (invokingState == PredictionContext.EMPTY_FULL_STATE_KEY) {
+			invokingState = -1;
+		}
+
+		return contextEdges.get(invokingState);
+	}
+
+	public synchronized void setContextTarget(int invokingState, DFAState target) {
+		if (!isContextSensitive()) {
+			throw new IllegalStateException("The state is not context sensitive.");
+		}
+
+		if (invokingState == PredictionContext.EMPTY_FULL_STATE_KEY) {
+			invokingState = -1;
+		}
+
+		contextEdges = contextEdges.put(invokingState, target);
+	}
+
+	public Map<Integer, DFAState> getContextEdgeMap() {
+		Map<Integer, DFAState> map = contextEdges.toMap();
+		if (map.containsKey(-1)) {
+			if (map.size() == 1) {
+				return Collections.singletonMap(PredictionContext.EMPTY_FULL_STATE_KEY, map.get(-1));
+			}
+			else {
+				try {
+					map.put(PredictionContext.EMPTY_FULL_STATE_KEY, map.remove(-1));
+				} catch (UnsupportedOperationException ex) {
+					// handles read only, non-singleton maps
+					map = new LinkedHashMap<Integer, DFAState>(map);
+					map.put(PredictionContext.EMPTY_FULL_STATE_KEY, map.remove(-1));
+				}
+			}
+		}
+
+		return map;
 	}
 
 	@Override
@@ -180,7 +243,6 @@ public class DFAState {
 		}
 
 		DFAState other = (DFAState)o;
-		// TODO (sam): what to do when configs==null?
 		boolean sameSet = this.configs.equals(other.configs);
 //		System.out.println("DFAState.equals: "+configs+(sameSet?"==":"!=")+other.configs);
 		return sameSet;
@@ -190,13 +252,13 @@ public class DFAState {
 	public String toString() {
         StringBuilder buf = new StringBuilder();
         buf.append(stateNumber).append(":").append(configs);
-        if ( isAcceptState ) {
+        if ( isAcceptState() ) {
             buf.append("=>");
             if ( predicates!=null ) {
                 buf.append(Arrays.toString(predicates));
             }
             else {
-                buf.append(prediction);
+                buf.append(getPrediction());
             }
         }
 		return buf.toString();

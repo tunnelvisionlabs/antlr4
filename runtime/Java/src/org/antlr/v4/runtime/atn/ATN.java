@@ -1,31 +1,7 @@
 /*
- * [The "BSD license"]
- *  Copyright (c) 2012 Terence Parr
- *  Copyright (c) 2012 Sam Harwell
- *  All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted provided that the following conditions
- *  are met:
- *
- *  1. Redistributions of source code must retain the above copyright
- *     notice, this list of conditions and the following disclaimer.
- *  2. Redistributions in binary form must reproduce the above copyright
- *     notice, this list of conditions and the following disclaimer in the
- *     documentation and/or other materials provided with the distribution.
- *  3. The name of the author may not be used to endorse or promote products
- *     derived from this software without specific prior written permission.
- *
- *  THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- *  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- *  OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- *  NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- *  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- *  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- *  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) 2012 The ANTLR Project. All rights reserved.
+ * Use of this file is governed by the BSD-3-Clause license that
+ * can be found in the LICENSE.txt file in the project root.
  */
 
 package org.antlr.v4.runtime.atn;
@@ -33,14 +9,19 @@ package org.antlr.v4.runtime.atn;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.dfa.DFA;
+import org.antlr.v4.runtime.misc.Args;
 import org.antlr.v4.runtime.misc.IntervalSet;
 import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.misc.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /** */
 public class ATN {
@@ -98,19 +79,58 @@ public class ATN {
 	@NotNull
 	public final List<TokensStartState> modeToStartState = new ArrayList<TokensStartState>();
 
+	private final ConcurrentMap<PredictionContext, PredictionContext> contextCache =
+		new ConcurrentHashMap<PredictionContext, PredictionContext>();
+
+	@NotNull
+	public DFA[] decisionToDFA = new DFA[0];
+	@NotNull
+	public DFA[] modeToDFA = new DFA[0];
+
+	protected final ConcurrentMap<Integer, Integer> LL1Table = new ConcurrentHashMap<Integer, Integer>();
+
 	/** Used for runtime deserialization of ATNs from strings */
 	public ATN(@NotNull ATNType grammarType, int maxTokenType) {
 		this.grammarType = grammarType;
 		this.maxTokenType = maxTokenType;
 	}
 
+	public final void clearDFA() {
+		decisionToDFA = new DFA[decisionToState.size()];
+		for (int i = 0; i < decisionToDFA.length; i++) {
+			decisionToDFA[i] = new DFA(decisionToState.get(i), i);
+		}
+
+		modeToDFA = new DFA[modeToStartState.size()];
+		for (int i = 0; i < modeToDFA.length; i++) {
+			modeToDFA[i] = new DFA(modeToStartState.get(i));
+		}
+
+		contextCache.clear();
+		LL1Table.clear();
+	}
+
+	public int getContextCacheSize() {
+		return contextCache.size();
+	}
+
+	public PredictionContext getCachedContext(PredictionContext context) {
+		return PredictionContext.getCachedContext(context, contextCache, new PredictionContext.IdentityHashMap());
+	}
+
+	public final DFA[] getDecisionToDFA() {
+		assert decisionToDFA != null && decisionToDFA.length == decisionToState.size();
+		return decisionToDFA;
+	}
+
 	/** Compute the set of valid tokens that can occur starting in state {@code s}.
-	 *  If {@code ctx} is null, the set of tokens will not include what can follow
+	 *  If {@code ctx} is {@link PredictionContext#EMPTY_LOCAL}, the set of tokens will not include what can follow
 	 *  the rule surrounding {@code s}. In other words, the set will be
 	 *  restricted to tokens reachable staying within {@code s}'s rule.
 	 */
 	@NotNull
-	public IntervalSet nextTokens(ATNState s, RuleContext ctx) {
+	public IntervalSet nextTokens(ATNState s, @NotNull PredictionContext ctx) {
+		Args.notNull("ctx", ctx);
 		LL1Analyzer anal = new LL1Analyzer(this);
 		IntervalSet next = anal.LOOK(s, ctx);
 		return next;
@@ -124,7 +144,7 @@ public class ATN {
 	@NotNull
     public IntervalSet nextTokens(@NotNull ATNState s) {
         if ( s.nextTokenWithinRule != null ) return s.nextTokenWithinRule;
-        s.nextTokenWithinRule = nextTokens(s, null);
+        s.nextTokenWithinRule = nextTokens(s, PredictionContext.EMPTY_LOCAL);
         s.nextTokenWithinRule.setReadonly(true);
         return s.nextTokenWithinRule;
     }
@@ -142,9 +162,19 @@ public class ATN {
 		states.set(state.stateNumber, null); // just free mem, don't shift states in list
 	}
 
+	public void defineMode(@NotNull String name, @NotNull TokensStartState s) {
+		modeNameToStartState.put(name, s);
+		modeToStartState.add(s);
+		modeToDFA = Arrays.copyOf(modeToDFA, modeToStartState.size());
+		modeToDFA[modeToDFA.length - 1] = new DFA(s);
+		defineDecisionState(s);
+	}
+
 	public int defineDecisionState(@NotNull DecisionState s) {
 		decisionToState.add(s);
 		s.decision = decisionToState.size()-1;
+		decisionToDFA = Arrays.copyOf(decisionToDFA, decisionToState.size());
+		decisionToDFA[decisionToDFA.length - 1] = new DFA(s, s.decision);
 		return s.decision;
 	}
 
@@ -170,6 +200,23 @@ public class ATN {
 	 *
 	 * <p>If {@code context} is {@code null}, it is treated as
 	 * {@link ParserRuleContext#EMPTY}.</p>
+	 *
+	 * <p>Note that this does NOT give you the set of all tokens that could
+	 * appear at a given token position in the input phrase.  In other words, it
+	 * does not answer:</p>
+	 *
+	 * <quote>"Given a specific partial input phrase, return the set of all
+	 * tokens that can follow the last token in the input phrase."</quote>
+	 *
+	 * <p>The big difference is that with just the input, the parser could land
+	 * right in the middle of a lookahead decision. Getting all
+	 * <em>possible</em> tokens given a partial input stream is a separate
+     * computation. See https://github.com/antlr/antlr4/issues/1428</p>
+	 *
+	 * <p>For this function, we are specifying an ATN state and call stack to
+	 * compute what token(s) can come next and specifically: outside of a
+	 * lookahead decision. That is what you want for error reporting and
+	 * recovery upon parse error.</p>
 	 *
 	 * @param stateNumber the ATN state number
 	 * @param context the full parse context

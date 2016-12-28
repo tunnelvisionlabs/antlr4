@@ -1,31 +1,7 @@
 /*
- * [The "BSD license"]
- *  Copyright (c) 2012 Terence Parr
- *  Copyright (c) 2012 Sam Harwell
- *  All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted provided that the following conditions
- *  are met:
- *
- *  1. Redistributions of source code must retain the above copyright
- *     notice, this list of conditions and the following disclaimer.
- *  2. Redistributions in binary form must reproduce the above copyright
- *     notice, this list of conditions and the following disclaimer in the
- *     documentation and/or other materials provided with the distribution.
- *  3. The name of the author may not be used to endorse or promote products
- *     derived from this software without specific prior written permission.
- *
- *  THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- *  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- *  OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- *  NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- *  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- *  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- *  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) 2012 The ANTLR Project. All rights reserved.
+ * Use of this file is governed by the BSD-3-Clause license that
+ * can be found in the LICENSE.txt file in the project root.
  */
 
 package org.antlr.v4.parse;
@@ -43,14 +19,19 @@ public class GrammarASTAdaptor extends CommonTreeAdaptor {
     public GrammarASTAdaptor() { }
     public GrammarASTAdaptor(org.antlr.runtime.CharStream input) { this.input = input; }
 
+	@Override
+	public GrammarAST nil() {
+		return (GrammarAST)super.nil();
+	}
+
     @Override
-    public Object create(Token token) {
+    public GrammarAST create(Token token) {
         return new GrammarAST(token);
     }
 
     @Override
     /** Make sure even imaginary nodes know the input stream */
-    public Object create(int tokenType, String text) {
+    public GrammarAST create(int tokenType, String text) {
 		GrammarAST t;
 		if ( tokenType==ANTLRParser.RULE ) {
 			// needed by TreeWizard to make RULE tree
@@ -68,14 +49,24 @@ public class GrammarASTAdaptor extends CommonTreeAdaptor {
         return t;
     }
 
+	@Override
+	public GrammarAST create(int tokenType, Token fromToken, String text) {
+		return (GrammarAST)super.create(tokenType, fromToken, text);
+	}
+
+	@Override
+	public GrammarAST create(int tokenType, Token fromToken) {
+		return (GrammarAST)super.create(tokenType, fromToken);
+	}
+
     @Override
-    public Object dupNode(Object t) {
+    public GrammarAST dupNode(Object t) {
         if ( t==null ) return null;
         return ((GrammarAST)t).dupNode(); //create(((GrammarAST)t).token);
     }
 
     @Override
-    public Object errorNode(org.antlr.runtime.TokenStream input, org.antlr.runtime.Token start, org.antlr.runtime.Token stop,
+    public GrammarASTErrorNode errorNode(org.antlr.runtime.TokenStream input, org.antlr.runtime.Token start, org.antlr.runtime.Token stop,
                             org.antlr.runtime.RecognitionException e)
     {
         return new GrammarASTErrorNode(input, start, stop, e);

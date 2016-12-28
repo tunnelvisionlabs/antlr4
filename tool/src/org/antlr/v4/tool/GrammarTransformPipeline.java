@@ -1,31 +1,7 @@
 /*
- * [The "BSD license"]
- *  Copyright (c) 2012 Terence Parr
- *  Copyright (c) 2012 Sam Harwell
- *  All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted provided that the following conditions
- *  are met:
- *
- *  1. Redistributions of source code must retain the above copyright
- *     notice, this list of conditions and the following disclaimer.
- *  2. Redistributions in binary form must reproduce the above copyright
- *     notice, this list of conditions and the following disclaimer in the
- *     documentation and/or other materials provided with the distribution.
- *  3. The name of the author may not be used to endorse or promote products
- *     derived from this software without specific prior written permission.
- *
- *  THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- *  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- *  OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- *  NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- *  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- *  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- *  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) 2012 The ANTLR Project. All rights reserved.
+ * Use of this file is governed by the BSD-3-Clause license that
+ * can be found in the LICENSE.txt file in the project root.
  */
 
 package org.antlr.v4.tool;
@@ -43,7 +19,7 @@ import org.antlr.v4.parse.BlockSetTransformer;
 import org.antlr.v4.parse.GrammarASTAdaptor;
 import org.antlr.v4.parse.GrammarToken;
 import org.antlr.v4.runtime.misc.DoubleKeyMap;
-import org.antlr.v4.runtime.misc.Pair;
+import org.antlr.v4.runtime.misc.Tuple2;
 import org.antlr.v4.tool.ast.AltAST;
 import org.antlr.v4.tool.ast.BlockAST;
 import org.antlr.v4.tool.ast.GrammarAST;
@@ -166,11 +142,11 @@ public class GrammarTransformPipeline {
 	/** Merge all the rules, token definitions, and named actions from
 		imported grammars into the root grammar tree.  Perform:
 
-	 	(tokens { X (= Y 'y')) + (tokens { Z )	->	(tokens { X (= Y 'y') Z)
+	 	(tokens { X (= Y 'y')) + (tokens { Z )	-&gt;	(tokens { X (= Y 'y') Z)
 
-	 	(@ members {foo}) + (@ members {bar})	->	(@ members {foobar})
+	 	(@ members {foo}) + (@ members {bar})	-&gt;	(@ members {foobar})
 
-	 	(RULES (RULE x y)) + (RULES (RULE z))	->	(RULES (RULE x y z))
+	 	(RULES (RULE x y)) + (RULES (RULE z))	-&gt;	(RULES (RULE x y z))
 
 	 	Rules in root prevent same rule from being appended to RULES node.
 
@@ -192,16 +168,9 @@ public class GrammarTransformPipeline {
 		// Compute list of rules in root grammar and ensure we have a RULES node
 		GrammarAST RULES = (GrammarAST)root.getFirstChildWithType(ANTLRParser.RULES);
 		Set<String> rootRuleNames = new HashSet<String>();
-		if ( RULES==null ) { // no rules in root, make RULES node, hook in
-			RULES = (GrammarAST)adaptor.create(ANTLRParser.RULES, "RULES");
-			RULES.g = rootGrammar;
-			root.addChild(RULES);
-		}
-		else {
-			// make list of rules we have in root grammar
-			List<GrammarAST> rootRules = RULES.getNodesWithType(ANTLRParser.RULE);
-			for (GrammarAST r : rootRules) rootRuleNames.add(r.getChild(0).getText());
-		}
+		// make list of rules we have in root grammar
+		List<GrammarAST> rootRules = RULES.getNodesWithType(ANTLRParser.RULE);
+		for (GrammarAST r : rootRules) rootRuleNames.add(r.getChild(0).getText());
 
 		for (Grammar imp : imports) {
 			// COPY TOKENS
@@ -209,7 +178,7 @@ public class GrammarTransformPipeline {
 			if ( imp_tokensRoot!=null ) {
 				rootGrammar.tool.log("grammar", "imported tokens: "+imp_tokensRoot.getChildren());
 				if ( tokensRoot==null ) {
-					tokensRoot = (GrammarAST)adaptor.create(ANTLRParser.TOKENS_SPEC, "TOKENS");
+					tokensRoot = adaptor.create(ANTLRParser.TOKENS_SPEC, "TOKENS");
 					tokensRoot.g = rootGrammar;
 					root.insertChild(1, tokensRoot); // ^(GRAMMAR ID TOKENS...)
 				}
@@ -329,7 +298,7 @@ public class GrammarTransformPipeline {
 	 *  We'll have this Grammar share token symbols later; don't generate
 	 *  tokenVocab or tokens{} section.  Copy over named actions.
 	 *
-	 *  Side-effects: it removes children from GRAMMAR & RULES nodes
+	 *  Side-effects: it removes children from GRAMMAR &amp; RULES nodes
 	 *                in combined AST.  Anything cut out is dup'd before
 	 *                adding to lexer to avoid "who's ur daddy" issues
 	 */
@@ -345,13 +314,13 @@ public class GrammarTransformPipeline {
 		    new GrammarRootAST(new CommonToken(ANTLRParser.GRAMMAR, "LEXER_GRAMMAR"), combinedGrammar.ast.tokenStream);
 		lexerAST.grammarType = ANTLRParser.LEXER;
 		lexerAST.token.setInputStream(combinedAST.token.getInputStream());
-		lexerAST.addChild((GrammarAST)adaptor.create(ANTLRParser.ID, lexerName));
+		lexerAST.addChild(adaptor.create(ANTLRParser.ID, lexerName));
 
 		// COPY OPTIONS
 		GrammarAST optionsRoot =
 			(GrammarAST)combinedAST.getFirstChildWithType(ANTLRParser.OPTIONS);
 		if ( optionsRoot!=null && optionsRoot.getChildCount()!=0 ) {
-			GrammarAST lexerOptionsRoot = (GrammarAST)adaptor.dupNode(optionsRoot);
+			GrammarAST lexerOptionsRoot = adaptor.dupNode(optionsRoot);
 			lexerAST.addChild(lexerOptionsRoot);
 			GrammarAST[] options = optionsRoot.getChildren().toArray(new GrammarAST[0]);
 			for (GrammarAST o : options) {
@@ -387,8 +356,7 @@ public class GrammarTransformPipeline {
 
 		// MOVE lexer rules
 
-		GrammarAST lexerRulesRoot =
-			(GrammarAST)adaptor.create(ANTLRParser.RULES, "RULES");
+		GrammarAST lexerRulesRoot = adaptor.create(ANTLRParser.RULES, "RULES");
 		lexerAST.addChild(lexerRulesRoot);
 		List<GrammarAST> rulesWeMoved = new ArrayList<GrammarAST>();
 		GrammarASTWithOptions[] rules;
@@ -406,12 +374,13 @@ public class GrammarTransformPipeline {
 				rulesWeMoved.add(r);
 			}
 		}
+
 		for (GrammarAST r : rulesWeMoved) {
 			combinedRulesRoot.deleteChild( r );
 		}
 
 		// Will track 'if' from IF : 'if' ; rules to avoid defining new token for 'if'
-		List<Pair<GrammarAST,GrammarAST>> litAliases =
+		List<Tuple2<GrammarAST,GrammarAST>> litAliases =
 			Grammar.getStringLiteralAliasesFromLexerRules(lexerAST);
 
 		Set<String> stringLiterals = combinedGrammar.getStringLiterals();
@@ -423,8 +392,8 @@ public class GrammarTransformPipeline {
 		for (String lit : stringLiterals) {
 			// if lexer already has a rule for literal, continue
 			if ( litAliases!=null ) {
-				for (Pair<GrammarAST,GrammarAST> pair : litAliases) {
-					GrammarAST litAST = pair.b;
+				for (Tuple2<GrammarAST,GrammarAST> pair : litAliases) {
+					GrammarAST litAST = pair.getItem2();
 					if ( lit.equals(litAST.getText()) ) continue nextLit;
 				}
 			}

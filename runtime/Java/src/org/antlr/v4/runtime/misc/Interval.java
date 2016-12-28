@@ -1,31 +1,7 @@
 /*
- * [The "BSD license"]
- *  Copyright (c) 2012 Terence Parr
- *  Copyright (c) 2012 Sam Harwell
- *  All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted provided that the following conditions
- *  are met:
- *
- *  1. Redistributions of source code must retain the above copyright
- *     notice, this list of conditions and the following disclaimer.
- *  2. Redistributions in binary form must reproduce the above copyright
- *     notice, this list of conditions and the following disclaimer in the
- *     documentation and/or other materials provided with the distribution.
- *  3. The name of the author may not be used to endorse or promote products
- *     derived from this software without specific prior written permission.
- *
- *  THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- *  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- *  OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- *  NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- *  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- *  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- *  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) 2012 The ANTLR Project. All rights reserved.
+ * Use of this file is governed by the BSD-3-Clause license that
+ * can be found in the LICENSE.txt file in the project root.
  */
 package org.antlr.v4.runtime.misc;
 
@@ -35,15 +11,12 @@ public class Interval {
 
 	public static final Interval INVALID = new Interval(-1,-2);
 
-	static Interval[] cache = new Interval[INTERVAL_POOL_MAX_VALUE+1];
+	private static Interval[] cache = new Interval[INTERVAL_POOL_MAX_VALUE+1];
 
-	public int a;
-	public int b;
-
-	public static int creates = 0;
-	public static int misses = 0;
-	public static int hits = 0;
-	public static int outOfRange = 0;
+	/** The start of the interval. */
+	public final int a;
+	/** The end of the interval (inclusive). */
+	public final int b;
 
 	public Interval(int a, int b) { this.a=a; this.b=b; }
 
@@ -74,9 +47,13 @@ public class Interval {
 
 	@Override
 	public boolean equals(Object o) {
-		if ( o==null || !(o instanceof Interval) ) {
+		if (o == this) {
+			return true;
+		}
+		else if (!(o instanceof Interval)) {
 			return false;
 		}
+
 		Interval other = (Interval)o;
 		return this.a==other.a && this.b==other.b;
 	}
@@ -136,9 +113,9 @@ public class Interval {
 		return Interval.of(Math.max(a, other.a), Math.min(b, other.b));
 	}
 
-	/** Return the interval with elements from this not in other;
-	 *  other must not be totally enclosed (properly contained)
-	 *  within this, which would result in two disjoint intervals
+	/** Return the interval with elements from {@code this} not in {@code other};
+	 *  {@code other} must not be totally enclosed (properly contained)
+	 *  within {@code this}, which would result in two disjoint intervals
 	 *  instead of the single one returned by this method.
 	 */
 	public Interval differenceNotProperlyContained(Interval other) {

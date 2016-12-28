@@ -1,13 +1,22 @@
+/*
+ * Copyright (c) 2012 The ANTLR Project. All rights reserved.
+ * Use of this file is governed by the BSD-3-Clause license that
+ * can be found in the LICENSE.txt file in the project root.
+ */
+
 package org.antlr.v4.codegen.model;
 
 import org.antlr.runtime.tree.TreeNodeStream;
+import org.antlr.v4.analysis.LeftFactoringRuleTransformer;
 import org.antlr.v4.misc.FrequencySet;
 import org.antlr.v4.misc.MutableInt;
 import org.antlr.v4.parse.GrammarTreeVisitor;
 import org.antlr.v4.tool.ErrorManager;
+import org.antlr.v4.tool.Grammar;
 import org.antlr.v4.tool.ast.ActionAST;
 import org.antlr.v4.tool.ast.AltAST;
 import org.antlr.v4.tool.ast.GrammarAST;
+import org.antlr.v4.tool.ast.GrammarASTWithOptions;
 import org.antlr.v4.tool.ast.TerminalAST;
 
 import java.util.ArrayDeque;
@@ -15,17 +24,15 @@ import java.util.Deque;
 import java.util.Map;
 
 public class ElementFrequenciesVisitor extends GrammarTreeVisitor {
+	final Grammar grammar;
 	final Deque<FrequencySet<String>> frequencies;
 
-	public ElementFrequenciesVisitor(TreeNodeStream input) {
+	public ElementFrequenciesVisitor(Grammar grammar, TreeNodeStream input) {
 		super(input);
+		this.grammar = grammar;
 		frequencies = new ArrayDeque<FrequencySet<String>>();
 		frequencies.push(new FrequencySet<String>());
 	}
-
-	/** During code gen, we can assume tree is in good shape */
-	@Override
-	public ErrorManager getErrorManager() { return super.getErrorManager(); }
 
 	/*
 	 * Common
@@ -65,7 +72,7 @@ public class ElementFrequenciesVisitor extends GrammarTreeVisitor {
 	 * @param b The second set.
 	 * @param clip The maximum value to allow for any output.
 	 * @return The sum of the two sets, with the individual elements clipped
-	 * to the maximum value gived by {@code clip}.
+	 * to the maximum value given by {@code clip}.
 	 */
 	protected static FrequencySet<String> combineAndClip(FrequencySet<String> a, FrequencySet<String> b, int clip) {
 		FrequencySet<String> result = new FrequencySet<String>();
@@ -95,7 +102,14 @@ public class ElementFrequenciesVisitor extends GrammarTreeVisitor {
 
 	@Override
 	public void ruleRef(GrammarAST ref, ActionAST arg) {
-		frequencies.peek().add(ref.getText());
+		if (ref instanceof GrammarASTWithOptions) {
+			GrammarASTWithOptions grammarASTWithOptions = (GrammarASTWithOptions)ref;
+			if (Boolean.parseBoolean(grammarASTWithOptions.getOptionString(LeftFactoringRuleTransformer.SUPPRESS_ACCESSOR))) {
+				return;
+			}
+		}
+
+		frequencies.peek().add(RuleFunction.getLabelName(grammar, ref));
 	}
 
 	/*

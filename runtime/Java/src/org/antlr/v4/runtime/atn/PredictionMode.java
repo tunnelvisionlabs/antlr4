@@ -1,31 +1,7 @@
 /*
- * [The "BSD license"]
- *  Copyright (c) 2012 Terence Parr
- *  Copyright (c) 2012 Sam Harwell
- *  All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted provided that the following conditions
- *  are met:
- *
- *  1. Redistributions of source code must retain the above copyright
- *     notice, this list of conditions and the following disclaimer.
- *  2. Redistributions in binary form must reproduce the above copyright
- *     notice, this list of conditions and the following disclaimer in the
- *     documentation and/or other materials provided with the distribution.
- *  3. The name of the author may not be used to endorse or promote products
- *     derived from this software without specific prior written permission.
- *
- *  THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- *  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- *  OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- *  NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- *  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- *  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- *  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) 2012 The ANTLR Project. All rights reserved.
+ * Use of this file is governed by the BSD-3-Clause license that
+ * can be found in the LICENSE.txt file in the project root.
  */
 
 package org.antlr.v4.runtime.atn;
@@ -127,8 +103,8 @@ public enum PredictionMode {
 		@Override
 		public int hashCode(ATNConfig o) {
 			int hashCode = MurmurHash.initialize(7);
-			hashCode = MurmurHash.update(hashCode, o.state.stateNumber);
-			hashCode = MurmurHash.update(hashCode, o.context);
+			hashCode = MurmurHash.update(hashCode, o.getState().stateNumber);
+			hashCode = MurmurHash.update(hashCode, o.getContext());
 			hashCode = MurmurHash.finish(hashCode, 2);
 	        return hashCode;
 		}
@@ -137,8 +113,8 @@ public enum PredictionMode {
 		public boolean equals(ATNConfig a, ATNConfig b) {
 			if ( a==b ) return true;
 			if ( a==null || b==null ) return false;
-			return a.state.stateNumber==b.state.stateNumber
-				&& a.context.equals(b.context);
+			return a.getState().stateNumber==b.getState().stateNumber
+				&& a.getContext().equals(b.getContext());
 		}
 	}
 
@@ -249,11 +225,11 @@ public enum PredictionMode {
 			// Don't bother with combining configs from different semantic
 			// contexts if we can fail over to full LL; costs more time
 			// since we'll often fail over anyway.
-			if ( configs.hasSemanticContext ) {
+			if ( configs.hasSemanticContext() ) {
 				// dup configs, tossing out semantic predicates
 				ATNConfigSet dup = new ATNConfigSet();
 				for (ATNConfig c : configs) {
-					c = new ATNConfig(c,SemanticContext.NONE);
+					c = c.transform(c.getState(), SemanticContext.NONE, false);
 					dup.add(c);
 				}
 				configs = dup;
@@ -281,7 +257,7 @@ public enum PredictionMode {
 	 */
 	public static boolean hasConfigInRuleStopState(ATNConfigSet configs) {
 		for (ATNConfig c : configs) {
-			if (c.state instanceof RuleStopState) {
+			if (c.getState() instanceof RuleStopState) {
 				return true;
 			}
 		}
@@ -301,7 +277,7 @@ public enum PredictionMode {
 	 */
 	public static boolean allConfigsInRuleStopStates(@NotNull ATNConfigSet configs) {
 		for (ATNConfig config : configs) {
-			if (!(config.state instanceof RuleStopState)) {
+			if (!(config.getState() instanceof RuleStopState)) {
 				return false;
 			}
 		}
@@ -325,19 +301,25 @@ public enum PredictionMode {
 	 * conflicting subsets {@code (s, _, ctx, _)} and singleton subsets with
 	 * non-conflicting configurations. Two configurations conflict if they have
 	 * identical {@link ATNConfig#state} and {@link ATNConfig#context} values
-	 * but different {@link ATNConfig#alt} value, e.g. {@code (s, i, ctx, _)}
-	 * and {@code (s, j, ctx, _)} for {@code i!=j}.</p>
+	 * but different {@link ATNConfig#getAlt} value, e.g. {@code (s, i, ctx, _)}
+	 * and {@code (s, j, ctx, _)} for {@code i!=j}.
 	 *
-	 * <p>Reduce these configuration subsets to the set of possible alternatives.
-	 * You can compute the alternative subsets in one pass as follows:</p>
+	 * <p/>
 	 *
-	 * <p>{@code A_s,ctx = {i | (s, i, ctx, _)}} for each configuration in
-	 * {@code C} holding {@code s} and {@code ctx} fixed.</p>
+	 * Reduce these configuration subsets to the set of possible alternatives.
+	 * You can compute the alternative subsets in one pass as follows:
 	 *
-	 * <p>Or in pseudo-code, for each configuration {@code c} in {@code C}:</p>
+	 * <p/>
+	 *
+	 * {@code A_s,ctx = {i | (s, i, ctx, _)}} for each configuration in
+	 * {@code C} holding {@code s} and {@code ctx} fixed.
+	 *
+	 * <p/>
+	 *
+	 * Or in pseudo-code, for each configuration {@code c} in {@code C}:
 	 *
 	 * <pre>
-	 * map[c] U= c.{@link ATNConfig#alt alt} # map hash/equals uses s and x, not
+	 * map[c] U= c.{@link ATNConfig#getAlt getAlt()} # map hash/equals uses s and x, not
 	 * alt and not pred
 	 * </pre>
 	 *
@@ -547,11 +529,25 @@ public enum PredictionMode {
 	}
 
 	/**
+	 * Get union of all alts from configs.
+	 *
+	 * @since 4.5
+	 */
+	@NotNull
+	public static BitSet getAlts(@NotNull ATNConfigSet configs) {
+		BitSet alts = new BitSet();
+		for (ATNConfig config : configs) {
+			alts.set(config.getAlt());
+		}
+		return alts;
+	}
+
+	/**
 	 * This function gets the conflicting alt subsets from a configuration set.
 	 * For each configuration {@code c} in {@code configs}:
 	 *
 	 * <pre>
-	 * map[c] U= c.{@link ATNConfig#alt alt} # map hash/equals uses s and x, not
+	 * map[c] U= c.{@link ATNConfig#getAlt getAlt()} # map hash/equals uses s and x, not
 	 * alt and not pred
 	 * </pre>
 	 */
@@ -564,7 +560,7 @@ public enum PredictionMode {
 				alts = new BitSet();
 				configToAlts.put(c, alts);
 			}
-			alts.set(c.alt);
+			alts.set(c.getAlt());
 		}
 		return configToAlts.values();
 	}
@@ -574,19 +570,19 @@ public enum PredictionMode {
 	 * configuration {@code c} in {@code configs}:
 	 *
 	 * <pre>
-	 * map[c.{@link ATNConfig#state state}] U= c.{@link ATNConfig#alt alt}
+	 * map[c.{@link ATNConfig#state state}] U= c.{@link ATNConfig#getAlt getAlt()}
 	 * </pre>
 	 */
 	@NotNull
 	public static Map<ATNState, BitSet> getStateToAltMap(@NotNull ATNConfigSet configs) {
 		Map<ATNState, BitSet> m = new HashMap<ATNState, BitSet>();
 		for (ATNConfig c : configs) {
-			BitSet alts = m.get(c.state);
+			BitSet alts = m.get(c.getState());
 			if ( alts==null ) {
 				alts = new BitSet();
-				m.put(c.state, alts);
+				m.put(c.getState(), alts);
 			}
-			alts.set(c.alt);
+			alts.set(c.getAlt());
 		}
 		return m;
 	}

@@ -1,38 +1,11 @@
 /*
- * [The "BSD license"]
- *  Copyright (c) 2012 Terence Parr
- *  Copyright (c) 2012 Sam Harwell
- *  All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted provided that the following conditions
- *  are met:
- *
- *  1. Redistributions of source code must retain the above copyright
- *     notice, this list of conditions and the following disclaimer.
- *  2. Redistributions in binary form must reproduce the above copyright
- *     notice, this list of conditions and the following disclaimer in the
- *     documentation and/or other materials provided with the distribution.
- *  3. The name of the author may not be used to endorse or promote products
- *     derived from this software without specific prior written permission.
- *
- *  THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- *  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- *  OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- *  NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- *  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- *  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- *  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) 2012 The ANTLR Project. All rights reserved.
+ * Use of this file is governed by the BSD-3-Clause license that
+ * can be found in the LICENSE.txt file in the project root.
  */
 
 package org.antlr.v4.runtime.misc;
 
-import java.awt.Window;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -40,12 +13,22 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 public class Utils {
+	public static String join(Iterable<?> iter, String separator) {
+		return join(iter.iterator(), separator);
+	}
+
+	public static <T> String join(T[] array, String separator) {
+		return join(Arrays.asList(array), separator);
+	}
+
     // Seriously: why isn't this built in to java? ugh!
     public static <T> String join(Iterator<T> iter, String separator) {
         StringBuilder buf = new StringBuilder();
@@ -58,16 +41,16 @@ public class Utils {
         return buf.toString();
     }
 
-	public static <T> String join(T[] array, String separator) {
-		StringBuilder builder = new StringBuilder();
-		for (int i = 0; i < array.length; i++) {
-			builder.append(array[i]);
-			if (i < array.length - 1) {
-				builder.append(separator);
-			}
+	public static boolean equals(Object x, Object y) {
+		if (x == y) {
+			return true;
 		}
 
-		return builder.toString();
+		if (x == null || y == null) {
+			return false;
+		}
+
+		return x.equals(y);
 	}
 
 	public static int numNonnull(Object[] data) {
@@ -150,36 +133,36 @@ public class Utils {
 		return data;
 	}
 
-	public static void waitForClose(final Window window) throws InterruptedException {
-		final Object lock = new Object();
-
-		Thread t = new Thread() {
-			@Override
-			public void run() {
-				synchronized (lock) {
-					while (window.isVisible()) {
-						try {
-							lock.wait(500);
-						} catch (InterruptedException e) {
-						}
-					}
+	public static <T> void removeAll(@NotNull List<T> list, @NotNull Predicate<? super T> predicate) {
+		int j = 0;
+		for (int i = 0; i < list.size(); i++) {
+			T item = list.get(i);
+			if (!predicate.eval(item)) {
+				if (j != i) {
+					list.set(j, item);
 				}
+
+				j++;
 			}
-		};
+		}
 
-		t.start();
+		if (j < list.size()) {
+			list.subList(j, list.size()).clear();
+		}
+	}
 
-		window.addWindowListener(new WindowAdapter() {
-			@Override
-			public void windowClosing(WindowEvent arg0) {
-				synchronized (lock) {
-					window.setVisible(false);
-					lock.notify();
-				}
+	public static <T> void removeAll(@NotNull Iterable<T> iterable, @NotNull Predicate<? super T> predicate) {
+		if (iterable instanceof List<?>) {
+			removeAll((List<T>)iterable, predicate);
+			return;
+		}
+
+		for (Iterator<T> iterator = iterable.iterator(); iterator.hasNext(); ) {
+			T item = iterator.next();
+			if (predicate.eval(item)) {
+				iterator.remove();
 			}
-		});
-
-		t.join();
+		}
 	}
 
 	/** Convert array of strings to string&rarr;index map. Useful for
@@ -200,5 +183,19 @@ public class Utils {
 			cdata[i] = (char)data.get(i);
 		}
 		return cdata;
+	}
+
+	/**
+	 * @since 4.5
+	 */
+	@NotNull
+	public static IntervalSet toSet(@NotNull BitSet bits) {
+		IntervalSet s = new IntervalSet();
+		int i = bits.nextSetBit(0);
+		while ( i >= 0 ) {
+			s.add(i);
+			i = bits.nextSetBit(i+1);
+		}
+		return s;
 	}
 }

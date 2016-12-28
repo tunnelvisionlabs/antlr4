@@ -1,47 +1,27 @@
 /*
- * [The "BSD license"]
- *  Copyright (c) 2012 Terence Parr
- *  Copyright (c) 2012 Sam Harwell
- *  All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted provided that the following conditions
- *  are met:
- *
- *  1. Redistributions of source code must retain the above copyright
- *     notice, this list of conditions and the following disclaimer.
- *  2. Redistributions in binary form must reproduce the above copyright
- *     notice, this list of conditions and the following disclaimer in the
- *     documentation and/or other materials provided with the distribution.
- *  3. The name of the author may not be used to endorse or promote products
- *     derived from this software without specific prior written permission.
- *
- *  THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- *  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- *  OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- *  NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- *  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- *  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- *  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) 2012 The ANTLR Project. All rights reserved.
+ * Use of this file is governed by the BSD-3-Clause license that
+ * can be found in the LICENSE.txt file in the project root.
  */
 package org.antlr.v4.runtime;
 
 import org.antlr.v4.runtime.misc.Interval;
 import org.antlr.v4.runtime.misc.NotNull;
-import org.antlr.v4.runtime.misc.Pair;
+import org.antlr.v4.runtime.misc.Nullable;
+import org.antlr.v4.runtime.misc.Tuple;
+import org.antlr.v4.runtime.misc.Tuple2;
 
 import java.io.Serializable;
 
 public class CommonToken implements WritableToken, Serializable {
+	private static final long serialVersionUID = -6708843461296520577L;
+
 	/**
-	 * An empty {@link Pair} which is used as the default value of
+	 * An empty {@link Tuple2} which is used as the default value of
 	 * {@link #source} for tokens that do not have a source.
 	 */
-	protected static final Pair<TokenSource, CharStream> EMPTY_SOURCE =
-		new Pair<TokenSource, CharStream>(null, null);
+	protected static final Tuple2<TokenSource, CharStream> EMPTY_SOURCE =
+		Tuple.<TokenSource, CharStream>create(null, null);
 
 	/**
 	 * This is the backing field for {@link #getType} and {@link #setType}.
@@ -69,10 +49,10 @@ public class CommonToken implements WritableToken, Serializable {
 	 * These properties share a field to reduce the memory footprint of
 	 * {@link CommonToken}. Tokens created by a {@link CommonTokenFactory} from
 	 * the same source and input stream share a reference to the same
-	 * {@link Pair} containing these values.</p>
+	 * {@link Tuple2} containing these values.</p>
 	 */
 	@NotNull
-	protected Pair<TokenSource, CharStream> source;
+	protected Tuple2<? extends TokenSource, CharStream> source;
 
 	/**
 	 * This is the backing field for {@link #getText} when the token text is
@@ -110,15 +90,15 @@ public class CommonToken implements WritableToken, Serializable {
 		this.source = EMPTY_SOURCE;
 	}
 
-	public CommonToken(@NotNull Pair<TokenSource, CharStream> source, int type, int channel, int start, int stop) {
+	public CommonToken(@NotNull Tuple2<? extends TokenSource, CharStream> source, int type, int channel, int start, int stop) {
 		this.source = source;
 		this.type = type;
 		this.channel = channel;
 		this.start = start;
 		this.stop = stop;
-		if (source.a != null) {
-			this.line = source.a.getLine();
-			this.charPositionInLine = source.a.getCharPositionInLine();
+		if (source.getItem1() != null) {
+			this.line = source.getItem1().getLine();
+			this.charPositionInLine = source.getItem1().getCharPositionInLine();
 		}
 	}
 
@@ -142,7 +122,7 @@ public class CommonToken implements WritableToken, Serializable {
 	 * <p>
 	 * If {@code oldToken} is also a {@link CommonToken} instance, the newly
 	 * constructed token will share a reference to the {@link #text} field and
-	 * the {@link Pair} stored in {@link #source}. Otherwise, {@link #text} will
+	 * the {@link Tuple2} stored in {@link #source}. Otherwise, {@link #text} will
 	 * be assigned the result of calling {@link #getText}, and {@link #source}
 	 * will be constructed from the result of {@link Token#getTokenSource} and
 	 * {@link Token#getInputStream}.</p>
@@ -164,7 +144,7 @@ public class CommonToken implements WritableToken, Serializable {
 		}
 		else {
 			text = oldToken.getText();
-			source = new Pair<TokenSource, CharStream>(oldToken.getTokenSource(), oldToken.getInputStream());
+			source = Tuple.create(oldToken.getTokenSource(), oldToken.getInputStream());
 		}
 	}
 
@@ -269,16 +249,20 @@ public class CommonToken implements WritableToken, Serializable {
 
 	@Override
 	public TokenSource getTokenSource() {
-		return source.a;
+		return source.getItem1();
 	}
 
 	@Override
 	public CharStream getInputStream() {
-		return source.b;
+		return source.getItem2();
 	}
 
 	@Override
 	public String toString() {
+		return toString(null);
+	}
+
+	public String toString(@Nullable Recognizer<?, ?> r) {
 		String channelStr = "";
 		if ( channel>0 ) {
 			channelStr=",channel="+channel;
@@ -292,6 +276,12 @@ public class CommonToken implements WritableToken, Serializable {
 		else {
 			txt = "<no text>";
 		}
-		return "[@"+getTokenIndex()+","+start+":"+stop+"='"+txt+"',<"+type+">"+channelStr+","+line+":"+getCharPositionInLine()+"]";
+
+		String typeString = String.valueOf(type);
+		if ( r!=null ) {
+			typeString = r.getVocabulary().getDisplayName(type);
+		}
+
+		return "[@"+getTokenIndex()+","+start+":"+stop+"='"+txt+"',<"+typeString+">"+channelStr+","+line+":"+getCharPositionInLine()+"]";
 	}
 }

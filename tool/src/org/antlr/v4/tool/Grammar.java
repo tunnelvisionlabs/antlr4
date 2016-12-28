@@ -1,37 +1,14 @@
 /*
- * [The "BSD license"]
- *  Copyright (c) 2012 Terence Parr
- *  Copyright (c) 2012 Sam Harwell
- *  All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted provided that the following conditions
- *  are met:
- *
- *  1. Redistributions of source code must retain the above copyright
- *     notice, this list of conditions and the following disclaimer.
- *  2. Redistributions in binary form must reproduce the above copyright
- *     notice, this list of conditions and the following disclaimer in the
- *     documentation and/or other materials provided with the distribution.
- *  3. The name of the author may not be used to endorse or promote products
- *     derived from this software without specific prior written permission.
- *
- *  THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- *  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- *  OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- *  NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- *  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- *  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- *  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) 2012 The ANTLR Project. All rights reserved.
+ * Use of this file is governed by the BSD-3-Clause license that
+ * can be found in the LICENSE.txt file in the project root.
  */
 
 package org.antlr.v4.tool;
 
 import org.antlr.v4.Tool;
 import org.antlr.v4.analysis.LeftRecursiveRuleTransformer;
+import org.antlr.v4.automata.ParserATNFactory;
 import org.antlr.v4.misc.CharSupport;
 import org.antlr.v4.misc.OrderedHashMap;
 import org.antlr.v4.misc.Utils;
@@ -57,8 +34,10 @@ import org.antlr.v4.runtime.misc.Interval;
 import org.antlr.v4.runtime.misc.IntervalSet;
 import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.misc.Nullable;
-import org.antlr.v4.runtime.misc.Pair;
+import org.antlr.v4.runtime.misc.Tuple;
+import org.antlr.v4.runtime.misc.Tuple2;
 import org.antlr.v4.tool.ast.ActionAST;
+import org.antlr.v4.tool.ast.AltAST;
 import org.antlr.v4.tool.ast.GrammarAST;
 import org.antlr.v4.tool.ast.GrammarASTWithOptions;
 import org.antlr.v4.tool.ast.GrammarRootAST;
@@ -102,27 +81,36 @@ public class Grammar implements AttributeResolver {
 	public static final Set<String> parserOptions = new HashSet<String>();
 	static {
 		parserOptions.add("superClass");
+		parserOptions.add("contextSuperClass");
 		parserOptions.add("TokenLabelType");
+		parserOptions.add("abstract");
 		parserOptions.add("tokenVocab");
 		parserOptions.add("language");
+		parserOptions.add("exportMacro");
 	}
 
 	public static final Set<String> lexerOptions = parserOptions;
 
 	public static final Set<String> ruleOptions = new HashSet<String>();
+	static {
+		ruleOptions.add("baseContext");
+	}
 
 	public static final Set<String> ParserBlockOptions = new HashSet<String>();
+	static {
+		ParserBlockOptions.add("sll");
+	}
 
 	public static final Set<String> LexerBlockOptions = new HashSet<String>();
 
-	/** Legal options for rule refs like id<key=value> */
+	/** Legal options for rule refs like id&lt;key=value&gt; */
 	public static final Set<String> ruleRefOptions = new HashSet<String>();
 	static {
 		ruleRefOptions.add(LeftRecursiveRuleTransformer.PRECEDENCE_OPTION_NAME);
 		ruleRefOptions.add(LeftRecursiveRuleTransformer.TOKENINDEX_OPTION_NAME);
 	}
 
-	/** Legal options for terminal refs like ID<assoc=right> */
+	/** Legal options for terminal refs like ID&lt;assoc=right&gt; */
 	public static final Set<String> tokenOptions = new HashSet<String>();
 	static {
 		tokenOptions.add("assoc");
@@ -141,6 +129,7 @@ public class Grammar implements AttributeResolver {
 	static {
 		doNotCopyOptionsToLexer.add("superClass");
 		doNotCopyOptionsToLexer.add("TokenLabelType");
+		doNotCopyOptionsToLexer.add("abstract");
 		doNotCopyOptionsToLexer.add("tokenVocab");
 	}
 
@@ -155,11 +144,20 @@ public class Grammar implements AttributeResolver {
 
 	public String name;
     public GrammarRootAST ast;
-	/** Track stream used to create this grammar */
+
+	/** Track token stream used to create this grammar */
 	@NotNull
 	public final org.antlr.runtime.TokenStream tokenStream;
-	/** If we transform grammar, track original unaltered token stream */
-	public org.antlr.runtime.TokenStream originalTokenStream;
+
+	/** If we transform grammar, track original unaltered token stream.
+	 *  This is set to the same value as tokenStream when tokenStream is
+	 *  initially set.
+	 *
+	 *  If this field differs from tokenStream, then we have transformed
+	 *  the grammar.
+	 */
+	@NotNull
+	public final org.antlr.runtime.TokenStream originalTokenStream;
 
     public String text; // testing only
     public String fileName;
@@ -181,6 +179,23 @@ public class Grammar implements AttributeResolver {
 	 */
     public OrderedHashMap<String, Rule> rules = new OrderedHashMap<String, Rule>();
 	public List<Rule> indexToRule = new ArrayList<Rule>();
+
+	/**
+	 * This maps a context name &rarr; a collection of {@link RuleAST} nodes in
+	 * the original grammar. The union of accessors and labels identified by
+	 * these ASTs define the accessor methods and fields of the generated
+	 * context classes.
+	 *
+	 * <p>
+	 * The keys of this map match the result of {@link Rule#getBaseContext}.</p>
+	 * <p>
+	 * The values in this map are clones of the nodes in the original grammar
+	 * (provided by {@link GrammarAST#dupTree}) to ensure that grammar
+	 * transformations do not affect the values generated for the contexts. The
+	 * duplication is performed after nodes from imported grammars are merged
+	 * into the AST.</p>
+	 */
+	public final Map<String, List<RuleAST>> contextASTs = new HashMap<String, List<RuleAST>>();
 
 	int ruleNumber = 0; // used to get rule indexes (0..n-1)
 	int stringLiteralRuleNumber = 0; // used to invent rule names for 'keyword', ';', ... (0..n-1)
@@ -288,6 +303,7 @@ public class Grammar implements AttributeResolver {
         this.ast = ast;
         this.name = (ast.getChild(0)).getText();
 		this.tokenStream = ast.tokenStream;
+		this.originalTokenStream = this.tokenStream;
 
 		initTokenSymbolTables();
     }
@@ -343,6 +359,7 @@ public class Grammar implements AttributeResolver {
 		}
 
 		this.tokenStream = ast.tokenStream;
+		this.originalTokenStream = this.tokenStream;
 
 		// ensure each node has pointer to surrounding grammar
 		final Grammar thiz = this;
@@ -373,6 +390,8 @@ public class Grammar implements AttributeResolver {
 		if ( ast==null ) return;
         GrammarAST i = (GrammarAST)ast.getFirstChildWithType(ANTLRParser.IMPORT);
         if ( i==null ) return;
+	    Set<String> visited = new HashSet<String>();
+	    visited.add(this.name);
         importedGrammars = new ArrayList<Grammar>();
         for (Object c : i.getChildren()) {
             GrammarAST t = (GrammarAST)c;
@@ -383,6 +402,9 @@ public class Grammar implements AttributeResolver {
             }
             else if ( t.getType()==ANTLRParser.ID ) {
                 importedGrammarName = t.getText();
+			}
+			if ( visited.contains(importedGrammarName) ) { // ignore circular refs
+				continue;
 			}
 			Grammar g;
 			try {
@@ -498,6 +520,14 @@ public class Grammar implements AttributeResolver {
 		*/
 	}
 
+	public ATN getATN() {
+		if ( atn==null ) {
+			ParserATNFactory factory = new ParserATNFactory(this);
+			atn = factory.createATN();
+		}
+		return atn;
+	}
+
 	public Rule getRule(int index) { return indexToRule.get(index); }
 
 	public Rule getRule(String grammarName, String ruleName) {
@@ -509,6 +539,27 @@ public class Grammar implements AttributeResolver {
 			return g.rules.get(ruleName);
 		}
 		return getRule(ruleName);
+	}
+
+	protected String getBaseContextName(String ruleName) {
+		Rule referencedRule = rules.get(ruleName);
+		if (referencedRule != null) {
+			ruleName = referencedRule.getBaseContext();
+		}
+
+		return ruleName;
+	}
+
+	public List<AltAST> getUnlabeledAlternatives(RuleAST ast) throws org.antlr.runtime.RecognitionException {
+		AltLabelVisitor visitor = new AltLabelVisitor(new org.antlr.runtime.tree.CommonTreeNodeStream(new GrammarASTAdaptor(), ast));
+		visitor.rule();
+		return visitor.getUnlabeledAlternatives();
+	}
+
+	public Map<String, List<Tuple2<Integer, AltAST>>> getLabeledAlternatives(RuleAST ast) throws org.antlr.runtime.RecognitionException {
+		AltLabelVisitor visitor = new AltLabelVisitor(new org.antlr.runtime.tree.CommonTreeNodeStream(new GrammarASTAdaptor(), ast));
+		visitor.rule();
+		return visitor.getLabeledAlternatives();
 	}
 
     /** Get list of all imports from all grammars in the delegate subtree of g.
@@ -535,15 +586,6 @@ public class Grammar implements AttributeResolver {
 	}
 
     public List<Grammar> getImportedGrammars() { return importedGrammars; }
-
-    /** Get delegates below direct delegates of g
-    public List<Grammar> getIndirectDelegates(Grammar g) {
-        List<Grammar> direct = getDirectDelegates(g);
-        List<Grammar> delegates = getDelegates(g);
-        delegates.removeAll(direct);
-        return delegates;
-    }
-*/
 
 	public LexerGrammar getImplicitLexer() {
 		return implicitLexer;
@@ -579,6 +621,10 @@ public class Grammar implements AttributeResolver {
         return parent.getOutermostGrammar();
     }
 
+	public boolean isAbstract() {
+		return Boolean.parseBoolean(getOptionString("abstract"));
+	}
+
     /** Get the name of the generated recognizer; may or may not be same
      *  as grammar name.
      *  Recognizer is TParser and TLexer from T if combined, else
@@ -594,9 +640,15 @@ public class Grammar implements AttributeResolver {
                 buf.append(g.name);
                 buf.append('_');
             }
+			if (isAbstract()) {
+				buf.append("Abstract");
+			}
             buf.append(name);
             qualifiedName = buf.toString();
         }
+		else if (isAbstract()) {
+			qualifiedName = "Abstract" + name;
+		}
 
         if ( isCombined() || (isLexer() && implicitLexer!=null) )
         {
@@ -1175,7 +1227,7 @@ public class Grammar implements AttributeResolver {
 	}
 
 	/** Return list of (TOKEN_NAME node, 'literal' node) pairs */
-	public static List<Pair<GrammarAST,GrammarAST>> getStringLiteralAliasesFromLexerRules(GrammarRootAST ast) {
+	public static List<Tuple2<GrammarAST,GrammarAST>> getStringLiteralAliasesFromLexerRules(GrammarRootAST ast) {
 		String[] patterns = {
 			"(RULE %name:TOKEN_REF (BLOCK (ALT %lit:STRING_LITERAL)))",
 			"(RULE %name:TOKEN_REF (BLOCK (ALT %lit:STRING_LITERAL ACTION)))",
@@ -1189,8 +1241,8 @@ public class Grammar implements AttributeResolver {
 		};
 		GrammarASTAdaptor adaptor = new GrammarASTAdaptor(ast.token.getInputStream());
 		org.antlr.runtime.tree.TreeWizard wiz = new org.antlr.runtime.tree.TreeWizard(adaptor,ANTLRParser.tokenNames);
-		List<Pair<GrammarAST,GrammarAST>> lexerRuleToStringLiteral =
-			new ArrayList<Pair<GrammarAST,GrammarAST>>();
+		List<Tuple2<GrammarAST,GrammarAST>> lexerRuleToStringLiteral =
+			new ArrayList<Tuple2<GrammarAST,GrammarAST>>();
 
 		List<GrammarAST> ruleNodes = ast.getNodesWithType(ANTLRParser.RULE);
 		if ( ruleNodes==null || ruleNodes.isEmpty() ) return null;
@@ -1215,14 +1267,13 @@ public class Grammar implements AttributeResolver {
 
 	protected static boolean defAlias(GrammarAST r, String pattern,
 									  org.antlr.runtime.tree.TreeWizard wiz,
-									  List<Pair<GrammarAST,GrammarAST>> lexerRuleToStringLiteral)
+									  List<Tuple2<GrammarAST,GrammarAST>> lexerRuleToStringLiteral)
 	{
 		HashMap<String, Object> nodes = new HashMap<String, Object>();
 		if ( wiz.parse(r, pattern, nodes) ) {
 			GrammarAST litNode = (GrammarAST)nodes.get("lit");
 			GrammarAST nameNode = (GrammarAST)nodes.get("name");
-			Pair<GrammarAST, GrammarAST> pair =
-				new Pair<GrammarAST, GrammarAST>(nameNode, litNode);
+			Tuple2<GrammarAST, GrammarAST> pair = Tuple.create(nameNode, litNode);
 			lexerRuleToStringLiteral.add(pair);
 			return true;
 		}
@@ -1299,9 +1350,20 @@ public class Grammar implements AttributeResolver {
 			return implicitLexer.createLexerInterpreter(input);
 		}
 
-		char[] serializedAtn = ATNSerializer.getSerializedAsChars(atn);
+		char[] serializedAtn = ATNSerializer.getSerializedAsChars(atn, Arrays.asList(getRuleNames()));
 		ATN deserialized = new ATNDeserializer().deserialize(serializedAtn);
 		return new LexerInterpreter(fileName, getVocabulary(), Arrays.asList(getRuleNames()), ((LexerGrammar)this).modes.keySet(), deserialized, input);
+	}
+
+	/** @since 4.5.1 */
+	public GrammarParserInterpreter createGrammarParserInterpreter(TokenStream tokenStream) {
+		if (this.isLexer()) {
+			throw new IllegalStateException("A parser interpreter can only be created for a parser or combined grammar.");
+		}
+
+		char[] serializedAtn = ATNSerializer.getSerializedAsChars(atn, Arrays.asList(getRuleNames()));
+		ATN deserialized = new ATNDeserializer().deserialize(serializedAtn);
+		return new GrammarParserInterpreter(this, deserialized, tokenStream);
 	}
 
 	public ParserInterpreter createParserInterpreter(TokenStream tokenStream) {
@@ -1309,8 +1371,43 @@ public class Grammar implements AttributeResolver {
 			throw new IllegalStateException("A parser interpreter can only be created for a parser or combined grammar.");
 		}
 
-		char[] serializedAtn = ATNSerializer.getSerializedAsChars(atn);
+		char[] serializedAtn = ATNSerializer.getSerializedAsChars(atn, Arrays.asList(getRuleNames()));
 		ATN deserialized = new ATNDeserializer().deserialize(serializedAtn);
 		return new ParserInterpreter(fileName, getVocabulary(), Arrays.asList(getRuleNames()), deserialized, tokenStream);
+	}
+
+	protected static class AltLabelVisitor extends GrammarTreeVisitor {
+		private final Map<String, List<Tuple2<Integer, AltAST>>> labeledAlternatives =
+			new HashMap<String, List<Tuple2<Integer, AltAST>>>();
+		private final List<AltAST> unlabeledAlternatives =
+			new ArrayList<AltAST>();
+
+		public AltLabelVisitor(org.antlr.runtime.tree.TreeNodeStream input) {
+			super(input);
+		}
+
+		public Map<String, List<Tuple2<Integer, AltAST>>> getLabeledAlternatives() {
+			return labeledAlternatives;
+		}
+
+		public List<AltAST> getUnlabeledAlternatives() {
+			return unlabeledAlternatives;
+		}
+
+		@Override
+		public void discoverOuterAlt(AltAST alt) {
+			if (alt.altLabel != null) {
+				List<Tuple2<Integer, AltAST>> list = labeledAlternatives.get(alt.altLabel.getText());
+				if (list == null) {
+					list = new ArrayList<Tuple2<Integer, AltAST>>();
+					labeledAlternatives.put(alt.altLabel.getText(), list);
+				}
+
+				list.add(Tuple.create(currentOuterAltNumber, alt));
+			}
+			else {
+				unlabeledAlternatives.add(alt);
+			}
+		}
 	}
 }

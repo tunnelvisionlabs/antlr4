@@ -1,31 +1,7 @@
 /*
- * [The "BSD license"]
- *  Copyright (c) 2012 Terence Parr
- *  Copyright (c) 2012 Sam Harwell
- *  All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted provided that the following conditions
- *  are met:
- *
- *  1. Redistributions of source code must retain the above copyright
- *     notice, this list of conditions and the following disclaimer.
- *  2. Redistributions in binary form must reproduce the above copyright
- *     notice, this list of conditions and the following disclaimer in the
- *     documentation and/or other materials provided with the distribution.
- *  3. The name of the author may not be used to endorse or promote products
- *     derived from this software without specific prior written permission.
- *
- *  THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- *  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- *  OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- *  NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- *  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- *  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- *  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) 2012 The ANTLR Project. All rights reserved.
+ * Use of this file is governed by the BSD-3-Clause license that
+ * can be found in the LICENSE.txt file in the project root.
  */
 
 package org.antlr.v4.tool;
@@ -53,15 +29,16 @@ import org.antlr.v4.runtime.atn.StarLoopbackState;
 import org.antlr.v4.runtime.atn.Transition;
 import org.antlr.v4.runtime.dfa.DFA;
 import org.antlr.v4.runtime.dfa.DFAState;
-import org.antlr.v4.runtime.misc.IntegerList;
 import org.stringtemplate.v4.ST;
 import org.stringtemplate.v4.STGroup;
 import org.stringtemplate.v4.STGroupFile;
 
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /** The DOT (part of graphviz) generation aspect. */
@@ -82,17 +59,17 @@ public class DOTGenerator {
 	}
 
 	public String getDOT(DFA dfa, boolean isLexer) {
-		if ( dfa.s0==null )	return null;
+		if ( dfa.s0.get()==null )	return null;
 
 		ST dot = stlib.getInstanceOf("dfa");
 		dot.add("name", "DFA"+dfa.decision);
-		dot.add("startState", dfa.s0.stateNumber);
+		dot.add("startState", dfa.s0.get().stateNumber);
 //		dot.add("useBox", Tool.internalOption_ShowATNConfigsInDFA);
 		dot.add("rankdir", rankdir);
 
 		// define stop states first; seems to be a bug in DOT where doublecircle
 		for (DFAState d : dfa.states.keySet()) {
-			if ( !d.isAcceptState ) continue;
+			if ( !d.isAcceptState() ) continue;
 			ST st = stlib.getInstanceOf("stopstate");
 			st.add("name", "s"+d.stateNumber);
 			st.add("label", getStateLabel(d));
@@ -100,7 +77,7 @@ public class DOTGenerator {
 		}
 
 		for (DFAState d : dfa.states.keySet()) {
-			if ( d.isAcceptState ) continue;
+			if ( d.isAcceptState() ) continue;
 			if ( d.stateNumber == Integer.MAX_VALUE ) continue;
 			ST st = stlib.getInstanceOf("state");
 			st.add("name", "s"+d.stateNumber);
@@ -109,22 +86,21 @@ public class DOTGenerator {
 		}
 
 		for (DFAState d : dfa.states.keySet()) {
-			if ( d.edges!=null ) {
-				for (int i = 0; i < d.edges.length; i++) {
-					DFAState target = d.edges[i];
-					if ( target==null) continue;
-					if ( target.stateNumber == Integer.MAX_VALUE ) continue;
-					int ttype = i-1; // we shift up for EOF as -1 for parser
-					String label = String.valueOf(ttype);
-					if ( isLexer ) label = "'"+getEdgeLabel(String.valueOf((char) i))+"'";
-					else if ( grammar!=null ) label = grammar.getTokenDisplayName(ttype);
-					ST st = stlib.getInstanceOf("edge");
-					st.add("label", label);
-					st.add("src", "s"+d.stateNumber);
-					st.add("target", "s"+target.stateNumber);
-					st.add("arrowhead", arrowhead);
-					dot.add("edges", st);
-				}
+			Map<Integer, DFAState> edges = d.getEdgeMap();
+			for (Map.Entry<Integer, DFAState> entry : edges.entrySet()) {
+				DFAState target = entry.getValue();
+				if ( target==null) continue;
+				if ( target.stateNumber == Integer.MAX_VALUE ) continue;
+				int ttype = entry.getKey();
+				String label = String.valueOf(ttype);
+				if ( isLexer ) label = "'"+getEdgeLabel(String.valueOf((char)ttype))+"'";
+				else if ( grammar!=null ) label = grammar.getTokenDisplayName(ttype);
+				ST st = stlib.getInstanceOf("edge");
+				st.add("label", label);
+				st.add("src", "s"+d.stateNumber);
+				st.add("target", "s"+target.stateNumber);
+				st.add("arrowhead", arrowhead);
+				dot.add("edges", st);
 			}
 		}
 
@@ -137,47 +113,37 @@ public class DOTGenerator {
 		StringBuilder buf = new StringBuilder(250);
 		buf.append('s');
 		buf.append(s.stateNumber);
-		if ( s.isAcceptState ) {
-			buf.append("=>").append(s.prediction);
-		}
-		if ( s.requiresFullContext) {
-			buf.append("^");
+		if ( s.isAcceptState() ) {
+			buf.append("=>").append(s.getPrediction());
 		}
 		if ( grammar!=null ) {
-			Set<Integer> alts = s.getAltSet();
-			if ( alts!=null ) {
-				buf.append("\\n");
-				// separate alts
-				IntegerList altList = new IntegerList();
-				altList.addAll(alts);
-				altList.sort();
-				Set<ATNConfig> configurations = s.configs;
-				for (int altIndex = 0; altIndex < altList.size(); altIndex++) {
-					int alt = altList.get(altIndex);
-					if ( altIndex>0 ) {
+			BitSet alts = s.configs.getRepresentedAlternatives();
+			buf.append("\\n");
+			Set<ATNConfig> configurations = s.configs;
+			for (int alt = alts.nextSetBit(0); alt >= 0; alt = alts.nextSetBit(alt + 1)) {
+				if ( alt>alts.nextSetBit(0) ) {
+					buf.append("\\n");
+				}
+				buf.append("alt");
+				buf.append(alt);
+				buf.append(':');
+				// get a list of configs for just this alt
+				// it will help us print better later
+				List<ATNConfig> configsInAlt = new ArrayList<ATNConfig>();
+				for (ATNConfig c : configurations) {
+					if ( c.getAlt()!=alt ) continue;
+					configsInAlt.add(c);
+				}
+				int n = 0;
+				for (int cIndex = 0; cIndex < configsInAlt.size(); cIndex++) {
+					ATNConfig c = configsInAlt.get(cIndex);
+					n++;
+					buf.append(c.toString(null, false));
+					if ( (cIndex+1)<configsInAlt.size() ) {
+						buf.append(", ");
+					}
+					if ( n%5==0 && (configsInAlt.size()-cIndex)>3 ) {
 						buf.append("\\n");
-					}
-					buf.append("alt");
-					buf.append(alt);
-					buf.append(':');
-					// get a list of configs for just this alt
-					// it will help us print better later
-					List<ATNConfig> configsInAlt = new ArrayList<ATNConfig>();
-					for (ATNConfig c : configurations) {
-						if (c.alt != alt) continue;
-						configsInAlt.add(c);
-					}
-					int n = 0;
-					for (int cIndex = 0; cIndex < configsInAlt.size(); cIndex++) {
-						ATNConfig c = configsInAlt.get(cIndex);
-						n++;
-						buf.append(c.toString(null, false));
-						if ( (cIndex+1)<configsInAlt.size() ) {
-							buf.append(", ");
-						}
-						if ( n%5==0 && (configsInAlt.size()-cIndex)>3 ) {
-							buf.append("\\n");
-						}
 					}
 				}
 			}

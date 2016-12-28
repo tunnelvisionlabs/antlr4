@@ -1,43 +1,18 @@
 /*
- * [The "BSD license"]
- *  Copyright (c) 2012 Terence Parr
- *  Copyright (c) 2012 Sam Harwell
- *  All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted provided that the following conditions
- *  are met:
- *
- *  1. Redistributions of source code must retain the above copyright
- *     notice, this list of conditions and the following disclaimer.
- *  2. Redistributions in binary form must reproduce the above copyright
- *     notice, this list of conditions and the following disclaimer in the
- *     documentation and/or other materials provided with the distribution.
- *  3. The name of the author may not be used to endorse or promote products
- *     derived from this software without specific prior written permission.
- *
- *  THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- *  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- *  OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- *  NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- *  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- *  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- *  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) 2012 The ANTLR Project. All rights reserved.
+ * Use of this file is governed by the BSD-3-Clause license that
+ * can be found in the LICENSE.txt file in the project root.
  */
 
 package org.antlr.v4.codegen;
 
-import org.antlr.v4.Tool;
 import org.antlr.v4.codegen.model.RuleFunction;
 import org.antlr.v4.codegen.model.SerializedATN;
 import org.antlr.v4.misc.Utils;
 import org.antlr.v4.parse.ANTLRParser;
-import org.antlr.v4.runtime.RuntimeMetaData;
 import org.antlr.v4.runtime.Token;
-import org.antlr.v4.runtime.misc.Nullable;
+import org.antlr.v4.runtime.atn.ATNSimulator;
+import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.tool.ErrorType;
 import org.antlr.v4.tool.Grammar;
 import org.antlr.v4.tool.Rule;
@@ -57,7 +32,7 @@ public abstract class Target {
 	 *  predicates and such that may refer to chars that need to be escaped
 	 *  when represented as strings.  Also, templates need to be escaped so
 	 *  that the target language can hold them as a string.
-	 *  <p/>
+	 *  <p>
 	 *  I have defined (via the constructor) the set of typical escapes,
 	 *  but your {@link Target} subclass is free to alter the translated chars
 	 *  or add more definitions.  This is non-static so each target can have
@@ -65,7 +40,7 @@ public abstract class Target {
 	 */
 	protected String[] targetCharValueEscape = new String[255];
 
-	private final CodeGenerator gen;
+	protected final CodeGenerator gen;
 	private final String language;
 	private STGroup templates;
 
@@ -90,50 +65,18 @@ public abstract class Target {
 		return language;
 	}
 
-	/** ANTLR tool should check output templates / target are compatible with tool code generation.
-	 *  For now, a simple string match used on x.y of x.y.z scheme. We use a method to avoid mismatches
-	 *  between a template called VERSION. This value is checked against Tool.VERSION during load of templates.
-	 *
-	 *  This additional method forces all targets 4.3 and beyond to add this method.
-	 *
-	 * @since 4.3
-	 */
-	public abstract String getVersion();
-
-	@Nullable
+	@NotNull
 	public STGroup getTemplates() {
 		if (templates == null) {
-			String version = getVersion();
-			if ( version==null ||
-				 !RuntimeMetaData.getMajorMinorVersion(version).equals(RuntimeMetaData.getMajorMinorVersion(Tool.VERSION)))
-			{
-				gen.tool.errMgr.toolError(ErrorType.INCOMPATIBLE_TOOL_AND_TEMPLATES, version, Tool.VERSION, language);
-			}
 			templates = loadTemplates();
 		}
 
 		return templates;
 	}
 
-	protected void genFile(Grammar g,
-						   ST outputFileST,
-						   String fileName)
+	protected void genFile(Grammar g, ST outputFileST, String fileName)
 	{
 		getCodeGenerator().write(outputFileST, fileName);
-	}
-
-	protected void genListenerFile(Grammar g,
-								   ST outputFileST)
-	{
-		String fileName = getCodeGenerator().getListenerFileName();
-		getCodeGenerator().write(outputFileST, fileName);
-	}
-
-	protected void genRecognizerHeaderFile(Grammar g,
-										   ST headerFileST,
-										   String extName) // e.g., ".h"
-	{
-		// no header file by default
 	}
 
 	/** Get a meaningful name for a token type useful during code generation.
@@ -211,106 +154,15 @@ public abstract class Target {
 	}
 
 	/**
-	 * <p>Convert from an ANTLR string literal found in a grammar file to an
+	 * Convert from an ANTLR string literal found in a grammar file to an
 	 * equivalent string literal in the target language.
-	 *</p>
-	 * <p>
-	 * For Java, this is the translation {@code 'a\n"'} &rarr; {@code "a\n\""}.
-	 * Expect single quotes around the incoming literal. Just flip the quotes
-	 * and replace double quotes with {@code \"}.
-	 * </p>
-	 * <p>
-	 * Note that we have decided to allow people to use '\"' without penalty, so
-	 * we must build the target string in a loop as {@link String#replace}
-	 * cannot handle both {@code \"} and {@code "} without a lot of messing
-	 * around.
-	 * </p>
 	 */
-	public String getTargetStringLiteralFromANTLRStringLiteral(
+	public abstract String getTargetStringLiteralFromANTLRStringLiteral(
 		CodeGenerator generator,
-		String literal,
-		boolean addQuotes)
-	{
-		StringBuilder sb = new StringBuilder();
-		String is = literal;
-
-		if ( addQuotes ) sb.append('"');
-
-		for (int i = 1; i < is.length() -1; i++) {
-			if  (is.charAt(i) == '\\') {
-				// Anything escaped is what it is! We assume that
-				// people know how to escape characters correctly. However
-				// we catch anything that does not need an escape in Java (which
-				// is what the default implementation is dealing with and remove
-				// the escape. The C target does this for instance.
-				//
-				switch (is.charAt(i+1)) {
-					// Pass through any escapes that Java also needs
-					//
-					case    '"':
-					case    'n':
-					case    'r':
-					case    't':
-					case    'b':
-					case    'f':
-					case    '\\':
-						// Pass the escape through
-						sb.append('\\');
-						break;
-
-					case    'u':    // Assume unnnn
-						// Pass the escape through as double \\
-						// so that Java leaves as \u0000 string not char
-						sb.append('\\');
-						sb.append('\\');
-						break;
-
-					default:
-						// Remove the escape by virtue of not adding it here
-						// Thus \' becomes ' and so on
-						break;
-				}
-
-				// Go past the \ character
-				i++;
-			} else {
-				// Characters that don't need \ in ANTLR 'strings' but do in Java
-				if (is.charAt(i) == '"') {
-					// We need to escape " in Java
-					sb.append('\\');
-				}
-			}
-			// Add in the next character, which may have been escaped
-			sb.append(is.charAt(i));
-		}
-
-		if ( addQuotes ) sb.append('"');
-
-		return sb.toString();
-	}
+		String literal, boolean addQuotes);
 
 	/** Assume 16-bit char */
-	public String encodeIntAsCharEscape(int v) {
-		if (v < Character.MIN_VALUE || v > Character.MAX_VALUE) {
-			throw new IllegalArgumentException(String.format("Cannot encode the specified value: %d", v));
-		}
-
-		if (v >= 0 && v < targetCharValueEscape.length && targetCharValueEscape[v] != null) {
-			return targetCharValueEscape[v];
-		}
-
-		if (v >= 0x20 && v < 127 && (!Character.isDigit(v) || v == '8' || v == '9')) {
-			return String.valueOf((char)v);
-		}
-
-		if ( v>=0 && v<=127 ) {
-			String oct = Integer.toOctalString(v);
-			return "\\"+ oct;
-		}
-
-		String hex = Integer.toHexString(v|0x10000).substring(1,5);
-		return "\\u"+hex;
-	}
+	public abstract String encodeIntAsCharEscape(int v);
 
 	public String getLoopLabel(GrammarAST ast) {
 		return "loop"+ ast.token.getTokenIndex();
@@ -330,7 +182,9 @@ public abstract class Target {
 		if ( r.g.isLexer() ) {
 			return getTemplates().getInstanceOf("LexerRuleContext").render();
 		}
-		return Utils.capitalize(r.name)+getTemplates().getInstanceOf("RuleContextNameSuffix").render();
+
+		String baseName = r.getBaseContext();
+		return Utils.capitalize(baseName)+getTemplates().getInstanceOf("RuleContextNameSuffix").render();
 	}
 
 	public String getAltLabelContextStructName(String label) {
@@ -347,7 +201,9 @@ public abstract class Target {
 		if ( r.g.isLexer() ) {
 			return getTemplates().getInstanceOf("LexerRuleContext").render();
 		}
-		return Utils.capitalize(r.name)+getTemplates().getInstanceOf("RuleContextNameSuffix").render();
+
+		String baseName = r.getBaseContext();
+		return Utils.capitalize(baseName)+getTemplates().getInstanceOf("RuleContextNameSuffix").render();
 	}
 
 	// should be same for all refs to same token like ctx.ID within single rule function
@@ -393,6 +249,55 @@ public abstract class Target {
 		return getTokenTypeAsTargetLabel(getCodeGenerator().g, ttype);
 	}
 
+	/** Generate TParser.java and TLexer.java from T.g4 if combined, else
+	 *  just use T.java as output regardless of type.
+	 */
+	public String getRecognizerFileName(boolean header) {
+		ST extST = getTemplates().getInstanceOf("codeFileExtension");
+		String recognizerName = gen.g.getRecognizerName();
+		return recognizerName+extST.render();
+	}
+
+	/** A given grammar T, return the listener name such as
+	 *  TListener.java, if we're using the Java target.
+ 	 */
+	public String getListenerFileName(boolean header) {
+		assert gen.g.name != null;
+		ST extST = getTemplates().getInstanceOf("codeFileExtension");
+		String listenerName = gen.g.name + "Listener";
+		return listenerName+extST.render();
+	}
+
+	/** A given grammar T, return the visitor name such as
+	 *  TVisitor.java, if we're using the Java target.
+ 	 */
+	public String getVisitorFileName(boolean header) {
+		assert gen.g.name != null;
+		ST extST = getTemplates().getInstanceOf("codeFileExtension");
+		String listenerName = gen.g.name + "Visitor";
+		return listenerName+extST.render();
+	}
+
+	/** A given grammar T, return a blank listener implementation
+	 *  such as TBaseListener.java, if we're using the Java target.
+ 	 */
+	public String getBaseListenerFileName(boolean header) {
+		assert gen.g.name != null;
+		ST extST = getTemplates().getInstanceOf("codeFileExtension");
+		String listenerName = gen.g.name + "BaseListener";
+		return listenerName+extST.render();
+	}
+
+	/** A given grammar T, return a blank listener implementation
+	 *  such as TBaseListener.java, if we're using the Java target.
+ 	 */
+	public String getBaseVisitorFileName(boolean header) {
+		assert gen.g.name != null;
+		ST extST = getTemplates().getInstanceOf("codeFileExtension");
+		String listenerName = gen.g.name + "BaseVisitor";
+		return listenerName+extST.render();
+	}
+
 	/**
 	 * Gets the maximum number of 16-bit unsigned integers that can be encoded
 	 * in a single segment of the serialized ATN.
@@ -403,6 +308,16 @@ public abstract class Target {
 	 */
 	public int getSerializedATNSegmentLimit() {
 		return Integer.MAX_VALUE;
+	}
+
+	/** How many bits should be used to do inline token type tests? Java assumes
+	 *  a 64-bit word for bitsets.  Must be a valid wordsize for your target like
+	 *  8, 16, 32, 64, etc...
+	 *
+	 *  @since 4.5
+	 */
+	public int getInlineTestSetWordSize() {
+		return 64;
 	}
 
 	public boolean grammarSymbolCausesIssueInGeneratedCode(GrammarAST idNode) {
@@ -441,31 +356,9 @@ public abstract class Target {
 
 	protected abstract boolean visibleGrammarSymbolCausesIssueInGeneratedCode(GrammarAST idNode);
 
-	public boolean templatesExist() {
-		String groupFileName = CodeGenerator.TEMPLATE_ROOT + "/" + getLanguage() + "/" + getLanguage() + STGroup.GROUP_FILE_EXTENSION;
-		STGroup result = null;
-		try {
-			result = new STGroupFile(groupFileName);
-		}
-		catch (IllegalArgumentException iae) {
-			result = null;
-		}
-		return result!=null;
-	}
-
-	@Nullable
+	@NotNull
 	protected STGroup loadTemplates() {
-		String groupFileName = CodeGenerator.TEMPLATE_ROOT + "/" + getLanguage() + "/" + getLanguage() + STGroup.GROUP_FILE_EXTENSION;
-		STGroup result = null;
-		try {
-			result = new STGroupFile(groupFileName);
-		}
-		catch (IllegalArgumentException iae) {
-			gen.tool.errMgr.toolError(ErrorType.MISSING_CODE_GEN_TEMPLATES,
-						 iae,
-						 language);
-		}
-		if ( result==null ) return null;
+		STGroup result = new STGroupFile(CodeGenerator.TEMPLATE_ROOT+"/"+getLanguage()+"/"+getLanguage()+STGroup.GROUP_FILE_EXTENSION);
 		result.registerRenderer(Integer.class, new NumberRenderer());
 		result.registerRenderer(String.class, new StringRenderer());
 		result.setListener(new STErrorListener() {
@@ -517,4 +410,7 @@ public abstract class Target {
 	public boolean supportsOverloadedMethods() {
 		return true;
 	}
+
+	/** @since 4.6 */
+	public boolean needsHeader() { return false; }; // Override in targets that need header files.
 }

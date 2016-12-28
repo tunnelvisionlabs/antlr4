@@ -1,7 +1,13 @@
+/*
+ * Copyright (c) 2012 The ANTLR Project. All rights reserved.
+ * Use of this file is governed by the BSD-3-Clause license that
+ * can be found in the LICENSE.txt file in the project root.
+ */
+
 package org.antlr.v4.runtime;
 
 import org.antlr.v4.runtime.misc.NotNull;
-import org.antlr.v4.runtime.misc.Pair;
+import org.antlr.v4.runtime.misc.Tuple;
 
 import java.util.List;
 
@@ -43,7 +49,7 @@ public class ListTokenSource implements TokenSource {
 	 * This is the backing field for {@link #getTokenFactory} and
 	 * {@link setTokenFactory}.
 	 */
-	private TokenFactory<?> _factory = CommonTokenFactory.DEFAULT;
+	private TokenFactory _factory = CommonTokenFactory.DEFAULT;
 
 	/**
 	 * Constructs a new {@link ListTokenSource} instance from the specified
@@ -126,7 +132,7 @@ public class ListTokenSource implements TokenSource {
 				}
 
 				int stop = Math.max(-1, start - 1);
-				eofToken = _factory.create(new Pair<TokenSource, CharStream>(this, getInputStream()), Token.EOF, "EOF", Token.DEFAULT_CHANNEL, start, stop, getLine(), getCharPositionInLine());
+				eofToken = _factory.create(Tuple.create(this, getInputStream()), Token.EOF, "EOF", Token.DEFAULT_CHANNEL, start, stop, getLine(), getCharPositionInLine());
 			}
 
 			return eofToken;
@@ -216,7 +222,7 @@ public class ListTokenSource implements TokenSource {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public void setTokenFactory(@NotNull TokenFactory<?> factory) {
+	public void setTokenFactory(@NotNull TokenFactory factory) {
 		this._factory = factory;
 	}
 
@@ -225,7 +231,7 @@ public class ListTokenSource implements TokenSource {
 	 */
 	@Override
 	@NotNull
-	public TokenFactory<?> getTokenFactory() {
+	public TokenFactory getTokenFactory() {
 		return _factory;
 	}
 }

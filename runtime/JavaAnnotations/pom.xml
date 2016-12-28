@@ -3,9 +3,9 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>org.antlr</groupId>
+        <groupId>com.tunnelvisionlabs</groupId>
         <artifactId>antlr4-master</artifactId>
-        <version>4.4-SNAPSHOT</version>
+        <version>4.6.1-SNAPSHOT</version>
         <relativePath>../..</relativePath>
     </parent>
 
@@ -13,6 +13,7 @@
 
     <name>ANTLR 4 Runtime Annotations</name>
     <description>A set of annotations used within the ANTLR 4 Runtime</description>
+    <packaging>bundle</packaging>
 
     <build>
         <sourceDirectory>src</sourceDirectory>

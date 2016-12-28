@@ -1,31 +1,7 @@
 /*
- * [The "BSD license"]
- *  Copyright (c) 2012 Terence Parr
- *  Copyright (c) 2012 Sam Harwell
- *  All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted provided that the following conditions
- *  are met:
- *
- *  1. Redistributions of source code must retain the above copyright
- *     notice, this list of conditions and the following disclaimer.
- *  2. Redistributions in binary form must reproduce the above copyright
- *     notice, this list of conditions and the following disclaimer in the
- *     documentation and/or other materials provided with the distribution.
- *  3. The name of the author may not be used to endorse or promote products
- *     derived from this software without specific prior written permission.
- *
- *  THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- *  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- *  OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- *  NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- *  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- *  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- *  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) 2012 The ANTLR Project. All rights reserved.
+ * Use of this file is governed by the BSD-3-Clause license that
+ * can be found in the LICENSE.txt file in the project root.
  */
 
 package org.antlr.v4;
@@ -41,7 +17,6 @@ import org.antlr.v4.automata.ATNFactory;
 import org.antlr.v4.automata.LexerATNFactory;
 import org.antlr.v4.automata.ParserATNFactory;
 import org.antlr.v4.codegen.CodeGenPipeline;
-import org.antlr.v4.codegen.CodeGenerator;
 import org.antlr.v4.misc.Graph;
 import org.antlr.v4.parse.ANTLRParser;
 import org.antlr.v4.parse.GrammarASTAdaptor;
@@ -49,7 +24,6 @@ import org.antlr.v4.parse.GrammarTreeVisitor;
 import org.antlr.v4.parse.ToolANTLRLexer;
 import org.antlr.v4.parse.ToolANTLRParser;
 import org.antlr.v4.parse.v3TreeGrammarException;
-import org.antlr.v4.runtime.RuntimeMetaData;
 import org.antlr.v4.runtime.misc.LogManager;
 import org.antlr.v4.runtime.misc.Nullable;
 import org.antlr.v4.semantics.SemanticPipeline;
@@ -91,9 +65,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class Tool {
 	public static final String VERSION;
 	static {
-		// Assigned in a static{} block to prevent the field from becoming a
-		// compile-time constant
-		VERSION = RuntimeMetaData.VERSION;
+		String version = Tool.class.getPackage().getImplementationVersion();
+		VERSION = version != null ? version : "4.x";
 	}
 
 	public static final String GRAMMAR_EXTENSION = ".g4";
@@ -376,7 +349,13 @@ public class Tool {
 				lexerg.originalGrammar = g;
 				g.implicitLexer = lexerg;
 				lexerg.implicitLexerOwner = g;
+
+				int prevErrors = errMgr.getNumErrors();
 				processNonCombinedGrammar(lexerg, gencode);
+				if (errMgr.getNumErrors() > prevErrors) {
+					return;
+				}
+
 //				System.out.println("lexer tokens="+lexerg.tokenNameToTypeMap);
 //				System.out.println("lexer strings="+lexerg.stringLiteralToTypeMap);
 			}
@@ -398,12 +377,6 @@ public class Tool {
 		// MAKE SURE GRAMMAR IS SEMANTICALLY CORRECT (FILL IN GRAMMAR OBJECT)
 		SemanticPipeline sem = new SemanticPipeline(g);
 		sem.process();
-
-		String language = g.getOptionString("language");
-		if ( !CodeGenerator.targetExists(language) ) {
-			errMgr.toolError(ErrorType.CANNOT_CREATE_TARGET_GENERATOR, language);
-			return;
-		}
 
 		if ( errMgr.getNumErrors()>prevErrors ) return;
 
@@ -481,18 +454,18 @@ public class Tool {
 			@Override
 			public void ruleRef(GrammarAST ref, ActionAST arg) {
 				RuleAST ruleAST = ruleToAST.get(ref.getText());
+				String fileName = ref.getToken().getInputStream().getSourceName();
 				if (Character.isUpperCase(currentRuleName.charAt(0)) &&
 					Character.isLowerCase(ref.getText().charAt(0)))
 				{
 					badref = true;
-					String fileName = ref.getToken().getInputStream().getSourceName();
 					errMgr.grammarError(ErrorType.PARSER_RULE_REF_IN_LEXER_RULE,
 										fileName, ref.getToken(), ref.getText(), currentRuleName);
 				}
 				else if ( ruleAST==null ) {
 					badref = true;
 					errMgr.grammarError(ErrorType.UNDEFINED_RULE_REF,
-										g.fileName, ref.token, ref.getText());
+										fileName, ref.token, ref.getText());
 				}
 			}
 			@Override
@@ -522,6 +495,19 @@ public class Tool {
 			// Make grammars depend on any tokenVocab options
 			if ( tokenVocabNode!=null ) {
 				String vocabName = tokenVocabNode.getText();
+				// Strip quote characters if any
+				int len = vocabName.length();
+				int firstChar = vocabName.charAt(0);
+				int lastChar = vocabName.charAt(len - 1);
+				if (len >= 2 && firstChar == '\'' && lastChar == '\'') {
+					vocabName = vocabName.substring(1, len-1);
+				}
+				// If the name contains a path delimited by forward slashes,
+				// use only the part after the last slash as the name
+				int lastSlash = vocabName.lastIndexOf('/');
+				if (lastSlash >= 0) {
+					vocabName = vocabName.substring(lastSlash + 1);
+				}
 				g.addEdge(grammarName, vocabName);
 			}
 			// add cycle to graph so we always process a grammar if no error
@@ -714,7 +700,7 @@ public class Tool {
 	 *
 	 *  The output dir -o spec takes precedence if it's absolute.
 	 *  E.g., if the grammar file dir is absolute the output dir is given
-	 *  precendence. "-o /tmp /usr/lib/t.g4" results in "/tmp/T.java" as
+	 *  precedence. "-o /tmp /usr/lib/t.g4" results in "/tmp/T.java" as
 	 *  output (assuming t.g4 holds T.java).
 	 *
 	 *  If no -o is specified, then just write to the directory where the

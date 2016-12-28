@@ -1,45 +1,32 @@
 /*
- * [The "BSD license"]
- *  Copyright (c) 2013 Terence Parr
- *  Copyright (c) 2013 Sam Harwell
- *  All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted provided that the following conditions
- *  are met:
- *
- *  1. Redistributions of source code must retain the above copyright
- *     notice, this list of conditions and the following disclaimer.
- *  2. Redistributions in binary form must reproduce the above copyright
- *     notice, this list of conditions and the following disclaimer in the
- *     documentation and/or other materials provided with the distribution.
- *  3. The name of the author may not be used to endorse or promote products
- *     derived from this software without specific prior written permission.
- *
- *  THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- *  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- *  OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- *  NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- *  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- *  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- *  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) 2012 The ANTLR Project. All rights reserved.
+ * Use of this file is governed by the BSD-3-Clause license that
+ * can be found in the LICENSE.txt file in the project root.
  */
 
 package org.antlr.v4.runtime.atn;
 
 import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.dfa.DFA;
+import org.antlr.v4.runtime.misc.Interval;
 import org.antlr.v4.runtime.misc.IntervalSet;
 import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.misc.Nullable;
-import org.antlr.v4.runtime.misc.Pair;
+import org.antlr.v4.runtime.misc.Tuple;
+import org.antlr.v4.runtime.misc.Tuple2;
+import org.antlr.v4.runtime.misc.Tuple3;
 
 import java.io.InvalidClassException;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -60,11 +47,6 @@ public class ATNDeserializer {
 	 */
 	private static final UUID BASE_SERIALIZED_UUID;
 	/**
-	 * This UUID indicates an extension of {@link BASE_SERIALIZED_UUID} for the
-	 * addition of precedence predicates.
-	 */
-	private static final UUID ADDED_PRECEDENCE_TRANSITIONS;
-	/**
 	 * This UUID indicates an extension of {@link #ADDED_PRECEDENCE_TRANSITIONS}
 	 * for the addition of lexer actions encoded as a sequence of
 	 * {@link LexerAction} instances.
@@ -84,13 +66,11 @@ public class ATNDeserializer {
 		/* WARNING: DO NOT MERGE THESE LINES. If UUIDs differ during a merge,
 		 * resolve the conflict by generating a new ID!
 		 */
-		BASE_SERIALIZED_UUID = UUID.fromString("33761B2D-78BB-4A43-8B0B-4F5BEE8AACF3");
-		ADDED_PRECEDENCE_TRANSITIONS = UUID.fromString("1DA0C57D-6C06-438A-9B27-10BCB3CE0F61");
-		ADDED_LEXER_ACTIONS = UUID.fromString("AADB8D7E-AEEF-4415-AD2B-8204D6CF042E");
+		BASE_SERIALIZED_UUID = UUID.fromString("E4178468-DF95-44D0-AD87-F22A5D5FB6D3");
+		ADDED_LEXER_ACTIONS = UUID.fromString("AB35191A-1603-487E-B75A-479B831EAF6D");
 
 		SUPPORTED_UUIDS = new ArrayList<UUID>();
 		SUPPORTED_UUIDS.add(BASE_SERIALIZED_UUID);
-		SUPPORTED_UUIDS.add(ADDED_PRECEDENCE_TRANSITIONS);
 		SUPPORTED_UUIDS.add(ADDED_LEXER_ACTIONS);
 
 		SERIALIZED_UUID = ADDED_LEXER_ACTIONS;
@@ -155,7 +135,6 @@ public class ATNDeserializer {
 			throw new UnsupportedOperationException(new InvalidClassException(ATN.class.getName(), reason));
 		}
 
-		boolean supportsPrecedencePredicates = isFeatureSupported(ADDED_PRECEDENCE_TRANSITIONS, uuid);
 		boolean supportsLexerActions = isFeatureSupported(ADDED_LEXER_ACTIONS, uuid);
 
 		ATNType grammarType = ATNType.values()[toInt(data[p++])];
@@ -165,8 +144,8 @@ public class ATNDeserializer {
 		//
 		// STATES
 		//
-		List<Pair<LoopEndState, Integer>> loopBackStateNumbers = new ArrayList<Pair<LoopEndState, Integer>>();
-		List<Pair<BlockStartState, Integer>> endStateNumbers = new ArrayList<Pair<BlockStartState, Integer>>();
+		List<Tuple2<LoopEndState, Integer>> loopBackStateNumbers = new ArrayList<Tuple2<LoopEndState, Integer>>();
+		List<Tuple2<BlockStartState, Integer>> endStateNumbers = new ArrayList<Tuple2<BlockStartState, Integer>>();
 		int nstates = toInt(data[p++]);
 		for (int i=0; i<nstates; i++) {
 			int stype = toInt(data[p++]);
@@ -184,22 +163,22 @@ public class ATNDeserializer {
 			ATNState s = stateFactory(stype, ruleIndex);
 			if ( stype == ATNState.LOOP_END ) { // special case
 				int loopBackStateNumber = toInt(data[p++]);
-				loopBackStateNumbers.add(new Pair<LoopEndState, Integer>((LoopEndState)s, loopBackStateNumber));
+				loopBackStateNumbers.add(Tuple.create((LoopEndState)s, loopBackStateNumber));
 			}
 			else if (s instanceof BlockStartState) {
 				int endStateNumber = toInt(data[p++]);
-				endStateNumbers.add(new Pair<BlockStartState, Integer>((BlockStartState)s, endStateNumber));
+				endStateNumbers.add(Tuple.create((BlockStartState)s, endStateNumber));
 			}
 			atn.addState(s);
 		}
 
 		// delay the assignment of loop back and end states until we know all the state instances have been initialized
-		for (Pair<LoopEndState, Integer> pair : loopBackStateNumbers) {
-			pair.a.loopBackState = atn.states.get(pair.b);
+		for (Tuple2<LoopEndState, Integer> pair : loopBackStateNumbers) {
+			pair.getItem1().loopBackState = atn.states.get(pair.getItem2());
 		}
 
-		for (Pair<BlockStartState, Integer> pair : endStateNumbers) {
-			pair.a.endState = (BlockEndState)atn.states.get(pair.b);
+		for (Tuple2<BlockStartState, Integer> pair : endStateNumbers) {
+			pair.getItem1().endState = (BlockEndState)atn.states.get(pair.getItem2());
 		}
 
 		int numNonGreedyStates = toInt(data[p++]);
@@ -208,12 +187,16 @@ public class ATNDeserializer {
 			((DecisionState)atn.states.get(stateNumber)).nonGreedy = true;
 		}
 
-		if (supportsPrecedencePredicates) {
-			int numPrecedenceStates = toInt(data[p++]);
-			for (int i = 0; i < numPrecedenceStates; i++) {
-				int stateNumber = toInt(data[p++]);
-				((RuleStartState)atn.states.get(stateNumber)).isPrecedenceRule = true;
-			}
+		int numSllDecisions = toInt(data[p++]);
+		for (int i = 0; i < numSllDecisions; i++) {
+			int stateNumber = toInt(data[p++]);
+			((DecisionState)atn.states.get(stateNumber)).sll = true;
+		}
+
+		int numPrecedenceStates = toInt(data[p++]);
+		for (int i = 0; i < numPrecedenceStates; i++) {
+			int stateNumber = toInt(data[p++]);
+			((RuleStartState)atn.states.get(stateNumber)).isPrecedenceRule = true;
 		}
 
 		//
@@ -228,6 +211,7 @@ public class ATNDeserializer {
 		for (int i=0; i<nrules; i++) {
 			int s = toInt(data[p++]);
 			RuleStartState startState = (RuleStartState)atn.states.get(s);
+			startState.leftFactored = toInt(data[p++]) != 0;
 			atn.ruleToStartState[i] = startState;
 			if ( atn.grammarType == ATNType.LEXER ) {
 				int tokenType = toInt(data[p++]);
@@ -266,6 +250,11 @@ public class ATNDeserializer {
 		for (int i=0; i<nmodes; i++) {
 			int s = toInt(data[p++]);
 			atn.modeToStartState.add((TokensStartState)atn.states.get(s));
+		}
+
+		atn.modeToDFA = new DFA[nmodes];
+		for (int i = 0; i < nmodes; i++) {
+			atn.modeToDFA[i] = new DFA(atn.modeToStartState.get(i));
 		}
 
 		//
@@ -312,7 +301,10 @@ public class ATNDeserializer {
 		}
 
 		// edges for rule stop states can be derived, so they aren't serialized
+		// Map rule stop state -> return state -> outermost precedence return
+		Set<Tuple3<Integer, Integer, Integer>> returnTransitions = new LinkedHashSet<Tuple3<Integer, Integer, Integer>>();
 		for (ATNState state : atn.states) {
+			boolean returningToLeftFactored = state.ruleIndex >= 0 && atn.ruleToStartState[state.ruleIndex].leftFactored;
 			for (int i = 0; i < state.getNumberOfTransitions(); i++) {
 				Transition t = state.transition(i);
 				if (!(t instanceof RuleTransition)) {
@@ -320,6 +312,11 @@ public class ATNDeserializer {
 				}
 
 				RuleTransition ruleTransition = (RuleTransition)t;
+				boolean returningFromLeftFactored = atn.ruleToStartState[ruleTransition.target.ruleIndex].leftFactored;
+				if (!returningFromLeftFactored && returningToLeftFactored) {
+					continue;
+				}
+
 				int outermostPrecedenceReturn = -1;
 				if (atn.ruleToStartState[ruleTransition.target.ruleIndex].isPrecedenceRule) {
 					if (ruleTransition.precedence == 0) {
@@ -327,9 +324,14 @@ public class ATNDeserializer {
 					}
 				}
 
-				EpsilonTransition returnTransition = new EpsilonTransition(ruleTransition.followState, outermostPrecedenceReturn);
-				atn.ruleToStopState[ruleTransition.target.ruleIndex].addTransition(returnTransition);
+				returnTransitions.add(Tuple.create(ruleTransition.target.ruleIndex, ruleTransition.followState.stateNumber, outermostPrecedenceReturn));
 			}
+		}
+
+		// Add all elements from returnTransitions to the ATN
+		for (Tuple3<Integer, Integer, Integer> returnTransition : returnTransitions) {
+			EpsilonTransition transition = new EpsilonTransition(atn.states.get(returnTransition.getItem2()), returnTransition.getItem3());
+			atn.ruleToStopState[returnTransition.getItem1()].addTransition(transition);
 		}
 
 		for (ATNState state : atn.states) {
@@ -427,6 +429,11 @@ public class ATNDeserializer {
 
 		markPrecedenceDecisions(atn);
 
+		atn.decisionToDFA = new DFA[ndecisions];
+		for (int i = 0; i < ndecisions; i++) {
+			atn.decisionToDFA[i] = new DFA(atn.decisionToState.get(i), i);
+		}
+
 		if (deserializationOptions.isVerifyATN()) {
 			verifyATN(atn);
 		}
@@ -521,6 +528,26 @@ public class ATNDeserializer {
 			}
 		}
 
+		if (deserializationOptions.isOptimize()) {
+			while (true) {
+				int optimizationCount = 0;
+				optimizationCount += inlineSetRules(atn);
+				optimizationCount += combineChainedEpsilons(atn);
+				boolean preserveOrder = atn.grammarType == ATNType.LEXER;
+				optimizationCount += optimizeSets(atn, preserveOrder);
+				if (optimizationCount == 0) {
+					break;
+				}
+			}
+
+			if (deserializationOptions.isVerifyATN()) {
+				// reverify after modification
+				verifyATN(atn);
+			}
+		}
+
+		identifyTailCalls(atn);
+
 		return atn;
 	}
 
@@ -532,6 +559,9 @@ public class ATNDeserializer {
 	 * @param atn The ATN.
 	 */
 	protected void markPrecedenceDecisions(@NotNull ATN atn) {
+		// Map rule index -> precedence decision for that rule
+		Map<Integer, StarLoopEntryState> rulePrecedenceDecisions = new HashMap<Integer, StarLoopEntryState>();
+
 		for (ATNState state : atn.states) {
 			if (!(state instanceof StarLoopEntryState)) {
 				continue;
@@ -545,9 +575,28 @@ public class ATNDeserializer {
 				ATNState maybeLoopEndState = state.transition(state.getNumberOfTransitions() - 1).target;
 				if (maybeLoopEndState instanceof LoopEndState) {
 					if (maybeLoopEndState.epsilonOnlyTransitions && maybeLoopEndState.transition(0).target instanceof RuleStopState) {
+						rulePrecedenceDecisions.put(state.ruleIndex, (StarLoopEntryState)state);
 						((StarLoopEntryState)state).precedenceRuleDecision = true;
+						((StarLoopEntryState)state).precedenceLoopbackStates = new BitSet(atn.states.size());
 					}
 				}
+			}
+		}
+
+		// After marking precedence decisions, we go back through and fill in
+		// StarLoopEntryState.precedenceLoopbackStates.
+		for (Map.Entry<Integer, StarLoopEntryState> precedenceDecision : rulePrecedenceDecisions.entrySet()) {
+			for (Transition transition : atn.ruleToStopState[precedenceDecision.getKey()].transitions) {
+				if (transition.getSerializationType() != Transition.EPSILON) {
+					continue;
+				}
+
+				EpsilonTransition epsilonTransition = (EpsilonTransition)transition;
+				if (epsilonTransition.outermostPrecedenceReturn() != -1) {
+					continue;
+				}
+
+				precedenceDecision.getValue().precedenceLoopbackStates.set(transition.target.stateNumber);
 			}
 		}
 	}
@@ -622,6 +671,370 @@ public class ATNDeserializer {
 		if (!condition) {
 			throw new IllegalStateException(message);
 		}
+	}
+
+	private static int inlineSetRules(ATN atn) {
+		int inlinedCalls = 0;
+
+		Transition[] ruleToInlineTransition = new Transition[atn.ruleToStartState.length];
+		for (int i = 0; i < atn.ruleToStartState.length; i++) {
+			RuleStartState startState = atn.ruleToStartState[i];
+			ATNState middleState = startState;
+			while (middleState.onlyHasEpsilonTransitions()
+				&& middleState.getNumberOfOptimizedTransitions() == 1
+				&& middleState.getOptimizedTransition(0).getSerializationType() == Transition.EPSILON)
+			{
+				middleState = middleState.getOptimizedTransition(0).target;
+			}
+
+			if (middleState.getNumberOfOptimizedTransitions() != 1) {
+				continue;
+			}
+
+			Transition matchTransition = middleState.getOptimizedTransition(0);
+			ATNState matchTarget = matchTransition.target;
+			if (matchTransition.isEpsilon()
+				|| !matchTarget.onlyHasEpsilonTransitions()
+				|| matchTarget.getNumberOfOptimizedTransitions() != 1
+				|| !(matchTarget.getOptimizedTransition(0).target instanceof RuleStopState))
+			{
+				continue;
+			}
+
+			switch (matchTransition.getSerializationType()) {
+			case Transition.ATOM:
+			case Transition.RANGE:
+			case Transition.SET:
+				ruleToInlineTransition[i] = matchTransition;
+				break;
+
+			case Transition.NOT_SET:
+			case Transition.WILDCARD:
+				// not implemented yet
+				continue;
+
+			default:
+				continue;
+			}
+		}
+
+		for (int stateNumber = 0; stateNumber < atn.states.size(); stateNumber++) {
+			ATNState state = atn.states.get(stateNumber);
+			if (state.ruleIndex < 0) {
+				continue;
+			}
+
+			List<Transition> optimizedTransitions = null;
+			for (int i = 0; i < state.getNumberOfOptimizedTransitions(); i++) {
+				Transition transition = state.getOptimizedTransition(i);
+				if (!(transition instanceof RuleTransition)) {
+					if (optimizedTransitions != null) {
+						optimizedTransitions.add(transition);
+					}
+
+					continue;
+				}
+
+				RuleTransition ruleTransition = (RuleTransition)transition;
+				Transition effective = ruleToInlineTransition[ruleTransition.target.ruleIndex];
+				if (effective == null) {
+					if (optimizedTransitions != null) {
+						optimizedTransitions.add(transition);
+					}
+
+					continue;
+				}
+
+				if (optimizedTransitions == null) {
+					optimizedTransitions = new ArrayList<Transition>();
+					for (int j = 0; j < i; j++) {
+						optimizedTransitions.add(state.getOptimizedTransition(i));
+					}
+				}
+
+				inlinedCalls++;
+				ATNState target = ruleTransition.followState;
+				ATNState intermediateState = new BasicState();
+				intermediateState.setRuleIndex(target.ruleIndex);
+				atn.addState(intermediateState);
+				optimizedTransitions.add(new EpsilonTransition(intermediateState));
+
+				switch (effective.getSerializationType()) {
+				case Transition.ATOM:
+					intermediateState.addTransition(new AtomTransition(target, ((AtomTransition)effective).label));
+					break;
+
+				case Transition.RANGE:
+					intermediateState.addTransition(new RangeTransition(target, ((RangeTransition)effective).from, ((RangeTransition)effective).to));
+					break;
+
+				case Transition.SET:
+					intermediateState.addTransition(new SetTransition(target, effective.label()));
+					break;
+
+				default:
+					throw new UnsupportedOperationException();
+				}
+			}
+
+			if (optimizedTransitions != null) {
+				if (state.isOptimized()) {
+					while (state.getNumberOfOptimizedTransitions() > 0) {
+						state.removeOptimizedTransition(state.getNumberOfOptimizedTransitions() - 1);
+					}
+				}
+
+				for (Transition transition : optimizedTransitions) {
+					state.addOptimizedTransition(transition);
+				}
+			}
+		}
+
+		if (ParserATNSimulator.debug) {
+			System.out.println("ATN runtime optimizer removed " + inlinedCalls + " rule invocations by inlining sets.");
+		}
+
+		return inlinedCalls;
+	}
+
+	private static int combineChainedEpsilons(ATN atn) {
+		int removedEdges = 0;
+
+		nextState:
+		for (ATNState state : atn.states) {
+			if (!state.onlyHasEpsilonTransitions() || state instanceof RuleStopState) {
+				continue;
+			}
+
+			List<Transition> optimizedTransitions = null;
+			nextTransition:
+			for (int i = 0; i < state.getNumberOfOptimizedTransitions(); i++) {
+				Transition transition = state.getOptimizedTransition(i);
+				ATNState intermediate = transition.target;
+				if (transition.getSerializationType() != Transition.EPSILON
+					|| ((EpsilonTransition)transition).outermostPrecedenceReturn() != -1
+					|| intermediate.getStateType() != ATNState.BASIC
+					|| !intermediate.onlyHasEpsilonTransitions())
+				{
+					if (optimizedTransitions != null) {
+						optimizedTransitions.add(transition);
+					}
+
+					continue nextTransition;
+				}
+
+				for (int j = 0; j < intermediate.getNumberOfOptimizedTransitions(); j++) {
+					if (intermediate.getOptimizedTransition(j).getSerializationType() != Transition.EPSILON
+						|| ((EpsilonTransition)intermediate.getOptimizedTransition(j)).outermostPrecedenceReturn() != -1)
+					{
+						if (optimizedTransitions != null) {
+							optimizedTransitions.add(transition);
+						}
+
+						continue nextTransition;
+					}
+				}
+
+				removedEdges++;
+				if (optimizedTransitions == null) {
+					optimizedTransitions = new ArrayList<Transition>();
+					for (int j = 0; j < i; j++) {
+						optimizedTransitions.add(state.getOptimizedTransition(j));
+					}
+				}
+
+				for (int j = 0; j < intermediate.getNumberOfOptimizedTransitions(); j++) {
+					ATNState target = intermediate.getOptimizedTransition(j).target;
+					optimizedTransitions.add(new EpsilonTransition(target));
+				}
+			}
+
+			if (optimizedTransitions != null) {
+				if (state.isOptimized()) {
+					while (state.getNumberOfOptimizedTransitions() > 0) {
+						state.removeOptimizedTransition(state.getNumberOfOptimizedTransitions() - 1);
+					}
+				}
+
+				for (Transition transition : optimizedTransitions) {
+					state.addOptimizedTransition(transition);
+				}
+			}
+		}
+
+		if (ParserATNSimulator.debug) {
+			System.out.println("ATN runtime optimizer removed " + removedEdges + " transitions by combining chained epsilon transitions.");
+		}
+
+		return removedEdges;
+	}
+
+	private static int optimizeSets(ATN atn, boolean preserveOrder) {
+		if (preserveOrder) {
+			// this optimization currently doesn't preserve edge order.
+			return 0;
+		}
+
+		int removedPaths = 0;
+		List<DecisionState> decisions = atn.decisionToState;
+		for (DecisionState decision : decisions) {
+			IntervalSet setTransitions = new IntervalSet();
+			for (int i = 0; i < decision.getNumberOfOptimizedTransitions(); i++) {
+				Transition epsTransition = decision.getOptimizedTransition(i);
+				if (!(epsTransition instanceof EpsilonTransition)) {
+					continue;
+				}
+
+				if (epsTransition.target.getNumberOfOptimizedTransitions() != 1) {
+					continue;
+				}
+
+				Transition transition = epsTransition.target.getOptimizedTransition(0);
+				if (!(transition.target instanceof BlockEndState)) {
+					continue;
+				}
+
+				if (transition instanceof NotSetTransition) {
+					// TODO: not yet implemented
+					continue;
+				}
+
+				if (transition instanceof AtomTransition
+					|| transition instanceof RangeTransition
+					|| transition instanceof SetTransition)
+				{
+					setTransitions.add(i);
+				}
+			}
+
+			if (setTransitions.size() <= 1) {
+				continue;
+			}
+
+			List<Transition> optimizedTransitions = new ArrayList<Transition>();
+			for (int i = 0; i < decision.getNumberOfOptimizedTransitions(); i++) {
+				if (!setTransitions.contains(i)) {
+					optimizedTransitions.add(decision.getOptimizedTransition(i));
+				}
+			}
+
+			ATNState blockEndState = decision.getOptimizedTransition(setTransitions.getMinElement()).target.getOptimizedTransition(0).target;
+			IntervalSet matchSet = new IntervalSet();
+			for (int i = 0; i < setTransitions.getIntervals().size(); i++) {
+				Interval interval = setTransitions.getIntervals().get(i);
+				for (int j = interval.a; j <= interval.b; j++) {
+					Transition matchTransition = decision.getOptimizedTransition(j).target.getOptimizedTransition(0);
+					if (matchTransition instanceof NotSetTransition) {
+						throw new UnsupportedOperationException("Not yet implemented.");
+					} else {
+						matchSet.addAll(matchTransition.label());
+					}
+				}
+			}
+
+			Transition newTransition;
+			if (matchSet.getIntervals().size() == 1) {
+				if (matchSet.size() == 1) {
+					newTransition = new AtomTransition(blockEndState, matchSet.getMinElement());
+				} else {
+					Interval matchInterval = matchSet.getIntervals().get(0);
+					newTransition = new RangeTransition(blockEndState, matchInterval.a, matchInterval.b);
+				}
+			} else {
+				newTransition = new SetTransition(blockEndState, matchSet);
+			}
+
+			ATNState setOptimizedState = new BasicState();
+			setOptimizedState.setRuleIndex(decision.ruleIndex);
+			atn.addState(setOptimizedState);
+
+			setOptimizedState.addTransition(newTransition);
+			optimizedTransitions.add(new EpsilonTransition(setOptimizedState));
+
+			removedPaths += decision.getNumberOfOptimizedTransitions() - optimizedTransitions.size();
+
+			if (decision.isOptimized()) {
+				while (decision.getNumberOfOptimizedTransitions() > 0) {
+					decision.removeOptimizedTransition(decision.getNumberOfOptimizedTransitions() - 1);
+				}
+			}
+
+			for (Transition transition : optimizedTransitions) {
+				decision.addOptimizedTransition(transition);
+			}
+		}
+
+		if (ParserATNSimulator.debug) {
+			System.out.println("ATN runtime optimizer removed " + removedPaths + " paths by collapsing sets.");
+		}
+
+		return removedPaths;
+	}
+
+	private static void identifyTailCalls(ATN atn) {
+		for (ATNState state : atn.states) {
+			for (Transition transition : state.transitions) {
+				if (!(transition instanceof RuleTransition)) {
+					continue;
+				}
+
+				RuleTransition ruleTransition = (RuleTransition)transition;
+				ruleTransition.tailCall = testTailCall(atn, ruleTransition, false);
+				ruleTransition.optimizedTailCall = testTailCall(atn, ruleTransition, true);
+			}
+
+			if (!state.isOptimized()) {
+				continue;
+			}
+
+			for (Transition transition : state.optimizedTransitions) {
+				if (!(transition instanceof RuleTransition)) {
+					continue;
+				}
+
+				RuleTransition ruleTransition = (RuleTransition)transition;
+				ruleTransition.tailCall = testTailCall(atn, ruleTransition, false);
+				ruleTransition.optimizedTailCall = testTailCall(atn, ruleTransition, true);
+			}
+		}
+	}
+
+	private static boolean testTailCall(ATN atn, RuleTransition transition, boolean optimizedPath) {
+		if (!optimizedPath && transition.tailCall) {
+			return true;
+		}
+		if (optimizedPath && transition.optimizedTailCall) {
+			return true;
+		}
+
+		BitSet reachable = new BitSet(atn.states.size());
+		Deque<ATNState> worklist = new ArrayDeque<ATNState>();
+		worklist.add(transition.followState);
+		while (!worklist.isEmpty()) {
+			ATNState state = worklist.pop();
+			if (reachable.get(state.stateNumber)) {
+				continue;
+			}
+
+			if (state instanceof RuleStopState) {
+				continue;
+			}
+
+			if (!state.onlyHasEpsilonTransitions()) {
+				return false;
+			}
+
+			List<Transition> transitions = optimizedPath ? state.optimizedTransitions : state.transitions;
+			for (Transition t : transitions) {
+				if (t.getSerializationType() != Transition.EPSILON) {
+					return false;
+				}
+
+				worklist.add(t.target);
+			}
+		}
+
+		return true;
 	}
 
 	protected static int toInt(char c) {

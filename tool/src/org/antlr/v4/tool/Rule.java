@@ -1,42 +1,20 @@
 /*
- * [The "BSD license"]
- *  Copyright (c) 2012 Terence Parr
- *  Copyright (c) 2012 Sam Harwell
- *  All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted provided that the following conditions
- *  are met:
- *
- *  1. Redistributions of source code must retain the above copyright
- *     notice, this list of conditions and the following disclaimer.
- *  2. Redistributions in binary form must reproduce the above copyright
- *     notice, this list of conditions and the following disclaimer in the
- *     documentation and/or other materials provided with the distribution.
- *  3. The name of the author may not be used to endorse or promote products
- *     derived from this software without specific prior written permission.
- *
- *  THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- *  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- *  OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- *  NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- *  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- *  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- *  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) 2012 The ANTLR Project. All rights reserved.
+ * Use of this file is governed by the BSD-3-Clause license that
+ * can be found in the LICENSE.txt file in the project root.
  */
 
 package org.antlr.v4.tool;
 
-import org.antlr.v4.runtime.misc.Pair;
+import org.antlr.v4.runtime.atn.ATNSimulator;
+import org.antlr.v4.runtime.misc.MultiMap;
+import org.antlr.v4.runtime.misc.Tuple;
+import org.antlr.v4.runtime.misc.Tuple2;
 import org.antlr.v4.tool.ast.ActionAST;
 import org.antlr.v4.tool.ast.AltAST;
 import org.antlr.v4.tool.ast.GrammarAST;
 import org.antlr.v4.tool.ast.PredAST;
 import org.antlr.v4.tool.ast.RuleAST;
-import org.stringtemplate.v4.misc.MultiMap;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -55,6 +33,7 @@ public class Rule implements AttributeResolver {
 	public static final AttributeDict predefinedRulePropertiesDict =
 		new AttributeDict(AttributeDict.DictType.PREDEFINED_RULE);
 	static {
+		predefinedRulePropertiesDict.add(new Attribute("parser"));
 		predefinedRulePropertiesDict.add(new Attribute("text"));
 		predefinedRulePropertiesDict.add(new Attribute("start"));
 		predefinedRulePropertiesDict.add(new Attribute("stop"));
@@ -76,6 +55,7 @@ public class Rule implements AttributeResolver {
 	}
 
 	public String name;
+	private String baseContext;
 	public List<GrammarAST> modifiers;
 
 	public RuleAST ast;
@@ -132,6 +112,28 @@ public class Rule implements AttributeResolver {
 		this.numberOfAlts = numberOfAlts;
 		alt = new Alternative[numberOfAlts+1]; // 1..n
 		for (int i=1; i<=numberOfAlts; i++) alt[i] = new Alternative(this, i);
+	}
+
+	public String getBaseContext() {
+		if (baseContext != null && !baseContext.isEmpty()) {
+			return baseContext;
+		}
+
+		String optionBaseContext = ast.getOptionString("baseContext");
+		if (optionBaseContext != null && !optionBaseContext.isEmpty()) {
+			return optionBaseContext;
+		}
+
+		int variantDelimiter = name.indexOf(ATNSimulator.RULE_VARIANT_DELIMITER);
+		if (variantDelimiter >= 0) {
+			return name.substring(0, variantDelimiter);
+		}
+
+		return name;
+	}
+
+	public void setBaseContext(String baseContext) {
+		this.baseContext = baseContext;
 	}
 
 	public void defineActionInAlt(int currentAlt, ActionAST actionAST) {
@@ -212,18 +214,18 @@ public class Rule implements AttributeResolver {
 	 * (alternative number and {@link AltAST}) identifying the alternatives with
 	 * this label. Unlabeled alternatives are not included in the result.
 	 */
-	public Map<String, List<Pair<Integer, AltAST>>> getAltLabels() {
-		Map<String, List<Pair<Integer, AltAST>>> labels = new LinkedHashMap<String, List<Pair<Integer, AltAST>>>();
+	public Map<String, List<Tuple2<Integer, AltAST>>> getAltLabels() {
+		Map<String, List<Tuple2<Integer, AltAST>>> labels = new LinkedHashMap<String, List<Tuple2<Integer, AltAST>>>();
 		for (int i=1; i<=numberOfAlts; i++) {
 			GrammarAST altLabel = alt[i].ast.altLabel;
 			if ( altLabel!=null ) {
-				List<Pair<Integer, AltAST>> list = labels.get(altLabel.getText());
+				List<Tuple2<Integer, AltAST>> list = labels.get(altLabel.getText());
 				if (list == null) {
-					list = new ArrayList<Pair<Integer, AltAST>>();
+					list = new ArrayList<Tuple2<Integer, AltAST>>();
 					labels.put(altLabel.getText(), list);
 				}
 
-				list.add(new Pair<Integer, AltAST>(i, alt[i].ast));
+				list.add(Tuple.create(i, alt[i].ast));
 			}
 		}
 		if ( labels.isEmpty() ) return null;

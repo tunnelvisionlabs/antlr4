@@ -1,36 +1,12 @@
 /*
- * [The "BSD license"]
- *  Copyright (c) 2014 Terence Parr
- *  Copyright (c) 2014 Sam Harwell
- *  All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted provided that the following conditions
- *  are met:
- *
- *  1. Redistributions of source code must retain the above copyright
- *     notice, this list of conditions and the following disclaimer.
- *  2. Redistributions in binary form must reproduce the above copyright
- *     notice, this list of conditions and the following disclaimer in the
- *     documentation and/or other materials provided with the distribution.
- *  3. The name of the author may not be used to endorse or promote products
- *     derived from this software without specific prior written permission.
- *
- *  THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- *  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- *  OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- *  NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- *  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- *  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- *  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) 2012 The ANTLR Project. All rights reserved.
+ * Use of this file is governed by the BSD-3-Clause license that
+ * can be found in the LICENSE.txt file in the project root.
  */
 
 package org.antlr.v4.runtime.atn;
 
-import org.antlr.v4.runtime.ANTLRErrorListener;
+import org.antlr.v4.runtime.ParserErrorListener;
 import org.antlr.v4.runtime.TokenStream;
 import org.antlr.v4.runtime.misc.NotNull;
 
@@ -48,7 +24,7 @@ import org.antlr.v4.runtime.misc.NotNull;
  * input.</p>
  *
  * @see ParserATNSimulator#reportContextSensitivity
- * @see ANTLRErrorListener#reportContextSensitivity
+ * @see ParserErrorListener#reportContextSensitivity
  *
  * @since 4.3
  */
@@ -58,16 +34,16 @@ public class ContextSensitivityInfo extends DecisionEventInfo {
 	 * with the specified detailed context sensitivity information.
 	 *
 	 * @param decision The decision number
-	 * @param configs The final configuration set containing the unique
+	 * @param state The final simulator state containing the unique
 	 * alternative identified by full-context prediction
 	 * @param input The input token stream
 	 * @param startIndex The start index for the current prediction
 	 * @param stopIndex The index at which the context sensitivity was
 	 * identified during full-context prediction
 	 */
-	public ContextSensitivityInfo(int decision, @NotNull ATNConfigSet configs,
+	public ContextSensitivityInfo(int decision, @NotNull SimulatorState state,
 								  @NotNull TokenStream input, int startIndex, int stopIndex)
 	{
-		super(decision, configs, input, startIndex, stopIndex, true);
+		super(decision, state, input, startIndex, stopIndex, true);
 	}
 }

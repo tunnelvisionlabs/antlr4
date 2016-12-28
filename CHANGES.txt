@@ -392,6 +392,8 @@ January 11, 2013
 * Reduce size of _serializedATN by adding 2 to each element: new representation
   avoids embedded values 0 and 0xFFFF which are common and have multi-byte
   representations in Java's modified UTF-8
+* Allow restriction of individual decisions to SLL prediction; blocks in parsers
+  support an "sll=true;" option to explicitly specify
 
 January 10, 2013
 

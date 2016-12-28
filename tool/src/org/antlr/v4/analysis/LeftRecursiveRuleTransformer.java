@@ -1,31 +1,7 @@
 /*
- * [The "BSD license"]
- *  Copyright (c) 2012 Terence Parr
- *  Copyright (c) 2012 Sam Harwell
- *  All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted provided that the following conditions
- *  are met:
- *
- *  1. Redistributions of source code must retain the above copyright
- *     notice, this list of conditions and the following disclaimer.
- *  2. Redistributions in binary form must reproduce the above copyright
- *     notice, this list of conditions and the following disclaimer in the
- *     documentation and/or other materials provided with the distribution.
- *  3. The name of the author may not be used to endorse or promote products
- *     derived from this software without specific prior written permission.
- *
- *  THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- *  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- *  OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- *  NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- *  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- *  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- *  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) 2012 The ANTLR Project. All rights reserved.
+ * Use of this file is governed by the BSD-3-Clause license that
+ * can be found in the LICENSE.txt file in the project root.
  */
 
 package org.antlr.v4.analysis;
@@ -42,7 +18,7 @@ import org.antlr.v4.parse.ANTLRParser;
 import org.antlr.v4.parse.GrammarASTAdaptor;
 import org.antlr.v4.parse.ScopeParser;
 import org.antlr.v4.parse.ToolANTLRParser;
-import org.antlr.v4.runtime.misc.Pair;
+import org.antlr.v4.runtime.misc.Tuple2;
 import org.antlr.v4.semantics.BasicSemanticChecks;
 import org.antlr.v4.semantics.RuleCollector;
 import org.antlr.v4.tool.AttributeDict;
@@ -92,9 +68,17 @@ public class LeftRecursiveRuleTransformer {
 		for (Rule r : rules) {
 			if ( !Grammar.isTokenName(r.name) ) {
 				if ( LeftRecursiveRuleAnalyzer.hasImmediateRecursiveRuleRefs(r.ast, r.name) ) {
-					g.originalTokenStream = g.tokenStream;
 					boolean fitsPattern = translateLeftRecursiveRule(ast, (LeftRecursiveRule)r, language);
-					if ( fitsPattern ) leftRecursiveRuleNames.add(r.name);
+					if ( fitsPattern ) {
+						leftRecursiveRuleNames.add(r.name);
+					}
+					else {
+						// Suppressed since this build has secondary support for left recursive rules that don't
+						// match the patterns for precedence rules.
+
+						// better given an error that non-conforming left-recursion exists
+						//tool.errMgr.grammarError(ErrorType.NONCONFORMING_LR_RULE, g.fileName, ((GrammarAST)r.ast.getChild(0)).token, r.name);
+					}
 				}
 			}
 		}
@@ -105,7 +89,7 @@ public class LeftRecursiveRuleTransformer {
 			if ( ((GrammarASTWithOptions)r).getOptionString(PRECEDENCE_OPTION_NAME) != null ) continue; // already has arg; must be in rewritten rule
 			if ( leftRecursiveRuleNames.contains(r.getText()) ) {
 				// found ref to recursive rule not already rewritten with arg
-				((GrammarASTWithOptions)r).setOption(PRECEDENCE_OPTION_NAME, (GrammarAST)new GrammarASTAdaptor().create(ANTLRParser.INT, "0"));
+				((GrammarASTWithOptions)r).setOption(PRECEDENCE_OPTION_NAME, new GrammarASTAdaptor().create(ANTLRParser.INT, "0"));
 			}
 		}
 	}
@@ -131,11 +115,15 @@ public class LeftRecursiveRuleTransformer {
 		}
 		if ( !isLeftRec ) return false;
 
-		// replace old rule's AST
+		// replace old rule's AST; first create text of altered rule
 		GrammarAST RULES = (GrammarAST)ast.getFirstChildWithType(ANTLRParser.RULES);
 		String newRuleText = leftRecursiveRuleWalker.getArtificialOpPrecRule();
 //		System.out.println("created: "+newRuleText);
-		RuleAST t = parseArtificialRule(g, newRuleText);
+		// now parse within the context of the grammar that originally created
+		// the AST we are transforming. This could be an imported grammar so
+		// we cannot just reference this.g because the role might come from
+		// the imported grammar and not the root grammar (this.g)
+		RuleAST t = parseArtificialRule(prevRuleAST.g, newRuleText);
 
 		// reuse the name token from the original AST since it refers to the proper source location in the original grammar
 		((GrammarAST)t.getChild(0)).token = ((GrammarAST)prevRuleAST.getChild(0)).getToken();
@@ -160,8 +148,7 @@ public class LeftRecursiveRuleTransformer {
 
 		// track recursive alt info for codegen
 		r.recPrimaryAlts = new ArrayList<LeftRecursiveRuleAltInfo>();
-		r.recPrimaryAlts.addAll(leftRecursiveRuleWalker.prefixAlts);
-		r.recPrimaryAlts.addAll(leftRecursiveRuleWalker.otherAlts);
+		r.recPrimaryAlts.addAll(leftRecursiveRuleWalker.prefixAndOtherAlts);
 		if (r.recPrimaryAlts.isEmpty()) {
 			tool.errMgr.grammarError(ErrorType.NO_NON_LR_ALTS, g.fileName, ((GrammarAST)r.ast.getChild(0)).getToken(), r.name);
 		}
@@ -186,8 +173,8 @@ public class LeftRecursiveRuleTransformer {
 
 		// define labels on recursive rule refs we delete; they don't point to nodes of course
 		// these are so $label in action translation works
-		for (Pair<GrammarAST,String> pair : leftRecursiveRuleWalker.leftRecursiveRuleRefLabels) {
-			GrammarAST labelNode = pair.a;
+		for (Tuple2<GrammarAST,String> pair : leftRecursiveRuleWalker.leftRecursiveRuleRefLabels) {
+			GrammarAST labelNode = pair.getItem1();
 			GrammarAST labelOpNode = (GrammarAST)labelNode.getParent();
 			GrammarAST elementNode = (GrammarAST)labelOpNode.getChild(1);
 			LabelElementPair lp = new LabelElementPair(g, labelNode, elementNode, labelOpNode.getType());
@@ -236,9 +223,9 @@ public class LeftRecursiveRuleTransformer {
 	 * 			(ALT ID))
 	 * 		(* (BLOCK
 	 *			(OPTIONS ...)
-	 * 			(ALT {7 >= $_p}? '*' (= b e) {$v = $a.v * $b.v;})
-	 * 			(ALT {6 >= $_p}? '+' (= b e) {$v = $a.v + $b.v;})
-	 * 			(ALT {3 >= $_p}? '++') (ALT {2 >= $_p}? '--'))))))
+	 * 			(ALT {7 &gt;= $_p}? '*' (= b e) {$v = $a.v * $b.v;})
+	 * 			(ALT {6 &gt;= $_p}? '+' (= b e) {$v = $a.v + $b.v;})
+	 * 			(ALT {3 &gt;= $_p}? '++') (ALT {2 &gt;= $_p}? '--'))))))
 	 * </pre>
 	 */
 	public void setAltASTPointers(LeftRecursiveRule r, RuleAST t) {

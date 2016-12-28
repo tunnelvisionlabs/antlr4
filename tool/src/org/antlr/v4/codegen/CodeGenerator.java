@@ -1,31 +1,7 @@
 /*
- * [The "BSD license"]
- *  Copyright (c) 2012 Terence Parr
- *  Copyright (c) 2012 Sam Harwell
- *  All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted provided that the following conditions
- *  are met:
- *
- *  1. Redistributions of source code must retain the above copyright
- *     notice, this list of conditions and the following disclaimer.
- *  2. Redistributions in binary form must reproduce the above copyright
- *     notice, this list of conditions and the following disclaimer in the
- *     documentation and/or other materials provided with the distribution.
- *  3. The name of the author may not be used to endorse or promote products
- *     derived from this software without specific prior written permission.
- *
- *  THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- *  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- *  OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- *  NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- *  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- *  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- *  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) 2012 The ANTLR Project. All rights reserved.
+ * Use of this file is governed by the BSD-3-Clause license that
+ * can be found in the LICENSE.txt file in the project root.
  */
 
 package org.antlr.v4.codegen;
@@ -45,6 +21,7 @@ import org.stringtemplate.v4.STWriter;
 import java.io.IOException;
 import java.io.Writer;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -69,12 +46,6 @@ public class CodeGenerator {
 
 	public int lineWidth = 72;
 
-	private CodeGenerator(String language) {
-		this.g = null;
-		this.tool = null;
-		this.language = language;
-	}
-
 	public CodeGenerator(@NotNull Grammar g) {
 		this(g.tool, g, g.getOptionString("language"));
 	}
@@ -85,44 +56,55 @@ public class CodeGenerator {
 		this.language = language != null ? language : DEFAULT_LANGUAGE;
 	}
 
-	public static boolean targetExists(String language) {
-		String targetName = "org.antlr.v4.codegen."+language+"Target";
-		try {
-			Class<? extends Target> c = Class.forName(targetName).asSubclass(Target.class);
-			Constructor<? extends Target> ctor = c.getConstructor(CodeGenerator.class);
-			CodeGenerator gen = new CodeGenerator(language);
-			Target target = ctor.newInstance(gen);
-			return target.templatesExist();
-		}
-		catch (Exception e) { // ignore errors; we're detecting presence only
-		}
-		return false;
-	}
-
 	@Nullable
 	public Target getTarget() {
-		if ( target == null && targetExists(language) ) {
+		if (target == null) {
 			loadLanguageTarget(language);
 		}
+
 		return target;
 	}
 
 	@Nullable
 	public STGroup getTemplates() {
-		Target t = getTarget();
-		return t==null ? null : t.getTemplates();
+		Target target = getTarget();
+		if (target == null) {
+			return null;
+		}
+
+		return target.getTemplates();
 	}
 
 	protected void loadLanguageTarget(String language) {
-		String targetName = "org.antlr.v4.codegen."+language+"Target";
+		String targetName = "org.antlr.v4.codegen.target."+language+"Target";
 		try {
 			Class<? extends Target> c = Class.forName(targetName).asSubclass(Target.class);
 			Constructor<? extends Target> ctor = c.getConstructor(CodeGenerator.class);
 			target = ctor.newInstance(this);
 		}
-		catch (Exception e) {
+		catch (ClassNotFoundException cnfe) {
 			tool.errMgr.toolError(ErrorType.CANNOT_CREATE_TARGET_GENERATOR,
-						 e,
+						 cnfe,
+						 targetName);
+		}
+		catch (NoSuchMethodException nsme) {
+			tool.errMgr.toolError(ErrorType.CANNOT_CREATE_TARGET_GENERATOR,
+						 nsme,
+						 targetName);
+		}
+		catch (InvocationTargetException ite) {
+			tool.errMgr.toolError(ErrorType.CANNOT_CREATE_TARGET_GENERATOR,
+						 ite,
+						 targetName);
+		}
+		catch (InstantiationException ie) {
+			tool.errMgr.toolError(ErrorType.CANNOT_CREATE_TARGET_GENERATOR,
+						 ie,
+						 targetName);
+		}
+		catch (IllegalAccessException cnfe) {
+			tool.errMgr.toolError(ErrorType.CANNOT_CREATE_TARGET_GENERATOR,
+						 cnfe,
 						 targetName);
 		}
 	}
@@ -136,17 +118,33 @@ public class CodeGenerator {
 		return controller;
 	}
 
-	private ST walk(OutputModelObject outputModel) {
-		OutputModelWalker walker = new OutputModelWalker(tool, getTemplates());
-		return walker.walk(outputModel);
+	private ST walk(OutputModelObject outputModel, boolean header) {
+		Target target = getTarget();
+		if (target == null) {
+			throw new UnsupportedOperationException("Cannot generate code without a target.");
+		}
+
+		OutputModelWalker walker = new OutputModelWalker(tool, target.getTemplates());
+		return walker.walk(outputModel, header);
 	}
 
-	public ST generateLexer() { return walk(createController().buildLexerOutputModel()); }
-	public ST generateParser() { return walk(createController().buildParserOutputModel()); }
-	public ST generateListener() { return walk(createController().buildListenerOutputModel()); }
-	public ST generateBaseListener() { return walk(createController().buildBaseListenerOutputModel()); }
-	public ST generateVisitor() { return walk(createController().buildVisitorOutputModel()); }
-	public ST generateBaseVisitor() { return walk(createController().buildBaseVisitorOutputModel()); }
+	public ST generateLexer() { return generateLexer(false); }
+	public ST generateLexer(boolean header) { return walk(createController().buildLexerOutputModel(header), header); }
+
+	public ST generateParser() { return generateParser(false); }
+	public ST generateParser(boolean header) { return walk(createController().buildParserOutputModel(header), header); }
+
+	public ST generateListener() { return generateListener(false); }
+	public ST generateListener(boolean header) { return walk(createController().buildListenerOutputModel(header), header); }
+
+	public ST generateBaseListener() { return generateBaseListener(false); }
+	public ST generateBaseListener(boolean header) { return walk(createController().buildBaseListenerOutputModel(header), header); }
+
+	public ST generateVisitor() { return generateVisitor(false); }
+	public ST generateVisitor(boolean header) { return walk(createController().buildVisitorOutputModel(header), header); }
+
+	public ST generateBaseVisitor() { return generateBaseVisitor(false); }
+	public ST generateBaseVisitor(boolean header) { return walk(createController().buildBaseVisitorOutputModel(header), header); }
 
 	/** Generate a token vocab file with all the token names/types.  For example:
 	 *  ID=7
@@ -157,7 +155,7 @@ public class CodeGenerator {
 	 */
 	ST getTokenVocabOutput() {
 		ST vocabFileST = new ST(vocabFilePattern);
-		Map<String,Integer> tokens = new LinkedHashMap<String,Integer>();
+		Map<String, Integer> tokens = new LinkedHashMap<String, Integer>();
 		// make constants for the token names
 		for (String t : g.tokenNameToTypeMap.keySet()) {
 			int tokenType = g.tokenNameToTypeMap.get(t);
@@ -168,7 +166,7 @@ public class CodeGenerator {
 		vocabFileST.add("tokens", tokens);
 
 		// now dump the strings
-		Map<String,Integer> literals = new LinkedHashMap<String,Integer>();
+		Map<String, Integer> literals = new LinkedHashMap<String, Integer>();
 		for (String literal : g.stringLiteralToTypeMap.keySet()) {
 			int tokenType = g.stringLiteralToTypeMap.get(literal);
 			if ( tokenType>=Token.MIN_USER_TOKEN_TYPE) {
@@ -180,56 +178,77 @@ public class CodeGenerator {
 		return vocabFileST;
 	}
 
-	public void writeRecognizer(ST outputFileST) {
-		getTarget().genFile(g, outputFileST, getRecognizerFileName());
-	}
-
-	public void writeListener(ST outputFileST) {
-		getTarget().genFile(g, outputFileST, getListenerFileName());
-	}
-
-	public void writeBaseListener(ST outputFileST) {
-		getTarget().genFile(g, outputFileST, getBaseListenerFileName());
-	}
-
-	public void writeVisitor(ST outputFileST) {
-		getTarget().genFile(g, outputFileST, getVisitorFileName());
-	}
-
-	public void writeBaseVisitor(ST outputFileST) {
-		getTarget().genFile(g, outputFileST, getBaseVisitorFileName());
-	}
-
-	public void writeHeaderFile() {
-		String fileName = getHeaderFileName();
-		if ( fileName==null ) return;
-		if ( getTemplates().isDefined("headerFile") ) {
-			ST extST = getTemplates().getInstanceOf("headerFileExtension");
-			ST headerFileST = null;
-			// TODO:  don't hide this header file generation here!
-			getTarget().genRecognizerHeaderFile(g, headerFileST, extST.render(lineWidth));
+	public void writeRecognizer(ST outputFileST, boolean header) {
+		Target target = getTarget();
+		if (target == null) {
+			throw new UnsupportedOperationException("Cannot generate code without a target.");
 		}
+
+		target.genFile(g, outputFileST, getRecognizerFileName(header));
+	}
+
+	public void writeListener(ST outputFileST, boolean header) {
+		Target target = getTarget();
+		if (target == null) {
+			throw new UnsupportedOperationException("Cannot generate code without a target.");
+		}
+
+		target.genFile(g, outputFileST, getListenerFileName(header));
+	}
+
+	public void writeBaseListener(ST outputFileST, boolean header) {
+		Target target = getTarget();
+		if (target == null) {
+			throw new UnsupportedOperationException("Cannot generate code without a target.");
+		}
+
+		target.genFile(g, outputFileST, getBaseListenerFileName(header));
+	}
+
+	public void writeVisitor(ST outputFileST, boolean header) {
+		Target target = getTarget();
+		if (target == null) {
+			throw new UnsupportedOperationException("Cannot generate code without a target.");
+		}
+
+		target.genFile(g, outputFileST, getVisitorFileName(header));
+	}
+
+	public void writeBaseVisitor(ST outputFileST, boolean header) {
+		Target target = getTarget();
+		if (target == null) {
+			throw new UnsupportedOperationException("Cannot generate code without a target.");
+		}
+
+		target.genFile(g, outputFileST, getBaseVisitorFileName(header));
 	}
 
 	public void writeVocabFile() {
+		Target target = getTarget();
+		if (target == null) {
+			throw new UnsupportedOperationException("Cannot generate code without a target.");
+		}
+
 		// write out the vocab interchange file; used by antlr,
 		// does not change per target
 		ST tokenVocabSerialization = getTokenVocabOutput();
 		String fileName = getVocabFileName();
 		if ( fileName!=null ) {
-			getTarget().genFile(g, tokenVocabSerialization, fileName);
+			target.genFile(g, tokenVocabSerialization, fileName);
 		}
 	}
 
 	public void write(ST code, String fileName) {
 		try {
-//			long start = System.currentTimeMillis();
+			@SuppressWarnings("unused")
+			long start = System.currentTimeMillis();
 			Writer w = tool.getOutputFileWriter(g, fileName);
 			STWriter wr = new AutoIndentWriter(w);
 			wr.setLineWidth(lineWidth);
 			code.write(wr);
 			w.close();
-//			long stop = System.currentTimeMillis();
+			@SuppressWarnings("unused")
+			long stop = System.currentTimeMillis();
 		}
 		catch (IOException ioe) {
 			tool.errMgr.toolError(ErrorType.CANNOT_WRITE_FILE,
@@ -238,53 +257,55 @@ public class CodeGenerator {
 		}
 	}
 
-	/** Generate TParser.java and TLexer.java from T.g4 if combined, else
-	 *  just use T.java as output regardless of type.
-	 */
-	public String getRecognizerFileName() {
-		ST extST = getTemplates().getInstanceOf("codeFileExtension");
-		String recognizerName = g.getRecognizerName();
-		return recognizerName+extST.render();
+	public String getRecognizerFileName() { return getRecognizerFileName(false); }
+	public String getListenerFileName() { return getListenerFileName(false); }
+	public String getVisitorFileName() { return getVisitorFileName(false); }
+	public String getBaseListenerFileName() { return getBaseListenerFileName(false); }
+	public String getBaseVisitorFileName() { return getBaseVisitorFileName(false); }
+
+	public String getRecognizerFileName(boolean header) {
+		Target target = getTarget();
+		if (target == null) {
+			throw new UnsupportedOperationException("Cannot generate code without a target.");
+		}
+
+		return target.getRecognizerFileName(header);
 	}
 
-	/** A given grammar T, return the listener name such as
-	 *  TListener.java, if we're using the Java target.
- 	 */
-	public String getListenerFileName() {
-		assert g.name != null;
-		ST extST = getTemplates().getInstanceOf("codeFileExtension");
-		String listenerName = g.name + "Listener";
-		return listenerName+extST.render();
+	public String getListenerFileName(boolean header) {
+		Target target = getTarget();
+		if (target == null) {
+			throw new UnsupportedOperationException("Cannot generate code without a target.");
+		}
+
+		return target.getListenerFileName(header);
 	}
 
-	/** A given grammar T, return the visitor name such as
-	 *  TVisitor.java, if we're using the Java target.
- 	 */
-	public String getVisitorFileName() {
-		assert g.name != null;
-		ST extST = getTemplates().getInstanceOf("codeFileExtension");
-		String listenerName = g.name + "Visitor";
-		return listenerName+extST.render();
+	public String getVisitorFileName(boolean header) {
+		Target target = getTarget();
+		if (target == null) {
+			throw new UnsupportedOperationException("Cannot generate code without a target.");
+		}
+
+		return target.getVisitorFileName(header);
 	}
 
-	/** A given grammar T, return a blank listener implementation
-	 *  such as TBaseListener.java, if we're using the Java target.
- 	 */
-	public String getBaseListenerFileName() {
-		assert g.name != null;
-		ST extST = getTemplates().getInstanceOf("codeFileExtension");
-		String listenerName = g.name + "BaseListener";
-		return listenerName+extST.render();
+	public String getBaseListenerFileName(boolean header) {
+		Target target = getTarget();
+		if (target == null) {
+			throw new UnsupportedOperationException("Cannot generate code without a target.");
+		}
+
+		return target.getBaseListenerFileName(header);
 	}
 
-	/** A given grammar T, return a blank listener implementation
-	 *  such as TBaseListener.java, if we're using the Java target.
- 	 */
-	public String getBaseVisitorFileName() {
-		assert g.name != null;
-		ST extST = getTemplates().getInstanceOf("codeFileExtension");
-		String listenerName = g.name + "BaseVisitor";
-		return listenerName+extST.render();
+	public String getBaseVisitorFileName(boolean header) {
+		Target target = getTarget();
+		if (target == null) {
+			throw new UnsupportedOperationException("Cannot generate code without a target.");
+		}
+
+		return target.getBaseVisitorFileName(header);
 	}
 
 	/** What is the name of the vocab file generated for this grammar?
@@ -295,10 +316,14 @@ public class CodeGenerator {
 	}
 
 	public String getHeaderFileName() {
-		ST extST = getTemplates().getInstanceOf("headerFileExtension");
+		Target target = getTarget();
+		if (target == null) {
+			throw new UnsupportedOperationException("Cannot generate code without a target.");
+		}
+
+		ST extST = target.getTemplates().getInstanceOf("headerFileExtension");
 		if ( extST==null ) return null;
 		String recognizerName = g.getRecognizerName();
 		return recognizerName+extST.render();
 	}
-
 }

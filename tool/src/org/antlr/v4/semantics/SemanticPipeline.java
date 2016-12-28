@@ -1,46 +1,26 @@
 /*
- * [The "BSD license"]
- *  Copyright (c) 2012 Terence Parr
- *  Copyright (c) 2012 Sam Harwell
- *  All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted provided that the following conditions
- *  are met:
- *
- *  1. Redistributions of source code must retain the above copyright
- *     notice, this list of conditions and the following disclaimer.
- *  2. Redistributions in binary form must reproduce the above copyright
- *     notice, this list of conditions and the following disclaimer in the
- *     documentation and/or other materials provided with the distribution.
- *  3. The name of the author may not be used to endorse or promote products
- *     derived from this software without specific prior written permission.
- *
- *  THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- *  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- *  OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- *  NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- *  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- *  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- *  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) 2012 The ANTLR Project. All rights reserved.
+ * Use of this file is governed by the BSD-3-Clause license that
+ * can be found in the LICENSE.txt file in the project root.
  */
 
 package org.antlr.v4.semantics;
 
+import org.antlr.v4.analysis.LeftFactoringRuleTransformer;
 import org.antlr.v4.analysis.LeftRecursiveRuleTransformer;
+import org.antlr.v4.automata.LexerATNFactory;
 import org.antlr.v4.parse.ANTLRParser;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.misc.NotNull;
-import org.antlr.v4.runtime.misc.Pair;
+import org.antlr.v4.runtime.misc.Tuple2;
 import org.antlr.v4.tool.ErrorType;
 import org.antlr.v4.tool.Grammar;
 import org.antlr.v4.tool.LexerGrammar;
 import org.antlr.v4.tool.Rule;
 import org.antlr.v4.tool.ast.GrammarAST;
+import org.antlr.v4.tool.ast.RuleAST;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -82,17 +62,37 @@ public class SemanticPipeline {
 		RuleCollector ruleCollector = new RuleCollector(g);
 		ruleCollector.process(g.ast);
 
+		// CLONE RULE ASTs FOR CONTEXT REFERENCE
+		for (Rule rule : ruleCollector.rules.values()) {
+			List<RuleAST> list = g.contextASTs.get(rule.getBaseContext());
+			if (list == null) {
+				list = new ArrayList<RuleAST>();
+				g.contextASTs.put(rule.getBaseContext(), list);
+			}
+
+			list.add((RuleAST)rule.ast.dupTree());
+		}
+
 		// DO BASIC / EASY SEMANTIC CHECKS
+		int prevErrors = g.tool.errMgr.getNumErrors();
 		BasicSemanticChecks basics = new BasicSemanticChecks(g, ruleCollector);
 		basics.process();
-
-		// don't continue if we get errors in this basic check
-		//if ( false ) return;
+		if ( g.tool.errMgr.getNumErrors()>prevErrors ) return;
 
 		// TRANSFORM LEFT-RECURSIVE RULES
+		prevErrors = g.tool.errMgr.getNumErrors();
 		LeftRecursiveRuleTransformer lrtrans =
 			new LeftRecursiveRuleTransformer(g.ast, ruleCollector.rules.values(), g);
 		lrtrans.translateLeftRecursiveRules();
+
+		// don't continue if we got errors during left-recursion elimination
+		if ( g.tool.errMgr.getNumErrors()>prevErrors ) {
+			return;
+		}
+
+		// AUTO LEFT FACTORING
+		LeftFactoringRuleTransformer lftrans = new LeftFactoringRuleTransformer(g.ast, ruleCollector.rules, g);
+		lftrans.translateLeftFactoredRules();
 
 		// STORE RULES IN GRAMMAR
 		for (Rule r : ruleCollector.rules.values()) {
@@ -127,6 +127,8 @@ public class SemanticPipeline {
 			assignTokenTypes(g, collector.tokensDefs,
 							 collector.tokenIDRefs, collector.terminals);
 		}
+
+		symcheck.checkForModeConflicts(g);
 
 		assignChannelTypes(g, collector.channelDefs);
 
@@ -171,13 +173,12 @@ public class SemanticPipeline {
 		}
 
 		// FOR ALL X : 'xxx'; RULES, DEFINE 'xxx' AS TYPE X
-		List<Pair<GrammarAST,GrammarAST>> litAliases =
-			Grammar.getStringLiteralAliasesFromLexerRules(g.ast);
+		List<Tuple2<GrammarAST,GrammarAST>> litAliases = Grammar.getStringLiteralAliasesFromLexerRules(g.ast);
 		Set<String> conflictingLiterals = new HashSet<String>();
 		if ( litAliases!=null ) {
-			for (Pair<GrammarAST,GrammarAST> pair : litAliases) {
-				GrammarAST nameAST = pair.a;
-				GrammarAST litAST = pair.b;
+			for (Tuple2<GrammarAST,GrammarAST> pair : litAliases) {
+				GrammarAST nameAST = pair.getItem1();
+				GrammarAST litAST = pair.getItem2();
 				if ( !G.stringLiteralToTypeMap.containsKey(litAST.getText()) ) {
 					G.defineTokenAlias(nameAST.getText(), litAST.getText());
 				}
@@ -285,6 +286,10 @@ public class SemanticPipeline {
 
 			if (g.getTokenType(channelName) != Token.INVALID_TYPE) {
 				g.tool.errMgr.grammarError(ErrorType.CHANNEL_CONFLICTS_WITH_TOKEN, g.fileName, channel.token, channelName);
+			}
+
+			if (LexerATNFactory.COMMON_CONSTANTS.containsKey(channelName)) {
+				g.tool.errMgr.grammarError(ErrorType.CHANNEL_CONFLICTS_WITH_COMMON_CONSTANTS, g.fileName, channel.token, channelName);
 			}
 
 			if (outermost instanceof LexerGrammar) {

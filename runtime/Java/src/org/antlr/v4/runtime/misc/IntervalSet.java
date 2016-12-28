@@ -1,31 +1,7 @@
 /*
- * [The "BSD license"]
- *  Copyright (c) 2012 Terence Parr
- *  Copyright (c) 2012 Sam Harwell
- *  All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted provided that the following conditions
- *  are met:
- *
- *  1. Redistributions of source code must retain the above copyright
- *     notice, this list of conditions and the following disclaimer.
- *  2. Redistributions in binary form must reproduce the above copyright
- *     notice, this list of conditions and the following disclaimer in the
- *     documentation and/or other materials provided with the distribution.
- *  3. The name of the author may not be used to endorse or promote products
- *     derived from this software without specific prior written permission.
- *
- *  THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- *  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- *  OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- *  NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- *  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- *  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- *  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) 2012 The ANTLR Project. All rights reserved.
+ * Use of this file is governed by the BSD-3-Clause license that
+ * can be found in the LICENSE.txt file in the project root.
  */
 package org.antlr.v4.runtime.misc;
 
@@ -663,27 +639,6 @@ public class IntervalSet implements IntSet {
 		return s;
 	}
 
-	/** Get the ith element of ordered set.  Used only by RandomPhrase so
-	 *  don't bother to implement if you're not doing that for a new
-	 *  ANTLR code gen target.
-	 */
-	public int get(int i) {
-		int n = intervals.size();
-		int index = 0;
-		for (int j = 0; j < n; j++) {
-			Interval I = intervals.get(j);
-			int a = I.a;
-			int b = I.b;
-			for (int v=a; v<=b; v++) {
-				if ( index==i ) {
-					return v;
-				}
-				index++;
-			}
-		}
-		return -1;
-	}
-
 	public int[] toArray() {
 		return toIntegerList().toArray();
 	}
@@ -706,18 +661,18 @@ public class IntervalSet implements IntSet {
             }
             // if on left edge x..b, adjust left
             if ( el==a ) {
-                I.a++;
+                intervals.set(i, Interval.of(I.a + 1, I.b));
                 break;
             }
             // if on right edge a..x, adjust right
             if ( el==b ) {
-                I.b--;
+                intervals.set(i, Interval.of(I.a, I.b - 1));
                 break;
             }
             // if in middle a..x..b, split interval
             if ( el>a && el<b ) { // found in this interval
                 int oldb = I.b;
-                I.b = el-1;      // [a..x-1]
+                intervals.set(i, Interval.of(I.a, el - 1)); // [a..x-1]
                 add(el+1, oldb); // add [x+1..b]
             }
         }

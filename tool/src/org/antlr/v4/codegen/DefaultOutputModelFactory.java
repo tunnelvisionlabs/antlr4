@@ -1,35 +1,12 @@
 /*
- * [The "BSD license"]
- *  Copyright (c) 2012 Terence Parr
- *  Copyright (c) 2012 Sam Harwell
- *  All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted provided that the following conditions
- *  are met:
- *
- *  1. Redistributions of source code must retain the above copyright
- *     notice, this list of conditions and the following disclaimer.
- *  2. Redistributions in binary form must reproduce the above copyright
- *     notice, this list of conditions and the following disclaimer in the
- *     documentation and/or other materials provided with the distribution.
- *  3. The name of the author may not be used to endorse or promote products
- *     derived from this software without specific prior written permission.
- *
- *  THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- *  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- *  OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- *  NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- *  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- *  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- *  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) 2012 The ANTLR Project. All rights reserved.
+ * Use of this file is governed by the BSD-3-Clause license that
+ * can be found in the LICENSE.txt file in the project root.
  */
 
 package org.antlr.v4.codegen;
 
+import org.antlr.v4.codegen.model.Action;
 import org.antlr.v4.codegen.model.CodeBlockForOuterMostAlt;
 import org.antlr.v4.codegen.model.OutputModelObject;
 import org.antlr.v4.codegen.model.RuleFunction;
@@ -40,6 +17,9 @@ import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.misc.Nullable;
 import org.antlr.v4.tool.Alternative;
 import org.antlr.v4.tool.Grammar;
+import org.antlr.v4.tool.Rule;
+import org.stringtemplate.v4.ST;
+import org.stringtemplate.v4.STGroup;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -63,6 +43,10 @@ public abstract class DefaultOutputModelFactory extends BlankOutputModelFactory 
 	protected DefaultOutputModelFactory(@NotNull CodeGenerator gen) {
 		this.gen = gen;
 		this.g = gen.g;
+
+		if (gen.getTarget() == null) {
+			throw new UnsupportedOperationException("Cannot build an output model without a target.");
+		}
 	}
 
 	@Override
@@ -75,6 +59,22 @@ public abstract class DefaultOutputModelFactory extends BlankOutputModelFactory 
 		return controller;
 	}
 
+	@Override
+	public List<SrcOp> rulePostamble(RuleFunction function, Rule r) {
+		if ( r.namedActions.containsKey("after") || r.namedActions.containsKey("finally") ) {
+			// See OutputModelController.buildLeftRecursiveRuleFunction
+			// and Parser.exitRule for other places which set stop.
+			CodeGenerator gen = getGenerator();
+			STGroup codegenTemplates = gen.getTemplates();
+			ST setStopTokenAST = codegenTemplates.getInstanceOf("recRuleSetStopToken");
+			Action setStopTokenAction = new Action(this, function.ruleCtx, setStopTokenAST);
+			List<SrcOp> ops = new ArrayList<SrcOp>(1);
+			ops.add(setStopTokenAction);
+			return ops;
+		}
+		return super.rulePostamble(function, r);
+	}
+
 	// Convenience methods
 
 	@NotNull
@@ -83,6 +83,13 @@ public abstract class DefaultOutputModelFactory extends BlankOutputModelFactory 
 
 	@Override
 	public CodeGenerator getGenerator() { return gen; }
+
+	@Override
+	public Target getTarget() {
+		Target target = getGenerator().getTarget();
+		assert target != null;
+		return target;
+	}
 
 	@Override
 	public OutputModelObject getRoot() { return controller.getRoot(); }

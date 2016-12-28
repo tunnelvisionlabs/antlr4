@@ -1,31 +1,7 @@
 /*
- * [The "BSD license"]
- *  Copyright (c) 2012 Terence Parr
- *  Copyright (c) 2012 Sam Harwell
- *  All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted provided that the following conditions
- *  are met:
- *
- *  1. Redistributions of source code must retain the above copyright
- *     notice, this list of conditions and the following disclaimer.
- *  2. Redistributions in binary form must reproduce the above copyright
- *     notice, this list of conditions and the following disclaimer in the
- *     documentation and/or other materials provided with the distribution.
- *  3. The name of the author may not be used to endorse or promote products
- *     derived from this software without specific prior written permission.
- *
- *  THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- *  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- *  OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- *  NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- *  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- *  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- *  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) 2012 The ANTLR Project. All rights reserved.
+ * Use of this file is governed by the BSD-3-Clause license that
+ * can be found in the LICENSE.txt file in the project root.
  */
 
 package org.antlr.v4.semantics;
@@ -54,6 +30,7 @@ import org.stringtemplate.v4.misc.MultiMap;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /** No side-effects except for setting options into the appropriate node.
  *  TODO:  make the side effects into a separate pass this
@@ -85,6 +62,7 @@ public class BasicSemanticChecks extends GrammarTreeVisitor {
 	 *  validDelegations.get(LEXER) gives list of the kinds of delegators
 	 *  that can import lexers.
 	 */
+	@SuppressWarnings("serial")
 	public static MultiMap<Integer,Integer> validImportTypes =
 		new MultiMap<Integer,Integer>() {
 			{
@@ -246,6 +224,7 @@ public class BasicSemanticChecks extends GrammarTreeVisitor {
 
 	@Override
 	public void grammarOption(GrammarAST ID, GrammarAST valueAST) {
+		@SuppressWarnings("unused")
 		boolean ok = checkOptions(g.ast, ID.token, valueAST);
 		//if ( ok ) g.ast.setOption(ID.getText(), value);
 	}
@@ -273,6 +252,7 @@ public class BasicSemanticChecks extends GrammarTreeVisitor {
 	@Override
 	public void elementOption(GrammarASTWithOptions elem, GrammarAST ID, GrammarAST valueAST) {
 		String v = null;
+		@SuppressWarnings("unused")
 		boolean ok = checkElementOptions(elem, ID, valueAST);
 //		if ( ok ) {
 //			if ( v!=null ) {
@@ -282,6 +262,99 @@ public class BasicSemanticChecks extends GrammarTreeVisitor {
 //				t.setOption(TerminalAST.defaultTokenOption, v);
 //			}
 //		}
+	}
+
+	/**
+	 * This method detects the following errors, which require analysis across
+	 * the whole grammar for rules according to their base context.
+	 *
+	 * <ul>
+	 * <li>{@link ErrorType#RULE_WITH_TOO_FEW_ALT_LABELS_GROUP}</li>
+	 * <li>{@link ErrorType#BASE_CONTEXT_MUST_BE_RULE_NAME}</li>
+	 * <li>{@link ErrorType#BASE_CONTEXT_CANNOT_BE_TRANSITIVE}</li>
+	 * <li>{@link ErrorType#LEXER_RULE_CANNOT_HAVE_BASE_CONTEXT}</li>
+	 * </ul>
+	 */
+	@Override
+	public void finishGrammar(GrammarRootAST root, GrammarAST ID) {
+		MultiMap<String, Rule> baseContexts = new MultiMap<String, Rule>();
+		for (Rule r : ruleCollector.rules.values()) {
+			GrammarAST optionAST = r.ast.getOptionAST("baseContext");
+
+			if (r.ast.isLexerRule()) {
+				if (optionAST != null) {
+					Token errorToken = optionAST.getToken();
+					g.tool.errMgr.grammarError(ErrorType.LEXER_RULE_CANNOT_HAVE_BASE_CONTEXT,
+											   g.fileName, errorToken, r.name);
+				}
+
+				continue;
+			}
+
+			baseContexts.map(r.getBaseContext(), r);
+
+			if (optionAST != null) {
+				Rule targetRule = ruleCollector.rules.get(r.getBaseContext());
+				boolean targetSpecifiesBaseContext =
+					targetRule != null
+					&& targetRule.ast != null
+					&& (targetRule.ast.getOptionAST("baseContext") != null
+						|| !targetRule.name.equals(targetRule.getBaseContext()));
+
+				if (targetSpecifiesBaseContext) {
+					Token errorToken = optionAST.getToken();
+					g.tool.errMgr.grammarError(ErrorType.BASE_CONTEXT_CANNOT_BE_TRANSITIVE,
+											   g.fileName, errorToken, r.name);
+				}
+			}
+
+			// It's unlikely for this to occur when optionAST is null, but checking
+			// anyway means it can detect certain errors within the logic of the
+			// Tool itself.
+			if (!ruleCollector.rules.containsKey(r.getBaseContext())) {
+				Token errorToken;
+				if (optionAST != null) {
+					errorToken = optionAST.getToken();
+				}
+				else {
+					errorToken = ((CommonTree)r.ast.getChild(0)).getToken();
+				}
+
+				g.tool.errMgr.grammarError(ErrorType.BASE_CONTEXT_MUST_BE_RULE_NAME,
+										   g.fileName, errorToken, r.name);
+			}
+		}
+
+		for (Map.Entry<String, List<Rule>> entry : baseContexts.entrySet()) {
+			// suppress RULE_WITH_TOO_FEW_ALT_LABELS_GROUP if RULE_WITH_TOO_FEW_ALT_LABELS
+			// would already have been reported for at least one rule with this
+			// base context.
+			boolean suppressError = false;
+			int altLabelCount = 0;
+			int outerAltCount = 0;
+			for (Rule rule : entry.getValue()) {
+				outerAltCount += rule.numberOfAlts;
+				List<GrammarAST> altLabels = ruleCollector.ruleToAltLabels.get(rule.name);
+				if (altLabels != null && !altLabels.isEmpty()) {
+					if (altLabels.size() != rule.numberOfAlts) {
+						suppressError = true;
+						break;
+					}
+
+					altLabelCount += altLabels.size();
+				}
+			}
+
+			if (suppressError) {
+				continue;
+			}
+
+			if (altLabelCount != 0 && altLabelCount != outerAltCount) {
+				Rule errorRule = entry.getValue().get(0);
+				g.tool.errMgr.grammarError(ErrorType.RULE_WITH_TOO_FEW_ALT_LABELS_GROUP,
+										   g.fileName, ((CommonTree)errorRule.ast.getChild(0)).getToken(), errorRule.name);
+			}
+		}
 	}
 
 	@Override
@@ -349,7 +422,7 @@ public class BasicSemanticChecks extends GrammarTreeVisitor {
 			GrammarAST root = (GrammarAST)rulesNode.getParent();
 			GrammarAST IDNode = (GrammarAST)root.getChild(0);
 			g.tool.errMgr.grammarError(ErrorType.NO_RULES, g.fileName,
-									   null, IDNode.getText(), g);
+					null, IDNode.getText(), g);
 		}
 	}
 
@@ -489,6 +562,14 @@ public class BasicSemanticChecks extends GrammarTreeVisitor {
 								   g.fileName,
 								   label,
 								   label.getText());
+	}
+
+	@Override
+	protected void enterTerminal(GrammarAST tree) {
+		String text = tree.getText();
+		if (text.equals("''")) {
+			g.tool.errMgr.grammarError(ErrorType.EMPTY_STRINGS_AND_SETS_NOT_ALLOWED, g.fileName, tree.token, "''");
+		}
 	}
 
 	/** Check option is appropriate for grammar, rule, subrule */

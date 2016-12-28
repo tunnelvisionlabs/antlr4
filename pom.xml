@@ -1,15 +1,21 @@
+<!--
+  ~ Copyright (c) 2012 The ANTLR Project. All rights reserved.
+  ~ Use of this file is governed by the BSD-3-Clause license that
+  ~ can be found in the LICENSE.txt file in the project root.
+  -->
+
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
     <parent>
         <groupId>org.sonatype.oss</groupId>
         <artifactId>oss-parent</artifactId>
-        <version>7</version>
+        <version>9</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
-    <groupId>org.antlr</groupId>
+    <groupId>com.tunnelvisionlabs</groupId>
     <artifactId>antlr4-master</artifactId>
-    <version>4.4-SNAPSHOT</version>
+    <version>4.6.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>ANTLR 4</name>
@@ -17,8 +23,12 @@
     <url>http://www.antlr.org</url>
     <inceptionYear>1992</inceptionYear>
     <organization>
-        <name>ANTLR</name>
-        <url>http://www.antlr.org</url>
+        <!--
+          The organization name is used in the manifests of the Jar files. Set to Tunnel Vision Labs for this custom
+          build.
+        -->
+        <name>Tunnel Vision Laboratories, LLC</name>
+        <url>http://tunnelvisionlabs.com</url>
     </organization>
 
     <licenses>
@@ -33,7 +43,7 @@
 
         <developer>
             <name>Terence Parr</name>
-            <url>http://antlr.org/wiki/display/~admin/Home</url>
+            <url>http://parrt.cs.usfca.edu</url>
             <roles>
                 <role>Project lead - ANTLR</role>
             </roles>
@@ -63,6 +73,8 @@
         <module>runtime/JavaAnnotations</module>
         <module>tool</module>
         <module>antlr4-maven-plugin</module>
+        <module>antlr4-testgen-maven-plugin</module>
+        <module>runtime-testsuite</module>
     </modules>
 
     <properties>
@@ -132,6 +144,40 @@
                 </plugins>
             </build>
         </profile>
+
+        <profile>
+            <id>jdk6-bnd</id>
+            <activation>
+                <jdk>1.6</jdk>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.felix</groupId>
+                        <artifactId>maven-bundle-plugin</artifactId>
+                        <version>2.5.4</version>
+                        <extensions>true</extensions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>jdk7plus-bnd</id>
+            <activation>
+                <jdk>!1.6</jdk>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.felix</groupId>
+                        <artifactId>maven-bundle-plugin</artifactId>
+                        <version>3.0.1</version>
+                        <extensions>true</extensions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
     </profiles>
 
     <build>
@@ -139,7 +185,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.1</version>
+                <version>3.6.0</version>
                 <configuration>
                     <showWarnings>true</showWarnings>
                     <showDeprecation>true</showDeprecation>
@@ -155,7 +201,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
-                <version>2.4</version>
+                <version>2.6</version>
                 <configuration>
                     <archive>
                         <manifest>
@@ -168,21 +214,21 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.16</version>
+                <version>2.18.1</version>
             </plugin>
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
                 <!-- override the version inherited from the parent -->
-                <version>2.2.1</version>
+                <version>2.4</version>
             </plugin>
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <!-- override the version inherited from the parent -->
-                <version>2.9.1</version>
+                <version>2.10.3</version>
                 <configuration>
                     <quiet>true</quiet>
                 </configuration>
@@ -192,16 +238,18 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-gpg-plugin</artifactId>
                 <!-- override the version inherited from the parent -->
-                <version>1.4</version>
+                <version>1.6</version>
             </plugin>
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-release-plugin</artifactId>
                 <!-- override the version inherited from the parent -->
-                <version>2.4.2</version>
+                <version>2.5.2</version>
                 <configuration>
                     <arguments>-Psonatype-oss-release ${release.arguments}</arguments>
+                    <autoVersionSubmodules>true</autoVersionSubmodules>
+                    <tagNameFormat>@{project.version}-opt</tagNameFormat>
                 </configuration>
             </plugin>
         </plugins>

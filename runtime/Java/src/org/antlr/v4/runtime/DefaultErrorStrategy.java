@@ -1,42 +1,19 @@
 /*
- * [The "BSD license"]
- *  Copyright (c) 2012 Terence Parr
- *  Copyright (c) 2012 Sam Harwell
- *  All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted provided that the following conditions
- *  are met:
- *
- *  1. Redistributions of source code must retain the above copyright
- *     notice, this list of conditions and the following disclaimer.
- *  2. Redistributions in binary form must reproduce the above copyright
- *     notice, this list of conditions and the following disclaimer in the
- *     documentation and/or other materials provided with the distribution.
- *  3. The name of the author may not be used to endorse or promote products
- *     derived from this software without specific prior written permission.
- *
- *  THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- *  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- *  OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- *  NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- *  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- *  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- *  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright (c) 2012 The ANTLR Project. All rights reserved.
+ * Use of this file is governed by the BSD-3-Clause license that
+ * can be found in the LICENSE.txt file in the project root.
  */
 
 package org.antlr.v4.runtime;
 
 import org.antlr.v4.runtime.atn.ATN;
 import org.antlr.v4.runtime.atn.ATNState;
+import org.antlr.v4.runtime.atn.PredictionContext;
 import org.antlr.v4.runtime.atn.RuleTransition;
 import org.antlr.v4.runtime.misc.IntervalSet;
 import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.misc.Nullable;
-import org.antlr.v4.runtime.misc.Pair;
+import org.antlr.v4.runtime.misc.Tuple;
 
 /**
  * This is the default implementation of {@link ANTLRErrorStrategy} used for
@@ -154,8 +131,12 @@ public class DefaultErrorStrategy implements ANTLRErrorStrategy {
 		}
 		else {
 			System.err.println("unknown recognition error type: "+e.getClass().getName());
-			recognizer.notifyErrorListeners(e.getOffendingToken(), e.getMessage(), e);
+			notifyErrorListeners(recognizer, e.getMessage(), e);
 		}
+	}
+
+	protected void notifyErrorListeners(@NotNull Parser recognizer, String message, RecognitionException e) {
+		recognizer.notifyErrorListeners(e.getOffendingToken(recognizer), message, e);
 	}
 
 	/**
@@ -250,10 +231,8 @@ public class DefaultErrorStrategy implements ANTLRErrorStrategy {
         int la = tokens.LA(1);
 
         // try cheaper subset first; might get lucky. seems to shave a wee bit off
-        if ( recognizer.getATN().nextTokens(s).contains(la) || la==Token.EOF ) return;
-
-		// Return but don't end recovery. only do that upon valid token match
-		if (recognizer.isExpectedToken(la)) {
+		IntervalSet nextTokens = recognizer.getATN().nextTokens(s);
+		if (nextTokens.contains(Token.EPSILON) || nextTokens.contains(la)) {
 			return;
 		}
 
@@ -307,7 +286,7 @@ public class DefaultErrorStrategy implements ANTLRErrorStrategy {
 			input = "<unknown input>";
 		}
 		String msg = "no viable alternative at input "+escapeWSAndQuote(input);
-		recognizer.notifyErrorListeners(e.getOffendingToken(), msg, e);
+		notifyErrorListeners(recognizer, msg, e);
 	}
 
 	/**
@@ -322,9 +301,9 @@ public class DefaultErrorStrategy implements ANTLRErrorStrategy {
 	protected void reportInputMismatch(@NotNull Parser recognizer,
 									   @NotNull InputMismatchException e)
 	{
-		String msg = "mismatched input "+getTokenErrorDisplay(e.getOffendingToken())+
+		String msg = "mismatched input "+getTokenErrorDisplay(e.getOffendingToken(recognizer))+
 		" expecting "+e.getExpectedTokens().toString(recognizer.getVocabulary());
-		recognizer.notifyErrorListeners(e.getOffendingToken(), msg, e);
+		notifyErrorListeners(recognizer, msg, e);
 	}
 
 	/**
@@ -341,7 +320,7 @@ public class DefaultErrorStrategy implements ANTLRErrorStrategy {
 	{
 		String ruleName = recognizer.getRuleNames()[recognizer._ctx.getRuleIndex()];
 		String msg = "rule "+ruleName+" "+e.getMessage();
-		recognizer.notifyErrorListeners(e.getOffendingToken(), msg, e);
+		notifyErrorListeners(recognizer, msg, e);
 	}
 
 	/**
@@ -506,7 +485,7 @@ public class DefaultErrorStrategy implements ANTLRErrorStrategy {
 		ATNState currentState = recognizer.getInterpreter().atn.states.get(recognizer.getState());
 		ATNState next = currentState.transition(0).target;
 		ATN atn = recognizer.getInterpreter().atn;
-		IntervalSet expectingAtLL2 = atn.nextTokens(next, recognizer._ctx);
+		IntervalSet expectingAtLL2 = atn.nextTokens(next, PredictionContext.fromRuleContext(atn, recognizer._ctx));
 //		System.out.println("LT(2) set="+expectingAtLL2.toString(recognizer.getTokenNames()));
 		if ( expectingAtLL2.contains(currentSymbolType) ) {
 			reportMissingToken(recognizer);
@@ -587,8 +566,14 @@ public class DefaultErrorStrategy implements ANTLRErrorStrategy {
 		if ( current.getType() == Token.EOF && lookback!=null ) {
 			current = lookback;
 		}
+
+		return constructToken(recognizer.getInputStream().getTokenSource(), expectedTokenType, tokenText, current);
+	}
+
+	protected Token constructToken(TokenSource tokenSource, int expectedTokenType, String tokenText, Token current) {
+		TokenFactory factory = tokenSource.getTokenFactory();
 		return
-			recognizer.getTokenFactory().create(new Pair<TokenSource, CharStream>(current.getTokenSource(), current.getTokenSource().getInputStream()), expectedTokenType, tokenText,
+			factory.create(Tuple.create(tokenSource, current.getTokenSource().getInputStream()), expectedTokenType, tokenText,
 							Token.DEFAULT_CHANNEL,
 							-1, -1,
 							current.getLine(), current.getCharPositionInLine());
