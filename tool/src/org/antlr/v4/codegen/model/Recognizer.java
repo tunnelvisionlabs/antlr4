@@ -40,6 +40,7 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -55,10 +56,10 @@ public abstract class Recognizer extends OutputModelObject {
 	 * {@link #literalNames} and {@link #symbolicNames}.
 	 */
 	@Deprecated
-	public String[] tokenNames;
+	public List<String> tokenNames;
 
-	public String[] literalNames;
-	public String[] symbolicNames;
+	public List<String> literalNames;
+	public List<String> symbolicNames;
 	public Set<String> ruleNames;
 	public Collection<Rule> rules;
 	@ModelElement public ActionChunk superClass;
@@ -99,7 +100,7 @@ public abstract class Recognizer extends OutputModelObject {
 		abstractRecognizer = g.isAbstract();
 	}
 
-	protected static String[] translateTokenStringsToTarget(String[] tokenStrings, OutputModelFactory factory) {
+	protected static List<String> translateTokenStringsToTarget(String[] tokenStrings, OutputModelFactory factory) {
 		String[] result = tokenStrings.clone();
 		for (int i = 0; i < tokenStrings.length; i++) {
 			result[i] = translateTokenStringToTarget(tokenStrings[i], factory);
@@ -114,7 +115,7 @@ public abstract class Recognizer extends OutputModelObject {
 			result = Arrays.copyOf(result, lastTrueEntry + 1);
 		}
 
-		return result;
+		return Arrays.asList(result);
 	}
 
 	protected static String translateTokenStringToTarget(String tokenName, OutputModelFactory factory) {

@@ -41,6 +41,7 @@ import java.util.Map;
 import org.stringtemplate.v4.ST;
 import org.stringtemplate.v4.STGroup;
 import org.stringtemplate.v4.STGroupFile;
+import org.stringtemplate.v4.StringRenderer;
 import org.stringtemplate.v4.gui.STViz;
 
 public class TestGenerator {
@@ -65,6 +66,7 @@ public class TestGenerator {
 	public void execute() {
 		STGroup targetGroup = new STGroupFile(runtimeTemplates.getPath());
 		targetGroup.registerModelAdaptor(STGroup.class, new STGroupModelAdaptor());
+		targetGroup.registerRenderer(String.class, new StringRenderer(), true);
 		targetGroup.defineDictionary("escape", new JavaEscapeStringMap());
 		targetGroup.defineDictionary("lines", new LinesStringMap());
 		targetGroup.defineDictionary("strlen", new StrlenStringMap());
