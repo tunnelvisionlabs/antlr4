@@ -652,6 +652,17 @@ public class ParserATNFactory implements ATNFactory {
 	}
 
 	protected void epsilon(ATNState a, @NotNull ATNState b, boolean prepend) {
+		for (Transition t : a.getTransitions()) {
+			if (t.getSerializationType() != Transition.EPSILON) {
+				continue;
+			}
+
+			if (t.target == b && ((EpsilonTransition)t).outermostPrecedenceReturn() == -1) {
+				// This transition was already added
+				return;
+			}
+		}
+
 		if ( a!=null ) {
 			int index = prepend ? 0 : a.getNumberOfTransitions();
 			a.addTransition(index, new EpsilonTransition(b));

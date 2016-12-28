@@ -38,6 +38,7 @@ import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.misc.Nullable;
 import org.antlr.v4.runtime.misc.Tuple;
 import org.antlr.v4.runtime.misc.Tuple2;
+import org.antlr.v4.runtime.misc.Tuple3;
 
 import java.io.InvalidClassException;
 import java.util.ArrayDeque;
@@ -45,9 +46,11 @@ import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -322,6 +325,8 @@ public class ATNDeserializer {
 		}
 
 		// edges for rule stop states can be derived, so they aren't serialized
+		// Map rule stop state -> return state -> outermost precedence return
+		Set<Tuple3<Integer, Integer, Integer>> returnTransitions = new LinkedHashSet<Tuple3<Integer, Integer, Integer>>();
 		for (ATNState state : atn.states) {
 			boolean returningToLeftFactored = state.ruleIndex >= 0 && atn.ruleToStartState[state.ruleIndex].leftFactored;
 			for (int i = 0; i < state.getNumberOfTransitions(); i++) {
@@ -343,9 +348,14 @@ public class ATNDeserializer {
 					}
 				}
 
-				EpsilonTransition returnTransition = new EpsilonTransition(ruleTransition.followState, outermostPrecedenceReturn);
-				atn.ruleToStopState[ruleTransition.target.ruleIndex].addTransition(returnTransition);
+				returnTransitions.add(Tuple.create(ruleTransition.target.ruleIndex, ruleTransition.followState.stateNumber, outermostPrecedenceReturn));
 			}
+		}
+
+		// Add all elements from returnTransitions to the ATN
+		for (Tuple3<Integer, Integer, Integer> returnTransition : returnTransitions) {
+			EpsilonTransition transition = new EpsilonTransition(atn.states.get(returnTransition.getItem2()), returnTransition.getItem3());
+			atn.ruleToStopState[returnTransition.getItem1()].addTransition(transition);
 		}
 
 		for (ATNState state : atn.states) {
