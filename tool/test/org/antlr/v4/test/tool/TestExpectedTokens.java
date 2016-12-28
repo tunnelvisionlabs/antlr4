@@ -149,6 +149,6 @@ public class TestExpectedTokens extends BaseTest {
 		// Simulate call stack after input '(x' from within rule expr
 		callStackFrom_expr = new ParserRuleContext(null, 9);
 		tokens = atn.getExpectedTokens(afterID, callStackFrom_expr);
-		assertEquals("{R, PLUS}", tokens.toString(g.getTokenNames()));
+		assertEquals("{R, PLUS}", tokens.toString(g.getVocabulary()));
 	}
 }
