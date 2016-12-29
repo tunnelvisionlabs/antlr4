@@ -30,8 +30,8 @@ grammar <grammarName>;
 
 s
 @after {
-<ContextRuleFunction("$ctx", "r"):ToStringTree():writeln()>
-<ContextRuleFunction("$ctx", "r"):WalkListener()>
+<ContextLabel("$ctx", "r"):ToStringTree():writeln()>
+<ContextLabel("$ctx", "r"):WalkListener()>
 }
   : r=e ;
 e : e '(' eList ')' # Call

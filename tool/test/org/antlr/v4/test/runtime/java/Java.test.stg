@@ -460,6 +460,7 @@ Invoke_pred(v) ::= <<this.pred(<v>)>>
 
 ParserTokenType(t) ::= "Parser.<t>"
 ContextRuleFunction(ctx, rule) ::= "<ctx>.<rule>"
+ContextLabel(ctx, label) ::= "<ctx>.<label>"
 StringType() ::= "String"
 IntType() ::= "int"
 ContextMember(ctx, subctx, member) ::= "<ctx>.<subctx>.<member>"
