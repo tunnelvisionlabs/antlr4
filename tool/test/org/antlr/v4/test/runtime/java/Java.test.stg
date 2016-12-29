@@ -264,7 +264,7 @@ boolean Property() {
 ParserPropertyCall(p, call) ::= "<p>.<call>"
 
 PositionAdjustingLexer() ::= <<
-
+@members {
 @Override
 public Token nextToken() {
 	if (!(_interp instanceof PositionAdjustingLexerATNSimulator)) {
@@ -341,7 +341,7 @@ protected static class PositionAdjustingLexerATNSimulator extends LexerATNSimula
 	}
 
 }
-
+}
 >>
 
 BasicListener(X) ::= <<
