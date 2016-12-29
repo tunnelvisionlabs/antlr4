@@ -19,23 +19,18 @@ This is the "optimized" fork of ANTLR 4, which contains many features and optimi
 * [Terence Parr](http://www.cs.usfca.edu/~parrt/), parrt@cs.usfca.edu
 ANTLR project lead and supreme dictator for life
 [University of San Francisco](http://www.usfca.edu/)
-* [Sam Harwell](http://tunnelvisionlabs.com/) (Tool co-author, Java and C# target)
-* Eric Vergnaud (Javascript, Python2, Python3 targets)
-* [Peter Boyer](https://github.com/pboyer) (Go target)
-* [Mike Lischke](http://www.soft-gems.net/) (C++ completed target)
-* Dan McLaughlin (C++ initial target)
-* David Sisson (C++ initial target and test)
-* [Janyou](https://github.com/janyou) (Swift target)
-* [Ewan Mellor](https://github.com/ewanmellor), [Hanzhou Shi](https://github.com/hanjoes) (Swift target merging)
+* [Sam Harwell](http://tunnelvisionlabs.com/) (Tool co-author, lead developer for the optimized fork along with the optimized Java, C#, and TypeScript targets)
+* Burt Harris (Co-author of the optimized TypeScript target)
 
 ## Useful information
 
 * [Release notes](https://github.com/tunnelvisionlabs/antlr4/releases)
 * [Getting started with v4](https://github.com/tunnelvisionlabs/antlr4/blob/master/doc/getting-started.md)
 * [Official site](http://www.antlr.org/)
+* [Reference (non-optimized) release](https://github.com/antlr/antlr4)
 * [Documentation](https://github.com/tunnelvisionlabs/antlr4/blob/master/doc/index.md)
 * [FAQ](https://github.com/tunnelvisionlabs/antlr4/blob/master/doc/faq/index.md)
-* [ANTLR code generation targets](https://github.com/tunnelvisionlabs/antlr4/blob/master/doc/targets.md)<br>(Currently: Java, C#, Python2|3, JavaScript, Go, C++, Swift)
+* [ANTLR optimized code generation targets](https://github.com/tunnelvisionlabs/antlr4/blob/master/doc/targets.md)
 * [Java API](http://www.antlr.org/api/Java/index.html)
 * [ANTLR v3](http://www.antlr3.org/)
 * [v3 to v4 Migration, differences](https://github.com/tunnelvisionlabs/antlr4/blob/master/doc/faq/general.md)

@@ -1,3 +1,5 @@
+:warning: The information on this page has not been updated for this optimized fork.
+
 # Actions and Attributes
 
 In Chapter 10, Attributes and Actions, we learned how to embed actions within grammars and looked at the most common token and rule attributes. This section summarizes the important syntax and semantics from that chapter and provides a complete list of all available attributes. (You can learn more about actions in the grammar from the free excerpt on listeners and actions.)

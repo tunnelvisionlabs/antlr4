@@ -1,3 +1,5 @@
+:warning: The information on this page has not been updated for this optimized fork.
+
 # Parsing Binary Files
 
 Parsing binary files is no different than parsing character-based files except that the "characters" are actually bytes not 16-bit unsigned short unicode characters.  From a lexer/parser point of view, there is no difference except that the characters are likely not printable.  If you want to match a special 2-byte marker 0xCA then 0xFE, the following rule is sufficient.

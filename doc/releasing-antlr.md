@@ -1,3 +1,5 @@
+:warning: The information on this page has not been updated for this optimized fork.
+
 # Cutting an ANTLR Release
 
 ## Github
