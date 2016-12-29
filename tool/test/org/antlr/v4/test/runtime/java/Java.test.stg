@@ -237,6 +237,7 @@ TokenStartColumnEquals(i) ::= <%this._tokenStartCharPositionInLine==<i>%>
 
 ImportListener(X) ::= ""
 
+ImportPredictionMode() ::= ""
 ImportBailErrorStrategy() ::= ""
 
 GetExpectedTokenNames() ::= "this.getExpectedTokens().toString(this.tokenNames)"
