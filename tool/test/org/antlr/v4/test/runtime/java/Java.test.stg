@@ -187,6 +187,7 @@ AssertIsList(v) ::= "List\<?> __ttt__ = <v>;" // just use static type system
 AssignLocal(s,v) ::= "<s> = <v>;"
 
 InitIntMember(n,v) ::= <%int <n> = <v>;%>
+InitLocalIntMember(n, v) ::= InitIntMember
 
 InitBooleanMember(n,v) ::= <%boolean <n> = <v>;%>
 
