@@ -240,6 +240,7 @@ GetExpectedTokenNames() ::= "this.getExpectedTokens().toString(this.tokenNames)"
 
 RuleInvocationStack() ::= "getRuleInvocationStack()"
 
+FULL_CONTEXT_DFA() ::= "getInterpreter().enable_global_context_dfa = true;"
 LL_EXACT_AMBIG_DETECTION() ::= <<_interp.setPredictionMode(PredictionMode.LL_EXACT_AMBIG_DETECTION);>>
 
 ParserToken(parser, token) ::= <%<parser>.<token>%>
