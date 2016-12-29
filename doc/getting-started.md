@@ -1,3 +1,5 @@
+:warning: The information on this page has not been updated for this optimized fork.
+
 # Getting Started with ANTLR v4
 
 Hi and welcome to the version 4 release of ANTLR! It's named after the fearless hero of the [Crazy Nasty-Ass Honey Badger](http://www.youtube.com/watch?v=4r7wHMg5Yjg) since ANTLR v4 takes whatever you give it--it just doesn't give a crap! See [Why do we need ANTLR v4?](faq/general.md) and the [preface of the ANTLR v4 book](http://media.pragprog.com/titles/tpantlr2/preface.pdf).

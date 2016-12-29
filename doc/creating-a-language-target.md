@@ -1,3 +1,5 @@
+:warning: The information on this page has not been updated for this optimized fork.
+
 # Creating an ANTLR Language Target
 
 This document describes how to make ANTLR generate parsers in a new language, *X*.

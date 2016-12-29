@@ -1,3 +1,5 @@
+:warning: The information on this page has not been updated for this optimized fork.
+
 # Overview of the ANTLR Runtime Test Suite
 
 An important part of ANTLR4 is its runtime test suite, which consist of 2 subparts:
