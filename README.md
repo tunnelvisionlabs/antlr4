@@ -12,7 +12,7 @@ This is the "optimized" fork of ANTLR 4, which contains many features and optimi
 
 [![Build Travis-CI Status](https://travis-ci.org/tunnelvisionlabs/antlr4.svg?branch=master)](https://travis-ci.org/tunnelvisionlabs/antlr4) [![Build AppVeyor Status](https://ci.appveyor.com/api/projects/status/ba3jofc6j63wrl89/branch/master?svg=true)](https://ci.appveyor.com/project/sharwell/antlr4/branch/master)
 
-[![codecov](https://codecov.io/gh/sharwell/antlr4/branch/optimized/graph/badge.svg)](https://codecov.io/gh/sharwell/antlr4)
+[![codecov](https://codecov.io/gh/tunnelvisionlabs/antlr4/branch/master/graph/badge.svg)](https://codecov.io/gh/tunnelvisionlabs/antlr4)
 
 ## Authors and major contributors
 
