@@ -187,6 +187,7 @@ AssertIsList(v) ::= "List\<?> __ttt__ = <v>;" // just use static type system
 AssignLocal(s,v) ::= "<s> = <v>;"
 
 InitIntMember(n,v) ::= <%int <n> = <v>;%>
+InitLocalIntMember(n, v) ::= InitIntMember
 
 InitBooleanMember(n,v) ::= <%boolean <n> = <v>;%>
 
@@ -236,10 +237,14 @@ TokenStartColumnEquals(i) ::= <%this._tokenStartCharPositionInLine==<i>%>
 
 ImportListener(X) ::= ""
 
+ImportPredictionMode() ::= ""
+ImportBailErrorStrategy() ::= ""
+
 GetExpectedTokenNames() ::= "this.getExpectedTokens().toString(this.tokenNames)"
 
 RuleInvocationStack() ::= "getRuleInvocationStack()"
 
+FULL_CONTEXT_DFA() ::= "getInterpreter().enable_global_context_dfa = true;"
 LL_EXACT_AMBIG_DETECTION() ::= <<_interp.setPredictionMode(PredictionMode.LL_EXACT_AMBIG_DETECTION);>>
 
 ParserToken(parser, token) ::= <%<parser>.<token>%>
@@ -259,7 +264,7 @@ boolean Property() {
 ParserPropertyCall(p, call) ::= "<p>.<call>"
 
 PositionAdjustingLexer() ::= <<
-
+@members {
 @Override
 public Token nextToken() {
 	if (!(_interp instanceof PositionAdjustingLexerATNSimulator)) {
@@ -336,7 +341,7 @@ protected static class PositionAdjustingLexerATNSimulator extends LexerATNSimula
 	}
 
 }
-
+}
 >>
 
 BasicListener(X) ::= <<
@@ -455,7 +460,9 @@ Invoke_pred(v) ::= <<this.pred(<v>)>>
 
 ParserTokenType(t) ::= "Parser.<t>"
 ContextRuleFunction(ctx, rule) ::= "<ctx>.<rule>"
+ContextLabel(ctx, label) ::= "<ctx>.<label>"
 StringType() ::= "String"
+IntType() ::= "int"
 ContextMember(ctx, subctx, member) ::= "<ctx>.<subctx>.<member>"
 isEmpty ::= [
 	"": true,

@@ -20,7 +20,7 @@ Rule() ::= "s"
 grammar(grammarName) ::= <<
 grammar <grammarName>;
 s : e {<writeln("$e.v")>};
-e returns [int v]
+e returns [<IntType()> v]
   : e '*' e     {$v = <Cast("BinaryContext","$ctx"):ContextMember({<Production("e")>(0)}, {<Result("v")>})> * <Cast("BinaryContext","$ctx"):ContextMember({<Production("e")>(1)}, {<Result("v")>})>;}  # binary
   | e '+' e     {$v = <Cast("BinaryContext","$ctx"):ContextMember({<Production("e")>(0)}, {<Result("v")>})> + <Cast("BinaryContext","$ctx"):ContextMember({<Production("e")>(1)}, {<Result("v")>})>;}  # binary
   | INT         {$v = $INT.int;}                   # anInt
