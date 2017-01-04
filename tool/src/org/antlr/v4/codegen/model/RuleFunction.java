@@ -28,6 +28,7 @@ import org.antlr.v4.runtime.atn.ATNSimulator;
 import org.antlr.v4.runtime.atn.ATNState;
 import org.antlr.v4.runtime.misc.IntervalSet;
 import org.antlr.v4.runtime.misc.OrderedHashSet;
+import org.antlr.v4.runtime.misc.Tuple;
 import org.antlr.v4.runtime.misc.Tuple2;
 import org.antlr.v4.tool.Attribute;
 import org.antlr.v4.tool.ErrorType;
@@ -193,17 +194,23 @@ public class RuleFunction extends OutputModelObject {
 	 */
 	public Set<Decl> getDeclsForAllElements(List<AltAST> altASTs) {
 		Set<String> needsList = new HashSet<String>();
+		Set<String> optional = new HashSet<String>();
 		Set<String> suppress = new HashSet<String>();
 		List<GrammarAST> allRefs = new ArrayList<GrammarAST>();
 		for (AltAST ast : altASTs) {
 			IntervalSet reftypes = new IntervalSet(RULE_REF, TOKEN_REF);
 			List<GrammarAST> refs = ast.getNodesWithType(reftypes);
 			allRefs.addAll(refs);
-			FrequencySet<String> altFreq = getElementFrequenciesForAlt(ast);
+			Tuple2<FrequencySet<String>, FrequencySet<String>> minAndAltFreq = getElementFrequenciesForAlt(ast);
+			FrequencySet<String> minFreq = minAndAltFreq.getItem1();
+			FrequencySet<String> altFreq = minAndAltFreq.getItem2();
 			for (GrammarAST t : refs) {
 				String refLabelName = getLabelName(rule.g, t);
 				if (altFreq.count(refLabelName)==0) {
 					suppress.add(refLabelName);
+				}
+				if (minFreq.count(refLabelName) == 0) {
+					optional.add(refLabelName);
 				}
 				if ( altFreq.count(refLabelName)>1 ) {
 					needsList.add(refLabelName);
@@ -218,7 +225,8 @@ public class RuleFunction extends OutputModelObject {
 			}
 			List<Decl> d = getDeclForAltElement(t,
 												refLabelName,
-												needsList.contains(refLabelName));
+												needsList.contains(refLabelName),
+												optional.contains(refLabelName));
 			decls.addAll(d);
 		}
 		return decls;
@@ -235,24 +243,24 @@ public class RuleFunction extends OutputModelObject {
 	}
 
 	/** Given list of X and r refs in alt, compute how many of each there are */
-	protected FrequencySet<String> getElementFrequenciesForAlt(AltAST ast) {
+	protected Tuple2<FrequencySet<String>, FrequencySet<String>> getElementFrequenciesForAlt(AltAST ast) {
 		try {
 			ElementFrequenciesVisitor visitor = new ElementFrequenciesVisitor(rule.g, new CommonTreeNodeStream(new GrammarASTAdaptor(), ast));
 			visitor.outerAlternative();
 			if (visitor.frequencies.size() != 1) {
 				factory.getGrammar().tool.errMgr.toolError(ErrorType.INTERNAL_ERROR);
-				return new FrequencySet<String>();
+				return Tuple.create(new FrequencySet<String>(), new FrequencySet<String>());
 			}
 
-			return visitor.frequencies.peek();
+			return Tuple.create(visitor.getMinFrequencies(), visitor.frequencies.peek());
 		}
 		catch (RecognitionException ex) {
 			factory.getGrammar().tool.errMgr.toolError(ErrorType.INTERNAL_ERROR, ex);
-			return new FrequencySet<String>();
+			return Tuple.create(new FrequencySet<String>(), new FrequencySet<String>());
 		}
 	}
 
-	public List<Decl> getDeclForAltElement(GrammarAST t, String refLabelName, boolean needList) {
+	public List<Decl> getDeclForAltElement(GrammarAST t, String refLabelName, boolean needList, boolean optional) {
 		int lfIndex = refLabelName.indexOf(ATNSimulator.RULE_VARIANT_DELIMITER);
 		if (lfIndex >= 0) {
 			refLabelName = refLabelName.substring(0, lfIndex);
@@ -269,7 +277,7 @@ public class RuleFunction extends OutputModelObject {
 				decls.add( new ContextRuleListIndexedGetterDecl(factory, refLabelName, ctxName) );
 			}
 			else {
-				decls.add( new ContextRuleGetterDecl(factory, refLabelName, ctxName) );
+				decls.add( new ContextRuleGetterDecl(factory, refLabelName, ctxName, optional) );
 			}
 		}
 		else {
@@ -279,7 +287,7 @@ public class RuleFunction extends OutputModelObject {
 				decls.add( new ContextTokenListIndexedGetterDecl(factory, refLabelName) );
 			}
 			else {
-				decls.add( new ContextTokenGetterDecl(factory, refLabelName) );
+				decls.add( new ContextTokenGetterDecl(factory, refLabelName, optional) );
 			}
 		}
 		return decls;

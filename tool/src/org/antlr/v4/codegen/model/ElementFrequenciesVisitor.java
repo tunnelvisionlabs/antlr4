@@ -11,7 +11,6 @@ import org.antlr.v4.analysis.LeftFactoringRuleTransformer;
 import org.antlr.v4.misc.FrequencySet;
 import org.antlr.v4.misc.MutableInt;
 import org.antlr.v4.parse.GrammarTreeVisitor;
-import org.antlr.v4.tool.ErrorManager;
 import org.antlr.v4.tool.Grammar;
 import org.antlr.v4.tool.ast.ActionAST;
 import org.antlr.v4.tool.ast.AltAST;
@@ -24,14 +23,32 @@ import java.util.Deque;
 import java.util.Map;
 
 public class ElementFrequenciesVisitor extends GrammarTreeVisitor {
+	/**
+	 * This special value means "no set", and is used by {@link #minFrequencies}
+	 * to ensure that {@link #combineMin} doesn't merge an empty set (all zeros)
+	 * with the results of the first alternative.
+	 */
+	private static final FrequencySet<String> SENTINEL = new FrequencySet<String>();
+
 	final Grammar grammar;
 	final Deque<FrequencySet<String>> frequencies;
+	private final Deque<FrequencySet<String>> minFrequencies;
 
 	public ElementFrequenciesVisitor(Grammar grammar, TreeNodeStream input) {
 		super(input);
 		this.grammar = grammar;
 		frequencies = new ArrayDeque<FrequencySet<String>>();
 		frequencies.push(new FrequencySet<String>());
+		minFrequencies = new ArrayDeque<FrequencySet<String>>();
+		minFrequencies.push(SENTINEL);
+	}
+
+	FrequencySet<String> getMinFrequencies() {
+		assert minFrequencies.size() == 1;
+		assert minFrequencies.peek() != SENTINEL;
+		assert SENTINEL.isEmpty();
+
+		return minFrequencies.peek();
 	}
 
 	/*
@@ -57,6 +74,31 @@ public class ElementFrequenciesVisitor extends GrammarTreeVisitor {
 		for (Map.Entry<String, MutableInt> entry : b.entrySet()) {
 			MutableInt slot = result.get(entry.getKey());
 			slot.v = Math.max(slot.v, entry.getValue().v);
+		}
+
+		return result;
+	}
+
+	/**
+	 * Generate a frequency set as the union of two input sets. If an
+	 * element is contained in both sets, the value for the output will be
+	 * the minimum of the two input values.
+	 *
+	 * @param a The first set.
+	 * @param b The second set. If this set is {@link #SENTINEL}, it is treated
+	 * as though no second set were provided.
+	 * @return The union of the two sets, with the minimum value chosen
+	 * whenever both sets contain the same key.
+	 */
+	protected static FrequencySet<String> combineMin(FrequencySet<String> a, FrequencySet<String> b) {
+		if (b == SENTINEL) {
+			return a;
+		}
+
+		assert a != SENTINEL;
+		FrequencySet<String> result = combineAndClip(a, b, 1);
+		for (Map.Entry<String, MutableInt> entry : result.entrySet()) {
+			entry.getValue().v = Math.min(a.count(entry.getKey()), b.count(entry.getKey()));
 		}
 
 		return result;
@@ -98,6 +140,7 @@ public class ElementFrequenciesVisitor extends GrammarTreeVisitor {
 	@Override
 	public void tokenRef(TerminalAST ref) {
 		frequencies.peek().add(ref.getText());
+		minFrequencies.peek().add(ref.getText());
 	}
 
 	@Override
@@ -110,6 +153,7 @@ public class ElementFrequenciesVisitor extends GrammarTreeVisitor {
 		}
 
 		frequencies.peek().add(RuleFunction.getLabelName(grammar, ref));
+		minFrequencies.peek().add(RuleFunction.getLabelName(grammar, ref));
 	}
 
 	/*
@@ -119,21 +163,25 @@ public class ElementFrequenciesVisitor extends GrammarTreeVisitor {
 	@Override
 	protected void enterAlternative(AltAST tree) {
 		frequencies.push(new FrequencySet<String>());
+		minFrequencies.push(new FrequencySet<String>());
 	}
 
 	@Override
 	protected void exitAlternative(AltAST tree) {
 		frequencies.push(combineMax(frequencies.pop(), frequencies.pop()));
+		minFrequencies.push(combineMin(minFrequencies.pop(), minFrequencies.pop()));
 	}
 
 	@Override
 	protected void enterElement(GrammarAST tree) {
 		frequencies.push(new FrequencySet<String>());
+		minFrequencies.push(new FrequencySet<String>());
 	}
 
 	@Override
 	protected void exitElement(GrammarAST tree) {
 		frequencies.push(combineAndClip(frequencies.pop(), frequencies.pop(), 2));
+		minFrequencies.push(combineAndClip(minFrequencies.pop(), minFrequencies.pop(), 2));
 	}
 
 	@Override
@@ -141,6 +189,11 @@ public class ElementFrequenciesVisitor extends GrammarTreeVisitor {
 		if (tree.getType() == CLOSURE || tree.getType() == POSITIVE_CLOSURE) {
 			for (Map.Entry<String, MutableInt> entry : frequencies.peek().entrySet()) {
 				entry.getValue().v = 2;
+			}
+
+			int multiplier = tree.getType() == POSITIVE_CLOSURE ? 1 : 0;
+			for (Map.Entry<String, MutableInt> entry : minFrequencies.peek().entrySet()) {
+				entry.getValue().v *= multiplier;
 			}
 		}
 	}
@@ -152,21 +205,25 @@ public class ElementFrequenciesVisitor extends GrammarTreeVisitor {
 	@Override
 	protected void enterLexerAlternative(GrammarAST tree) {
 		frequencies.push(new FrequencySet<String>());
+		minFrequencies.push(new FrequencySet<String>());
 	}
 
 	@Override
 	protected void exitLexerAlternative(GrammarAST tree) {
 		frequencies.push(combineMax(frequencies.pop(), frequencies.pop()));
+		minFrequencies.push(combineMin(minFrequencies.pop(), minFrequencies.pop()));
 	}
 
 	@Override
 	protected void enterLexerElement(GrammarAST tree) {
 		frequencies.push(new FrequencySet<String>());
+		minFrequencies.push(new FrequencySet<String>());
 	}
 
 	@Override
 	protected void exitLexerElement(GrammarAST tree) {
 		frequencies.push(combineAndClip(frequencies.pop(), frequencies.pop(), 2));
+		minFrequencies.push(combineAndClip(minFrequencies.pop(), minFrequencies.pop(), 2));
 	}
 
 	@Override
@@ -174,6 +231,11 @@ public class ElementFrequenciesVisitor extends GrammarTreeVisitor {
 		if (tree.getType() == CLOSURE || tree.getType() == POSITIVE_CLOSURE) {
 			for (Map.Entry<String, MutableInt> entry : frequencies.peek().entrySet()) {
 				entry.getValue().v = 2;
+			}
+
+			int multiplier = tree.getType() == POSITIVE_CLOSURE ? 1 : 0;
+			for (Map.Entry<String, MutableInt> entry : minFrequencies.peek().entrySet()) {
+				entry.getValue().v *= multiplier;
 			}
 		}
 	}
