@@ -237,7 +237,12 @@ public class ParserATNFactory implements ATNFactory {
 	@NotNull
 	@Override
 	public Handle range(@NotNull GrammarAST a, @NotNull GrammarAST b) {
-		throw new UnsupportedOperationException("This construct is not valid in parsers.");
+		g.tool.errMgr.grammarError(ErrorType.TOKEN_RANGE_IN_PARSER, g.fileName,
+		                           a.getToken(),
+		                           a.getToken().getText(),
+		                           b.getToken().getText());
+		// From a..b, yield ATN for just a.
+		return tokenRef((TerminalAST)a);
 	}
 
 	protected int getTokenType(@NotNull GrammarAST atom) {
