@@ -194,9 +194,10 @@ public class RuleFunction extends OutputModelObject {
 	 */
 	public Set<Decl> getDeclsForAllElements(List<AltAST> altASTs) {
 		Set<String> needsList = new HashSet<String>();
-		Set<String> optional = new HashSet<String>();
+		Set<String> nonOptional = new HashSet<String>();
 		Set<String> suppress = new HashSet<String>();
 		List<GrammarAST> allRefs = new ArrayList<GrammarAST>();
+		boolean firstAlt = true;
 		for (AltAST ast : altASTs) {
 			IntervalSet reftypes = new IntervalSet(RULE_REF, TOKEN_REF);
 			List<GrammarAST> refs = ast.getNodesWithType(reftypes);
@@ -209,13 +210,23 @@ public class RuleFunction extends OutputModelObject {
 				if (altFreq.count(refLabelName)==0) {
 					suppress.add(refLabelName);
 				}
-				if (minFreq.count(refLabelName) == 0) {
-					optional.add(refLabelName);
-				}
+
 				if ( altFreq.count(refLabelName)>1 ) {
 					needsList.add(refLabelName);
 				}
+
+				if (firstAlt && minFreq.count(refLabelName) != 0) {
+					nonOptional.add(refLabelName);
+				}
 			}
+
+			for (String ref : nonOptional.toArray(new String[nonOptional.size()])) {
+				if (minFreq.count(ref) == 0) {
+					nonOptional.remove(ref);
+				}
+			}
+
+			firstAlt = false;
 		}
 		Set<Decl> decls = new LinkedHashSet<Decl>();
 		for (GrammarAST t : allRefs) {
@@ -226,7 +237,7 @@ public class RuleFunction extends OutputModelObject {
 			List<Decl> d = getDeclForAltElement(t,
 												refLabelName,
 												needsList.contains(refLabelName),
-												optional.contains(refLabelName));
+												!nonOptional.contains(refLabelName));
 			decls.addAll(d);
 		}
 		return decls;
