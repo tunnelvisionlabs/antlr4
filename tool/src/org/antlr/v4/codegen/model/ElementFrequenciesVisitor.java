@@ -11,7 +11,6 @@ import org.antlr.v4.analysis.LeftFactoringRuleTransformer;
 import org.antlr.v4.misc.FrequencySet;
 import org.antlr.v4.misc.MutableInt;
 import org.antlr.v4.parse.GrammarTreeVisitor;
-import org.antlr.v4.tool.ErrorManager;
 import org.antlr.v4.tool.Grammar;
 import org.antlr.v4.tool.ast.ActionAST;
 import org.antlr.v4.tool.ast.AltAST;
@@ -191,6 +190,11 @@ public class ElementFrequenciesVisitor extends GrammarTreeVisitor {
 			for (Map.Entry<String, MutableInt> entry : frequencies.peek().entrySet()) {
 				entry.getValue().v = 2;
 			}
+
+			int multiplier = tree.getType() == POSITIVE_CLOSURE ? 1 : 0;
+			for (Map.Entry<String, MutableInt> entry : minFrequencies.peek().entrySet()) {
+				entry.getValue().v *= multiplier;
+			}
 		}
 
 		if (tree.getType() == CLOSURE) {
@@ -233,6 +237,11 @@ public class ElementFrequenciesVisitor extends GrammarTreeVisitor {
 		if (tree.getType() == CLOSURE || tree.getType() == POSITIVE_CLOSURE) {
 			for (Map.Entry<String, MutableInt> entry : frequencies.peek().entrySet()) {
 				entry.getValue().v = 2;
+			}
+
+			int multiplier = tree.getType() == POSITIVE_CLOSURE ? 1 : 0;
+			for (Map.Entry<String, MutableInt> entry : minFrequencies.peek().entrySet()) {
+				entry.getValue().v *= multiplier;
 			}
 		}
 
