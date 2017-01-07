@@ -146,6 +146,13 @@ public class DFA {
 		this.emptyEdgeMap = new EmptyEdgeMap<DFAState>(minDfaEdge, maxDfaEdge);
 		this.emptyContextEdgeMap = new EmptyEdgeMap<DFAState>(-1, atnStartState.atn.states.size() - 1);
 
+		// Precedence DFAs are associated with the special precedence decision
+		// created for left-recursive rules which evaluate their alternatives
+		// using a precedence hierarchy. When such a decision is encountered, we
+		// mark this DFA instance as a precedence DFA and initialize the initial
+		// states s0 and s0full to special DFAState instances which use outgoing
+		// edges to link to the actual start state used for each precedence
+		// level.
 		boolean isPrecedenceDfa = false;
 		if (atnStartState instanceof StarLoopEntryState) {
 			if (((StarLoopEntryState)atnStartState).precedenceRuleDecision) {
