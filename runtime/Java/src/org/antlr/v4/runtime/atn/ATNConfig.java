@@ -351,6 +351,15 @@ public class ATNConfig {
         return hashCode;
     }
 
+	/**
+	 * Returns a graphical representation of the current {@link ATNConfig} in
+	 * Graphviz format. The graph can be stored to a <strong>.dot</strong> file
+	 * and then rendered to an image using Graphviz.
+	 *
+	 * @return A Graphviz graph representing the current {@link ATNConfig}.
+	 *
+	 * @see http://www.graphviz.org/
+	 */
 	public String toDotString() {
 		StringBuilder builder = new StringBuilder();
 		builder.append("digraph G {\n");
