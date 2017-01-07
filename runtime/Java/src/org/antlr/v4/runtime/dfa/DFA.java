@@ -27,13 +27,31 @@ import java.util.concurrent.atomic.AtomicReference;
 public class DFA {
 	/** A set of all DFA states. Use {@link Map} so we can get old state back
 	 *  ({@link Set} only allows you to see if it's there).
+	 *
+	 * <p>Note that this collection of states holds the DFA states for both SLL
+	 * and LL prediction. Only the start state needs to be differentiated for
+	 * these cases, which is tracked by the {@link #s0} and {@link #s0full}
+	 * fields.</p>
      */
     @NotNull
 	public final ConcurrentMap<DFAState, DFAState> states = new ConcurrentHashMap<DFAState, DFAState>();
 
+	/**
+	 * This is the start state for SLL prediction.
+	 *
+	 * <p>When {@link #isPrecedenceDfa} is {@code true}, this state is not used
+	 * directly. Rather, {@link #getPrecedenceStartState} is used to obtain the
+	 * true SLL start state by traversing an outgoing edge corresponding to the
+	 * current precedence level in the parser.</p>
+	 */
 	@NotNull
 	public final AtomicReference<DFAState> s0 = new AtomicReference<DFAState>();
 
+	/**
+	 * This is the start state for full context prediction.
+	 *
+	 * @see #s0
+	 */
 	@NotNull
 	public final AtomicReference<DFAState> s0full = new AtomicReference<DFAState>();
 
