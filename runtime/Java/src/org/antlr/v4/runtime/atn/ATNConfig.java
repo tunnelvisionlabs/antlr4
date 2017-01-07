@@ -213,6 +213,45 @@ public class ATNConfig {
 		return result;
 	}
 
+	/**
+	 * Determines if this {@link ATNConfig} fully contains another
+	 * {@link ATNConfig}.
+	 *
+	 * <p>An ATN configuration represents a position (including context) in an
+	 * ATN during parsing. Since {@link ATNConfig} stores the context as a
+	 * graph, a single {@link ATNConfig} instance is capable of representing
+	 * many ATN configurations which are all in the same "location" but have
+	 * different contexts. These {@link ATNConfig} instances are again merged
+	 * when they are added to an {@link ATNConfigSet}. This method supports
+	 * {@link ATNConfigSet#contains} by evaluating whether a particular
+	 * {@link ATNConfig} contains all of the ATN configurations represented by
+	 * another {@link ATNConfig}.</p>
+	 *
+	 * <p>An {@link ATNConfig} <em>a</em> contains another {@link ATNConfig}
+	 * <em>b</em> if all of the following conditions are met:</p>
+	 *
+	 * <ul>
+	 * <li>The configurations are in the same state ({@link #getState()})</li>
+	 * <li>The configurations predict the same alternative
+	 * ({@link #getAlt()})</li>
+	 * <li>The semantic context of <em>a</em> implies the semantic context of
+	 * <em>b</em> (this method performs a weaker equality check)</li>
+	 * <li>Joining the prediction contexts of <em>a</em> and <em>b</em> results
+	 * in the prediction context of <em>a</em></li>
+	 * </ul>
+	 *
+	 * <p>This method implements a conservative approximation of containment. As
+	 * a result, when this method returns {code true} it is known that parsing
+	 * from {@link subconfig} can only recognize a subset of the inputs which
+	 * can be recognized starting at the current {@link ATNConfig}. However, due
+	 * to the imprecise evaluation of implication for the semantic contexts, no
+	 * assumptions can be made about the relationship between the configurations
+	 * when this method returns {@code false}.</p>
+	 *
+	 * @param subconfig The sub configuration.
+	 * @return {@code true} if this configuration contains {@code subconfig};
+	 * otherwise, {@code false}.
+	 */
 	public boolean contains(ATNConfig subconfig) {
 		if (this.getState().stateNumber != subconfig.getState().stateNumber
 			|| this.getAlt() != subconfig.getAlt()
