@@ -9,11 +9,13 @@ import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.Vocabulary;
 import org.antlr.v4.runtime.VocabularyImpl;
+import org.antlr.v4.runtime.atn.ATN;
 import org.antlr.v4.runtime.atn.ATNConfigSet;
 import org.antlr.v4.runtime.atn.ATNState;
 import org.antlr.v4.runtime.atn.ATNType;
 import org.antlr.v4.runtime.atn.LexerATNSimulator;
 import org.antlr.v4.runtime.atn.StarLoopEntryState;
+import org.antlr.v4.runtime.atn.TokensStartState;
 import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.misc.Nullable;
 
@@ -63,17 +65,42 @@ public class DFA {
 
 	private final AtomicInteger nextStateNumber = new AtomicInteger();
 
+	/**
+	 * This is the backing field for {@link #getMinDfaEdge()}.
+	 */
 	private final int minDfaEdge;
 
+	/**
+	 * This is the backing field for {@link #getMaxDfaEdge()}.
+	 */
 	private final int maxDfaEdge;
 
+	/**
+	 * This field initializes the outgoing edge map for the special starting DFA
+	 * state created for precedence DFAs.
+	 *
+	 * <p>The range of allowed values assigned to this map represent the
+	 * precedence levels for which an edge will be stored in the DFA. If a
+	 * precedence level is encountered outside this range, the DFA will not be
+	 * able to hold an edge pointing to the start state for the decision, so
+	 * prediction for this precedence level will always result in recomputing
+	 * the start state. Should this occur, the existing start state can still be
+	 * located within {@link #states} so outgoing edges starting from the start
+	 * state will not be dropped.</p>
+	 */
 	@NotNull
-	private static final EmptyEdgeMap<DFAState> emptyPrecedenceEdges =
+	private static final EmptyEdgeMap<DFAState> EMPTY_PRECEDENCE_EDGES =
 		new EmptyEdgeMap<DFAState>(0, 200);
 
+	/**
+	 * This is the backing field for {@link #getEmptyEdgeMap()}.
+	 */
 	@NotNull
 	private final EmptyEdgeMap<DFAState> emptyEdgeMap;
 
+	/**
+	 * This is the backing field for {@link #getEmptyContextEdgeMap()}.
+	 */
 	@NotNull
 	private final EmptyEdgeMap<DFAState> emptyContextEdgeMap;
 
@@ -83,10 +110,26 @@ public class DFA {
 	 */
 	private final boolean precedenceDfa;
 
+	/**
+	 * Constructs a {@link DFA} instance associated with a lexer mode.
+	 *
+	 * <p>The start state for a {@link DFA} constructed with this method should
+	 * be a {@link TokensStartState}, which is the start state for a lexer mode.
+	 * The prediction made by this DFA determines the lexer rule which matches
+	 * the current input.</p>
+	 *
+	 * @param atnStartState The start state for the mode.
+	 */
 	public DFA(@NotNull ATNState atnStartState) {
 		this(atnStartState, 0);
 	}
 
+	/**
+	 * Constructs a {@link DFA} instance associated with a decision.
+	 *
+	 * @param atnStartState The decision associated with this DFA.
+	 * @param decision The decision number.
+	 */
 	public DFA(@NotNull ATNState atnStartState, int decision) {
 		this.atnStartState = atnStartState;
 		this.decision = decision;
@@ -107,27 +150,81 @@ public class DFA {
 		if (atnStartState instanceof StarLoopEntryState) {
 			if (((StarLoopEntryState)atnStartState).precedenceRuleDecision) {
 				isPrecedenceDfa = true;
-				this.s0.set(new DFAState(emptyPrecedenceEdges, getEmptyContextEdgeMap(), new ATNConfigSet()));
-				this.s0full.set(new DFAState(emptyPrecedenceEdges, getEmptyContextEdgeMap(), new ATNConfigSet()));
+				this.s0.set(new DFAState(EMPTY_PRECEDENCE_EDGES, getEmptyContextEdgeMap(), new ATNConfigSet()));
+				this.s0full.set(new DFAState(EMPTY_PRECEDENCE_EDGES, getEmptyContextEdgeMap(), new ATNConfigSet()));
 			}
 		}
 
 		this.precedenceDfa = isPrecedenceDfa;
 	}
 
+	/**
+	 * Gets the minimum input symbol value which can be stored in this DFA.
+	 *
+	 * @return The minimum input symbol which can be stored in this DFA.
+	 *
+	 * @see #getEmptyEdgeMap
+	 */
 	public final int getMinDfaEdge() {
 		return minDfaEdge;
 	}
 
+	/**
+	 * Gets the maximum input symbol value which can be stored in this DFA.
+	 *
+	 * @return The maximum input symbol which can be stored in this DFA.
+	 *
+	 * @see #getEmptyEdgeMap
+	 */
 	public final int getMaxDfaEdge() {
 		return maxDfaEdge;
 	}
 
+	/**
+	 * Gets an empty edge map initialized with the minimum and maximum symbol
+	 * values allowed to be stored in this DFA.
+	 *
+	 * <p>Setting a range of allowed symbol values for a DFA bounds the memory
+	 * overhead for storing the map of outgoing edges. The various
+	 * implementations of {@link EdgeMap} use this range to determine the best
+	 * memory savings will be obtained from sparse storage (e.g.
+	 * {@link SingletonEdgeMap} or {@link SparseEdgeMap}) or dense storage
+	 * ({@link ArrayEdgeMap}). Symbols values outside the range are supported
+	 * during prediction, but since DFA edges are never created for these
+	 * symbols they will always recompute the target state through a match and
+	 * closure operation.</p>
+	 *
+	 * <p>Empty edge maps are immutable objects which track the allowed range of
+	 * input symbols that can be stored as edges in the DFA. By storing an empty
+	 * edge map instance in the DFA, new instances of {@link DFAState} created
+	 * for the DFA can be initialized with a non-null outgoing edge map with the
+	 * proper symbol range without incurring extra allocations.</p>
+	 *
+	 * @return The empty edge map used for initializing {@link DFAState}
+	 * instances associated with this DFA.
+	 */
 	@NotNull
 	public EmptyEdgeMap<DFAState> getEmptyEdgeMap() {
 		return emptyEdgeMap;
 	}
 
+	/**
+	 * Gets an empty edge map initialized with the minimum and maximum context
+	 * values allowed to be stored in this DFA.
+	 *
+	 * <p>The value assigned to a context edge within the DFA is an ATN state
+	 * number, so the range of allowed values for the context edge map is
+	 * {@link ATNState#INVALID_STATE_NUMBER} through the number of states stored
+	 * in {@link ATN#states} for the ATN.</p>
+	 *
+	 * <p>This empty edge map serves a purpose similar to
+	 * {@link #getEmptyEdgeMap}. It is used for initializing {@link DFAState}
+	 * instances without incurring memory overhead for the (especially) common
+	 * case where no outgoing context edges are added to the DFA state.</p>
+	 *
+	 * @return The empty context edge map used for initializing {@link DFAState}
+	 * instances associated with this DFA.
+	 */
 	@NotNull
 	public EmptyEdgeMap<DFAState> getEmptyContextEdgeMap() {
 		return emptyContextEdgeMap;

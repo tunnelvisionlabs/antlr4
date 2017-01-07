@@ -88,10 +88,44 @@ public class DFAState {
 		}
 	}
 
+	/**
+	 * Constructs a new {@link DFAState} for a DFA.
+	 *
+	 * <p>This constructor initializes the DFA state using empty edge maps
+	 * provided by the specified DFA.</p>
+	 *
+	 * @param dfa The DFA.
+	 * @param configs The set of ATN configurations defining this state.
+	 */
 	public DFAState(@NotNull DFA dfa, @NotNull ATNConfigSet configs) {
 		this(dfa.getEmptyEdgeMap(), dfa.getEmptyContextEdgeMap(), configs);
 	}
 
+	/**
+	 * Constructs a new {@link DFAState} with explicit initial values for the
+	 * outgoing edge and context edge maps.
+	 *
+	 * <p>The empty maps provided to this constructor contain information about
+	 * the range of edge values which are allowed to be stored in the map. Since
+	 * edges outside the allowed range are simply dropped from the DFA, this
+	 * offers several potential benefits:</p>
+	 *
+	 * <ul>
+	 * <li>In the general case, empty edge maps are initialized to support the
+	 * range of values expected to be seen during prediction, which is in turn
+	 * used to minimize the memory overhead associated with a
+	 * dynamically-constructed DFA.</li>
+	 * <li>As a special case, empty edge maps can be intentionally constructed
+	 * so the DFA will not store edges with specific values. In the limit, a
+	 * range which does not contain any allowed edges can be used to prevent the
+	 * DFA from storing <em>any</em> edges, forcing the prediction algorithm to
+	 * recompute all transitions as they are needed.</li>
+	 * </ul>
+	 *
+	 * @param emptyEdges The empty edge map.
+	 * @param emptyContextEdges The empty context edge map.
+	 * @param configs The set of ATN configurations defining this state.
+	 */
 	public DFAState(@NotNull EmptyEdgeMap<DFAState> emptyEdges, @NotNull EmptyEdgeMap<DFAState> emptyContextEdges, @NotNull ATNConfigSet configs) {
 		this.configs = configs;
 		this.edges = emptyEdges;
