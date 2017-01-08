@@ -17,12 +17,49 @@ import java.util.Deque;
 import java.util.IdentityHashMap;
 import java.util.Map;
 
-/** A tuple: (ATN state, predicted alt, syntactic, semantic context).
- *  The syntactic context is a graph-structured stack node whose
- *  path(s) to the root is the rule invocation(s)
- *  chain used to arrive at the state.  The semantic context is
- *  the tree of semantic predicates encountered before reaching
- *  an ATN state.
+/**
+ * Represents a location with context in an ATN. The location is identified by
+ * the following values:
+ *
+ * <ul>
+ * <li>The current ATN state</li>
+ * <li>The predicted alternative</li>
+ * <li>The semantic context which must be true for this configuration to be
+ * enabled</li>
+ * <li>The syntactic context, which is represented as a graph-structured stack
+ * whose path(s) lead to the root of the rule invocations leading to this
+ * state.</li>
+ * </ul>
+ *
+ * <p>In addition to these values, {@link ATNConfig} stores several properties
+ * about paths taken to get to the location which were added over time to help
+ * with performance, correctness, and/or debugging.</p>
+ *
+ * <ul>
+ * <li>{@link #getReachesIntoOuterContext()}: Used to ensure semantic predicates
+ * are not evaluated in the wrong context.</li>
+ * <li>{@link #hasPassedThroughNonGreedyDecision()}: Used for enabling
+ * first-match-wins instead of longest-match-wins after crossing a non-greedy
+ * decision.</li>
+ * <li>{@link #getLexerActionExecutor()}: Used for tracking the lexer action(s)
+ * to execute should this instance be selected during lexing.</li>
+ * <li>{@link #isPrecedenceFilterSuppressed()}: A state variable for one of the
+ * dynamic disambiguation strategies employed by
+ * {@link ParserATNSimulator#applyPrecedenceFilter}.</li>
+ * </ul>
+ *
+ * <p>Due to the use of a graph-structured stack, a single {@link ATNConfig} is
+ * capable of representing many individual ATN configurations which reached the
+ * same location in an ATN by following different paths.</p>
+ *
+ * <p>PERF: To conserve memory, {@link ATNConfig} is split into several
+ * different concrete types. {@link ATNConfig} itself stores the minimum amount
+ * of information typically used to define an {@link ATNConfig} instance.
+ * Various derived types provide additional storage space for cases where a
+ * non-default value is used for some of the object properties. The
+ * {@link ATNConfig#create} and {@link ATNConfig#transform} methods
+ * automatically select the smallest concrete type capable of representing the
+ * unique information for any given {@link ATNConfig}.</p>
  */
 public class ATNConfig {
 	/**
@@ -213,6 +250,45 @@ public class ATNConfig {
 		return result;
 	}
 
+	/**
+	 * Determines if this {@link ATNConfig} fully contains another
+	 * {@link ATNConfig}.
+	 *
+	 * <p>An ATN configuration represents a position (including context) in an
+	 * ATN during parsing. Since {@link ATNConfig} stores the context as a
+	 * graph, a single {@link ATNConfig} instance is capable of representing
+	 * many ATN configurations which are all in the same "location" but have
+	 * different contexts. These {@link ATNConfig} instances are again merged
+	 * when they are added to an {@link ATNConfigSet}. This method supports
+	 * {@link ATNConfigSet#contains} by evaluating whether a particular
+	 * {@link ATNConfig} contains all of the ATN configurations represented by
+	 * another {@link ATNConfig}.</p>
+	 *
+	 * <p>An {@link ATNConfig} <em>a</em> contains another {@link ATNConfig}
+	 * <em>b</em> if all of the following conditions are met:</p>
+	 *
+	 * <ul>
+	 * <li>The configurations are in the same state ({@link #getState()})</li>
+	 * <li>The configurations predict the same alternative
+	 * ({@link #getAlt()})</li>
+	 * <li>The semantic context of <em>a</em> implies the semantic context of
+	 * <em>b</em> (this method performs a weaker equality check)</li>
+	 * <li>Joining the prediction contexts of <em>a</em> and <em>b</em> results
+	 * in the prediction context of <em>a</em></li>
+	 * </ul>
+	 *
+	 * <p>This method implements a conservative approximation of containment. As
+	 * a result, when this method returns {code true} it is known that parsing
+	 * from {@link subconfig} can only recognize a subset of the inputs which
+	 * can be recognized starting at the current {@link ATNConfig}. However, due
+	 * to the imprecise evaluation of implication for the semantic contexts, no
+	 * assumptions can be made about the relationship between the configurations
+	 * when this method returns {@code false}.</p>
+	 *
+	 * @param subconfig The sub configuration.
+	 * @return {@code true} if this configuration contains {@code subconfig};
+	 * otherwise, {@code false}.
+	 */
 	public boolean contains(ATNConfig subconfig) {
 		if (this.getState().stateNumber != subconfig.getState().stateNumber
 			|| this.getAlt() != subconfig.getAlt()
@@ -312,6 +388,15 @@ public class ATNConfig {
         return hashCode;
     }
 
+	/**
+	 * Returns a graphical representation of the current {@link ATNConfig} in
+	 * Graphviz format. The graph can be stored to a <strong>.dot</strong> file
+	 * and then rendered to an image using Graphviz.
+	 *
+	 * @return A Graphviz graph representing the current {@link ATNConfig}.
+	 *
+	 * @see http://www.graphviz.org/
+	 */
 	public String toDotString() {
 		StringBuilder builder = new StringBuilder();
 		builder.append("digraph G {\n");
@@ -391,6 +476,14 @@ public class ATNConfig {
 		return buf.toString();
     }
 
+	/**
+	 * This class was derived from {@link ATNConfig} purely as a memory
+	 * optimization. It allows for the creation of an {@link ATNConfig} with a
+	 * non-default semantic context.
+	 *
+	 * <p>See the {@link ATNConfig} documentation for more information about
+	 * conserving memory through the use of several concrete types.</p>
+	 */
 	private static class SemanticContextATNConfig extends ATNConfig {
 
 		@NotNull
@@ -413,6 +506,14 @@ public class ATNConfig {
 
 	}
 
+	/**
+	 * This class was derived from {@link ATNConfig} purely as a memory
+	 * optimization. It allows for the creation of an {@link ATNConfig} with a
+	 * lexer action.
+	 *
+	 * <p>See the {@link ATNConfig} documentation for more information about
+	 * conserving memory through the use of several concrete types.</p>
+	 */
 	private static class ActionATNConfig extends ATNConfig {
 
 		private final LexerActionExecutor lexerActionExecutor;
@@ -445,6 +546,14 @@ public class ATNConfig {
 		}
 	}
 
+	/**
+	 * This class was derived from {@link SemanticContextATNConfig} purely as a memory
+	 * optimization. It allows for the creation of an {@link ATNConfig} with
+	 * both a lexer action and a non-default semantic context.
+	 *
+	 * <p>See the {@link ATNConfig} documentation for more information about
+	 * conserving memory through the use of several concrete types.</p>
+	 */
 	private static class ActionSemanticContextATNConfig extends SemanticContextATNConfig {
 
 		private final LexerActionExecutor lexerActionExecutor;
