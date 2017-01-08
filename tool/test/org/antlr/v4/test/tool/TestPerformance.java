@@ -1350,7 +1350,7 @@ public class TestPerformance extends BaseTest {
 								throw ex;
 							}
 
-							tokens.reset();
+							tokens.seek(0);
 							if (REUSE_PARSER && sharedParsers[thread] != null) {
 								parser.setInputStream(tokens);
 							} else {
