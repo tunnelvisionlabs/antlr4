@@ -1378,7 +1378,7 @@ public class Grammar implements AttributeResolver {
 
 	protected static class AltLabelVisitor extends GrammarTreeVisitor {
 		private final Map<String, List<Tuple2<Integer, AltAST>>> labeledAlternatives =
-			new HashMap<String, List<Tuple2<Integer, AltAST>>>();
+			new LinkedHashMap<String, List<Tuple2<Integer, AltAST>>>();
 		private final List<AltAST> unlabeledAlternatives =
 			new ArrayList<AltAST>();
 

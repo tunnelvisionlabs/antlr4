@@ -43,6 +43,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -131,7 +132,7 @@ public class RuleFunction extends OutputModelObject {
 
 	public void addContextGetters(OutputModelFactory factory, Collection<RuleAST> contextASTs) {
 		List<AltAST> unlabeledAlternatives = new ArrayList<AltAST>();
-		Map<String, List<AltAST>> labeledAlternatives = new HashMap<String, List<AltAST>>();
+		Map<String, List<AltAST>> labeledAlternatives = new LinkedHashMap<String, List<AltAST>>();
 
 		for (RuleAST ast : contextASTs) {
 			try {
@@ -163,7 +164,7 @@ public class RuleFunction extends OutputModelObject {
 		}
 
 		// make structs for '#' labeled alts, define ctx labels for elements
-		altLabelCtxs = new HashMap<String, AltLabelStructDecl>();
+		altLabelCtxs = new LinkedHashMap<String, AltLabelStructDecl>();
 		if (!labeledAlternatives.isEmpty()) {
 			for (Map.Entry<String, List<AltAST>> entry : labeledAlternatives.entrySet()) {
 				AltLabelStructDecl labelDecl = new AltLabelStructDecl(factory, rule, entry.getKey());
