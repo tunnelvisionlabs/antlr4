@@ -321,7 +321,6 @@ public class ParserInterpreter extends Parser {
 	 *  for subclasses to track interesting things.
 	 */
 	protected int visitDecisionState(DecisionState p) {
-		int edge = 1;
 		int predictedAlt;
 		getErrorHandler().sync(this);
 		int decision = p.decision;
