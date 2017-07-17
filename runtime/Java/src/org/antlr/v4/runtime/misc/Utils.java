@@ -79,6 +79,16 @@ public class Utils {
 		return buf.toString();
 	}
 
+	public static void writeFile(@NotNull File file, @NotNull byte[] content) throws IOException {
+		FileOutputStream fos = new FileOutputStream(file);
+		try {
+			fos.write(content);
+		}
+		finally {
+			fos.close();
+		}
+	}
+
 	public static void writeFile(@NotNull String fileName, @NotNull String content) throws IOException {
 		writeFile(fileName, content, null);
 	}

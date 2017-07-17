@@ -1139,11 +1139,12 @@ public abstract class BaseTest {
 			"import org.antlr.v4.runtime.*;\n" +
 			"import org.antlr.v4.runtime.tree.*;\n" +
 			"import org.antlr.v4.runtime.atn.*;\n" +
+			"import java.io.File;\n"+
 			"import java.util.Arrays;\n"+
 			"\n" +
 			"public class Test {\n" +
 			"    public static void main(String[] args) throws Exception {\n" +
-			"        CharStream input = new ANTLRFileStream(args[0]);\n" +
+			"        CharStream input = CharStreams.createWithUTF8(new File(args[0]));\n" +
 			"        <lexerName> lex = new <lexerName>(input);\n" +
 			"        CommonTokenStream tokens = new CommonTokenStream(lex);\n" +
 			"        <createParser>\n"+
@@ -1196,11 +1197,12 @@ public abstract class BaseTest {
 
 	protected void writeLexerTestFile(String lexerName, boolean showDFA) {
 		ST outputFileST = new ST(
+			"import java.io.File;\n" +
 			"import org.antlr.v4.runtime.*;\n" +
 			"\n" +
 			"public class Test {\n" +
 			"    public static void main(String[] args) throws Exception {\n" +
-			"        CharStream input = new ANTLRFileStream(args[0]);\n" +
+			"        CharStream input = CharStreams.createWithUTF8(new File(args[0]));\n" +
 			"        <lexerName> lex = new <lexerName>(input);\n" +
 			"        CommonTokenStream tokens = new CommonTokenStream(lex);\n" +
 			"        tokens.fill();\n" +

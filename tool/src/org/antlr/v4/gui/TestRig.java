@@ -9,6 +9,7 @@ package org.antlr.v4.gui;
 import javax.print.PrintException;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonToken;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.DiagnosticErrorListener;
@@ -19,14 +20,13 @@ import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.TokenStream;
 import org.antlr.v4.runtime.atn.PredictionMode;
 
-import java.io.FileInputStream;
+import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.Reader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -154,42 +154,44 @@ public class TestRig {
 			parser = parserCtor.newInstance((TokenStream)null);
 		}
 
+		Charset charset = ( encoding == null ? Charset.defaultCharset () : Charset.forName(encoding) );
 		if ( inputFiles.isEmpty() ) {
-			InputStream is = System.in;
-			Reader r;
-			if ( encoding!=null ) {
-				r = new InputStreamReader(is, encoding);
+			CharStream charStream;
+			if ( charset.equals(Charset.forName("UTF-8"))) {
+				charStream = CharStreams.createWithUTF8Stream(System.in);
+			} else {
+				InputStreamReader r = new InputStreamReader(System.in, charset);
+				try {
+					charStream = new ANTLRInputStream(r);
+				}
+				finally {
+					r.close();
+				}
 			}
-			else {
-				r = new InputStreamReader(is);
-			}
-
-			process(lexer, parserClass, parser, is, r);
+			process(lexer, parserClass, parser, charStream);
 			return;
 		}
 		for (String inputFile : inputFiles) {
-			InputStream is = System.in;
-			if ( inputFile!=null ) {
-				is = new FileInputStream(inputFile);
+			CharStream charStream;
+			if ( charset.equals(Charset.forName("UTF-8")) ) {
+				charStream = CharStreams.createWithUTF8(new File(inputFile));
+			} else {
+				InputStreamReader r = new InputStreamReader(System.in, charset);
+				try {
+					charStream = new ANTLRInputStream(r);
+				}
+				finally {
+					r.close();
+				}
 			}
-			Reader r;
-			if ( encoding!=null ) {
-				r = new InputStreamReader(is, encoding);
-			}
-			else {
-				r = new InputStreamReader(is);
-			}
-
 			if ( inputFiles.size()>1 ) {
 				System.err.println(inputFile);
 			}
-			process(lexer, parserClass, parser, is, r);
+			process(lexer, parserClass, parser, charStream);
 		}
 	}
 
-	protected void process(Lexer lexer, Class<? extends Parser> parserClass, Parser parser, InputStream is, Reader r) throws IOException, IllegalAccessException, InvocationTargetException, PrintException {
-		try {
-			ANTLRInputStream input = new ANTLRInputStream(r);
+	protected void process(Lexer lexer, Class<? extends Parser> parserClass, Parser parser, CharStream input) throws IOException, IllegalAccessException, InvocationTargetException, PrintException {
 			lexer.setInputStream(input);
 			CommonTokenStream tokens = new CommonTokenStream(lexer);
 
@@ -242,9 +244,4 @@ public class TestRig {
 				System.err.println("No method for rule "+startRuleName+" or it has arguments");
 			}
 		}
-		finally {
-			if ( r!=null ) r.close();
-			if ( is!=null ) is.close();
-		}
-	}
 }

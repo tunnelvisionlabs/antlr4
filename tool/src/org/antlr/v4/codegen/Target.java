@@ -8,6 +8,7 @@ package org.antlr.v4.codegen;
 
 import org.antlr.v4.codegen.model.RuleFunction;
 import org.antlr.v4.codegen.model.SerializedATN;
+import org.antlr.v4.misc.CharSupport;
 import org.antlr.v4.misc.Utils;
 import org.antlr.v4.parse.ANTLRParser;
 import org.antlr.v4.runtime.Token;
@@ -131,23 +132,34 @@ public abstract class Target {
 		if ( quoted ) {
 			buf.append('"');
 		}
-		for (int i=0; i<s.length(); i++) {
-			int c = s.charAt(i);
+		for (int i=0; i<s.length(); ) {
+			int c = s.codePointAt(i);
 			if ( c!='\'' && // don't escape single quotes in strings for java
 				 c<targetCharValueEscape.length &&
 				 targetCharValueEscape[c]!=null )
 			{
 				buf.append(targetCharValueEscape[c]);
 			}
-			else {
-				buf.append((char)c);
+			else if (shouldUseUnicodeEscapeForCodePointInDoubleQuotedString(c)) {
+				appendUnicodeEscapedCodePoint(i, buf);
 			}
+			else
+			{
+				buf.appendCodePoint(c);
+			}
+			i += Character.charCount(c);
 		}
 		if ( quoted ) {
 			buf.append('"');
 		}
 		return buf.toString();
 	}
+
+	/**
+	 * Escape the Unicode code point appropriately for this language
+	 * and append the escaped value to {@code sb}.
+	 */
+	abstract protected void appendUnicodeEscapedCodePoint(int codePoint, StringBuilder sb);
 
 	public String getTargetStringLiteralFromString(String s) {
 		return getTargetStringLiteralFromString(s, true);
@@ -160,6 +172,19 @@ public abstract class Target {
 	public abstract String getTargetStringLiteralFromANTLRStringLiteral(
 		CodeGenerator generator,
 		String literal, boolean addQuotes);
+
+	protected static boolean shouldUseUnicodeEscapeForCodePointInDoubleQuotedString(int codePoint) {
+		// We don't want anyone passing 0x0A (newline) or 0x22
+		// (double-quote) here because Java treats \\u000A as
+		// a literal newline and \\u0022 as a literal
+		// double-quote, so Unicode escaping doesn't help.
+		assert codePoint != 0x0A && codePoint != 0x22;
+
+		return
+			codePoint < 0x20  || // control characters up to but not including space
+			codePoint == 0x5C || // backslash
+			codePoint >= 0x7F;   // DEL and beyond (keeps source code 7-bit US-ASCII)
+	}
 
 	/** Assume 16-bit char */
 	public abstract String encodeIntAsCharEscape(int v);
