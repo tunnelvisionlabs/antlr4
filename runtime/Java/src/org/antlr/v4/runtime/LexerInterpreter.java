@@ -10,6 +10,7 @@ import org.antlr.v4.runtime.atn.ATN;
 import org.antlr.v4.runtime.atn.ATNType;
 import org.antlr.v4.runtime.atn.LexerATNSimulator;
 import org.antlr.v4.runtime.misc.NotNull;
+import org.antlr.v4.runtime.misc.Nullable;
 
 import java.util.Collection;
 
@@ -20,6 +21,7 @@ public class LexerInterpreter extends Lexer {
 	@Deprecated
 	protected final String[] tokenNames;
 	protected final String[] ruleNames;
+	protected final String[] channelNames;
 	protected final String[] modeNames;
 	@NotNull
 	private final Vocabulary vocabulary;
@@ -27,10 +29,15 @@ public class LexerInterpreter extends Lexer {
 
 	@Deprecated
 	public LexerInterpreter(String grammarFileName, Collection<String> tokenNames, Collection<String> ruleNames, Collection<String> modeNames, ATN atn, CharStream input) {
-		this(grammarFileName, VocabularyImpl.fromTokenNames(tokenNames.toArray(new String[tokenNames.size()])), ruleNames, modeNames, atn, input);
+		this(grammarFileName, VocabularyImpl.fromTokenNames(tokenNames.toArray(new String[tokenNames.size()])), ruleNames, null, modeNames, atn, input);
 	}
 
+	@Deprecated
 	public LexerInterpreter(String grammarFileName, @NotNull Vocabulary vocabulary, Collection<String> ruleNames, Collection<String> modeNames, ATN atn, CharStream input) {
+		this(grammarFileName, vocabulary, ruleNames, null, modeNames, atn, input);
+	}
+
+	public LexerInterpreter(String grammarFileName, @NotNull Vocabulary vocabulary, Collection<String> ruleNames, @Nullable Collection<String> channelNames, Collection<String> modeNames, ATN atn, CharStream input) {
 		super(input);
 
 		if (atn.grammarType != ATNType.LEXER) {
@@ -45,6 +52,7 @@ public class LexerInterpreter extends Lexer {
 		}
 
 		this.ruleNames = ruleNames.toArray(new String[ruleNames.size()]);
+		this.channelNames = channelNames != null ? channelNames.toArray(new String[channelNames.size()]) : null;
 		this.modeNames = modeNames.toArray(new String[modeNames.size()]);
 		this.vocabulary = vocabulary;
 		this._interp = new LexerATNSimulator(this,atn);
@@ -69,6 +77,11 @@ public class LexerInterpreter extends Lexer {
 	@Override
 	public String[] getRuleNames() {
 		return ruleNames;
+	}
+
+	@Override
+	public String[] getChannelNames() {
+		return channelNames;
 	}
 
 	@Override
