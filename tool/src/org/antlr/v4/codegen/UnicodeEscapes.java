@@ -19,7 +19,8 @@ public enum UnicodeEscapes {
 			// to int before passing to the %X formatter or else it throws.
 			sb.append(String.format("\\u%04X", (int)highSurrogate(codePoint)));
 			sb.append(String.format("\\u%04X", (int)lowSurrogate(codePoint)));
-		} else {
+		}
+		else {
 			sb.append(String.format("\\u%04X", codePoint));
 		}
 	}

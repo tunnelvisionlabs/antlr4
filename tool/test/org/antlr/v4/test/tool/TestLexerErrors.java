@@ -30,7 +30,7 @@ public class TestLexerErrors extends BaseTest {
 		String grammar =
 			"lexer grammar Actions;\n"
 			+ "ACTION2 : '[' (STRING | ~'\"')*? ']';\n"
-			+ "STRING : '\"' ('\\\"' | .)*? '\"';\n"
+			+ "STRING : '\"' ('\\\\\"' | .)*? '\"';\n"
 			+ "WS : [ \\t\\r\\n]+ -> skip;\n";
 		String tokens = execLexer("Actions.g4", grammar, "Actions", "[\"foo\"]");
 		String expectingTokens =

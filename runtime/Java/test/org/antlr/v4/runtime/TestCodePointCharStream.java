@@ -3,13 +3,10 @@
  * Use of this file is governed by the BSD-3-Clause license that
  * can be found in the LICENSE.txt file in the project root.
  */
-package org.antlr.v4.test.tool;
+package org.antlr.v4.runtime;
 
 import static org.junit.Assert.assertEquals;
-
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CodePointCharStream;
-import org.antlr.v4.runtime.IntStream;
+import static org.junit.Assert.assertTrue;
 
 import org.antlr.v4.runtime.misc.Interval;
 
@@ -23,21 +20,21 @@ public class TestCodePointCharStream {
 
 	@Test
 	public void emptyBytesHasSize0() {
-		CodePointCharStream s = CharStreams.createWithString("");
+		CodePointCharStream s = CharStreams.fromString("");
 		assertEquals(0, s.size());
 		assertEquals(0, s.index());
 	}
 
 	@Test
 	public void emptyBytesLookAheadReturnsEOF() {
-		CodePointCharStream s = CharStreams.createWithString("");
+		CodePointCharStream s = CharStreams.fromString("");
 		assertEquals(IntStream.EOF, s.LA(1));
 		assertEquals(0, s.index());
 	}
 
 	@Test
 	public void consumingEmptyStreamShouldThrow() {
-		CodePointCharStream s = CharStreams.createWithString("");
+		CodePointCharStream s = CharStreams.fromString("");
 		thrown.expect(IllegalStateException.class);
 		thrown.expectMessage("cannot consume EOF");
 		s.consume();
@@ -45,13 +42,13 @@ public class TestCodePointCharStream {
 
 	@Test
 	public void singleLatinCodePointHasSize1() {
-		CodePointCharStream s = CharStreams.createWithString("X");
+		CodePointCharStream s = CharStreams.fromString("X");
 		assertEquals(1, s.size());
 	}
 
 	@Test
 	public void consumingSingleLatinCodePointShouldMoveIndex() {
-		CodePointCharStream s = CharStreams.createWithString("X");
+		CodePointCharStream s = CharStreams.fromString("X");
 		assertEquals(0, s.index());
 		s.consume();
 		assertEquals(1, s.index());
@@ -59,7 +56,7 @@ public class TestCodePointCharStream {
 
 	@Test
 	public void consumingPastSingleLatinCodePointShouldThrow() {
-		CodePointCharStream s = CharStreams.createWithString("X");
+		CodePointCharStream s = CharStreams.fromString("X");
 		s.consume();
 		thrown.expect(IllegalStateException.class);
 		thrown.expectMessage("cannot consume EOF");
@@ -68,14 +65,14 @@ public class TestCodePointCharStream {
 
 	@Test
 	public void singleLatinCodePointLookAheadShouldReturnCodePoint() {
-		CodePointCharStream s = CharStreams.createWithString("X");
+		CodePointCharStream s = CharStreams.fromString("X");
 		assertEquals('X', s.LA(1));
 		assertEquals(0, s.index());
 	}
 
 	@Test
 	public void multipleLatinCodePointsLookAheadShouldReturnCodePoints() {
-		CodePointCharStream s = CharStreams.createWithString("XYZ");
+		CodePointCharStream s = CharStreams.fromString("XYZ");
 		assertEquals('X', s.LA(1));
 		assertEquals(0, s.index());
 		assertEquals('Y', s.LA(2));
@@ -86,20 +83,20 @@ public class TestCodePointCharStream {
 
 	@Test
 	public void singleLatinCodePointLookAheadPastEndShouldReturnEOF() {
-		CodePointCharStream s = CharStreams.createWithString("X");
+		CodePointCharStream s = CharStreams.fromString("X");
 		assertEquals(IntStream.EOF, s.LA(2));
 	}
 
 	@Test
 	public void singleCJKCodePointHasSize1() {
-		CodePointCharStream s = CharStreams.createWithString("\u611B");
+		CodePointCharStream s = CharStreams.fromString("\u611B");
 		assertEquals(1, s.size());
 		assertEquals(0, s.index());
 	}
 
 	@Test
 	public void consumingSingleCJKCodePointShouldMoveIndex() {
-		CodePointCharStream s = CharStreams.createWithString("\u611B");
+		CodePointCharStream s = CharStreams.fromString("\u611B");
 		assertEquals(0, s.index());
 		s.consume();
 		assertEquals(1, s.index());
@@ -107,7 +104,7 @@ public class TestCodePointCharStream {
 
 	@Test
 	public void consumingPastSingleCJKCodePointShouldThrow() {
-		CodePointCharStream s = CharStreams.createWithString("\u611B");
+		CodePointCharStream s = CharStreams.fromString("\u611B");
 		s.consume();
 		thrown.expect(IllegalStateException.class);
 		thrown.expectMessage("cannot consume EOF");
@@ -116,21 +113,21 @@ public class TestCodePointCharStream {
 
 	@Test
 	public void singleCJKCodePointLookAheadShouldReturnCodePoint() {
-		CodePointCharStream s = CharStreams.createWithString("\u611B");
+		CodePointCharStream s = CharStreams.fromString("\u611B");
 		assertEquals(0x611B, s.LA(1));
 		assertEquals(0, s.index());
 	}
 
 	@Test
 	public void singleCJKCodePointLookAheadPastEndShouldReturnEOF() {
-		CodePointCharStream s = CharStreams.createWithString("\u611B");
+		CodePointCharStream s = CharStreams.fromString("\u611B");
 		assertEquals(IntStream.EOF, s.LA(2));
 		assertEquals(0, s.index());
 	}
 
 	@Test
 	public void singleEmojiCodePointHasSize1() {
-		CodePointCharStream s = CharStreams.createWithString(
+		CodePointCharStream s = CharStreams.fromString(
 				new StringBuilder().appendCodePoint(0x1F4A9).toString());
 		assertEquals(1, s.size());
 		assertEquals(0, s.index());
@@ -138,7 +135,7 @@ public class TestCodePointCharStream {
 
 	@Test
 	public void consumingSingleEmojiCodePointShouldMoveIndex() {
-		CodePointCharStream s = CharStreams.createWithString(
+		CodePointCharStream s = CharStreams.fromString(
 				new StringBuilder().appendCodePoint(0x1F4A9).toString());
 		assertEquals(0, s.index());
 		s.consume();
@@ -147,7 +144,7 @@ public class TestCodePointCharStream {
 
 	@Test
 	public void consumingPastEndOfEmojiCodePointWithShouldThrow() {
-		CodePointCharStream s = CharStreams.createWithString(
+		CodePointCharStream s = CharStreams.fromString(
 				new StringBuilder().appendCodePoint(0x1F4A9).toString());
 		assertEquals(0, s.index());
 		s.consume();
@@ -159,7 +156,7 @@ public class TestCodePointCharStream {
 
 	@Test
 	public void singleEmojiCodePointLookAheadShouldReturnCodePoint() {
-		CodePointCharStream s = CharStreams.createWithString(
+		CodePointCharStream s = CharStreams.fromString(
 				new StringBuilder().appendCodePoint(0x1F4A9).toString());
 		assertEquals(0x1F4A9, s.LA(1));
 		assertEquals(0, s.index());
@@ -167,7 +164,7 @@ public class TestCodePointCharStream {
 
 	@Test
 	public void singleEmojiCodePointLookAheadPastEndShouldReturnEOF() {
-		CodePointCharStream s = CharStreams.createWithString(
+		CodePointCharStream s = CharStreams.fromString(
 				new StringBuilder().appendCodePoint(0x1F4A9).toString());
 		assertEquals(IntStream.EOF, s.LA(2));
 		assertEquals(0, s.index());
@@ -175,19 +172,19 @@ public class TestCodePointCharStream {
 
 	@Test
 	public void getTextWithLatin() {
-		CodePointCharStream s = CharStreams.createWithString("0123456789");
+		CodePointCharStream s = CharStreams.fromString("0123456789");
 		assertEquals("34567", s.getText(Interval.of(3, 7)));
 	}
 
 	@Test
 	public void getTextWithCJK() {
-		CodePointCharStream s = CharStreams.createWithString("01234\u40946789");
+		CodePointCharStream s = CharStreams.fromString("01234\u40946789");
 		assertEquals("34\u409467", s.getText(Interval.of(3, 7)));
 	}
 
 	@Test
 	public void getTextWithEmoji() {
-		CodePointCharStream s = CharStreams.createWithString(
+		CodePointCharStream s = CharStreams.fromString(
 				new StringBuilder("01234")
 					.appendCodePoint(0x1F522)
 					.append("6789")
@@ -197,19 +194,19 @@ public class TestCodePointCharStream {
 
 	@Test
 	public void toStringWithLatin() {
-		CodePointCharStream s = CharStreams.createWithString("0123456789");
+		CodePointCharStream s = CharStreams.fromString("0123456789");
 		assertEquals("0123456789", s.toString());
 	}
 
 	@Test
 	public void toStringWithCJK() {
-		CodePointCharStream s = CharStreams.createWithString("01234\u40946789");
+		CodePointCharStream s = CharStreams.fromString("01234\u40946789");
 		assertEquals("01234\u40946789", s.toString());
 	}
 
 	@Test
 	public void toStringWithEmoji() {
-		CodePointCharStream s = CharStreams.createWithString(
+		CodePointCharStream s = CharStreams.fromString(
 				new StringBuilder("01234")
 					.appendCodePoint(0x1F522)
 					.append("6789")
@@ -219,19 +216,19 @@ public class TestCodePointCharStream {
 
 	@Test
 	public void lookAheadWithLatin() {
-		CodePointCharStream s = CharStreams.createWithString("0123456789");
+		CodePointCharStream s = CharStreams.fromString("0123456789");
 		assertEquals('5', s.LA(6));
 	}
 
 	@Test
 	public void lookAheadWithCJK() {
-		CodePointCharStream s = CharStreams.createWithString("01234\u40946789");
+		CodePointCharStream s = CharStreams.fromString("01234\u40946789");
 		assertEquals(0x4094, s.LA(6));
 	}
 
 	@Test
 	public void lookAheadWithEmoji() {
-		CodePointCharStream s = CharStreams.createWithString(
+		CodePointCharStream s = CharStreams.fromString(
 				new StringBuilder("01234")
 					.appendCodePoint(0x1F522)
 					.append("6789")
@@ -241,21 +238,21 @@ public class TestCodePointCharStream {
 
 	@Test
 	public void seekWithLatin() {
-		CodePointCharStream s = CharStreams.createWithString("0123456789");
+		CodePointCharStream s = CharStreams.fromString("0123456789");
 		s.seek(5);
 		assertEquals('5', s.LA(1));
 	}
 
 	@Test
 	public void seekWithCJK() {
-		CodePointCharStream s = CharStreams.createWithString("01234\u40946789");
+		CodePointCharStream s = CharStreams.fromString("01234\u40946789");
 		s.seek(5);
 		assertEquals(0x4094, s.LA(1));
 	}
 
 	@Test
 	public void seekWithEmoji() {
-		CodePointCharStream s = CharStreams.createWithString(
+		CodePointCharStream s = CharStreams.fromString(
 				new StringBuilder("01234")
 					.appendCodePoint(0x1F522)
 					.append("6789")
@@ -266,26 +263,47 @@ public class TestCodePointCharStream {
 
 	@Test
 	public void lookBehindWithLatin() {
-		CodePointCharStream s = CharStreams.createWithString("0123456789");
+		CodePointCharStream s = CharStreams.fromString("0123456789");
 		s.seek(6);
 		assertEquals('5', s.LA(-1));
 	}
 
 	@Test
 	public void lookBehindWithCJK() {
-		CodePointCharStream s = CharStreams.createWithString("01234\u40946789");
+		CodePointCharStream s = CharStreams.fromString("01234\u40946789");
 		s.seek(6);
 		assertEquals(0x4094, s.LA(-1));
 	}
 
 	@Test
 	public void lookBehindWithEmoji() {
-		CodePointCharStream s = CharStreams.createWithString(
+		CodePointCharStream s = CharStreams.fromString(
 				new StringBuilder("01234")
 					.appendCodePoint(0x1F522)
 					.append("6789")
 					.toString());
 		s.seek(6);
 		assertEquals(0x1F522, s.LA(-1));
+	}
+
+	@Test
+	public void asciiContentsShouldUse8BitBuffer() {
+		CodePointCharStream s = CharStreams.fromString("hello");
+		assertTrue(s.getInternalStorage() instanceof byte[]);
+		assertEquals(5, s.size());
+	}
+
+	@Test
+	public void bmpContentsShouldUse16BitBuffer() {
+		CodePointCharStream s = CharStreams.fromString("hello \u4E16\u754C");
+		assertTrue(s.getInternalStorage() instanceof char[]);
+		assertEquals(8, s.size());
+	}
+
+	@Test
+	public void smpContentsShouldUse32BitBuffer() {
+		CodePointCharStream s = CharStreams.fromString("hello \uD83C\uDF0D");
+		assertTrue(s.getInternalStorage() instanceof int[]);
+		assertEquals(7, s.size());
 	}
 }

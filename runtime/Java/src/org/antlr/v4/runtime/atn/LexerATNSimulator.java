@@ -731,7 +731,8 @@ public class LexerATNSimulator extends ATNSimulator {
 		if ( curChar=='\n' ) {
 			line++;
 			charPositionInLine=0;
-		} else {
+		}
+		else {
 			charPositionInLine++;
 		}
 		input.consume();

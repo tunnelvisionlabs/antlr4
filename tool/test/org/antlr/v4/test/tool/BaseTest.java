@@ -11,7 +11,6 @@ import org.antlr.v4.automata.ATNPrinter;
 import org.antlr.v4.automata.LexerATNFactory;
 import org.antlr.v4.automata.ParserATNFactory;
 import org.antlr.v4.codegen.CodeGenerator;
-import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CommonToken;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -57,6 +56,7 @@ import javax.tools.JavaFileObject;
 import javax.tools.StandardJavaFileManager;
 import javax.tools.ToolProvider;
 import org.antlr.v4.analysis.AnalysisPipeline;
+import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.misc.Tuple;
 import org.antlr.v4.runtime.misc.Tuple2;
 
@@ -67,7 +67,6 @@ import java.io.InputStreamReader;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.io.PrintStream;
-import java.io.StringReader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -288,7 +287,7 @@ public abstract class BaseTest {
 	}
 
 	public IntegerList getTokenTypesViaATN(String input, LexerATNSimulator lexerATN) {
-		ANTLRInputStream in = new ANTLRInputStream(input);
+		CharStream in = CharStreams.fromString(input);
 		IntegerList tokenTypes = new IntegerList();
 		int ttype;
 		do {
@@ -672,11 +671,9 @@ public abstract class BaseTest {
 		final Class<? extends Lexer> lexerClass = loadLexerClassFromTempDir(lexerName);
 		final Class<? extends Parser> parserClass = loadParserClassFromTempDir(parserName);
 
-		ANTLRInputStream in = new ANTLRInputStream(new StringReader(input));
-
 		Class<? extends Lexer> c = lexerClass.asSubclass(Lexer.class);
 		Constructor<? extends Lexer> ctor = c.getConstructor(CharStream.class);
-		Lexer lexer = ctor.newInstance(in);
+		Lexer lexer = ctor.newInstance(CharStreams.fromString(input));
 
 		Class<? extends Parser> pc = parserClass.asSubclass(Parser.class);
 		Constructor<? extends Parser> pctor = pc.getConstructor(TokenStream.class);
@@ -1144,7 +1141,7 @@ public abstract class BaseTest {
 			"\n" +
 			"public class Test {\n" +
 			"    public static void main(String[] args) throws Exception {\n" +
-			"        CharStream input = CharStreams.createWithUTF8(new File(args[0]));\n" +
+			"        CharStream input = CharStreams.fromFile(new File(args[0]));\n" +
 			"        <lexerName> lex = new <lexerName>(input);\n" +
 			"        CommonTokenStream tokens = new CommonTokenStream(lex);\n" +
 			"        <createParser>\n"+
@@ -1202,7 +1199,7 @@ public abstract class BaseTest {
 			"\n" +
 			"public class Test {\n" +
 			"    public static void main(String[] args) throws Exception {\n" +
-			"        CharStream input = CharStreams.createWithUTF8(new File(args[0]));\n" +
+			"        CharStream input = CharStreams.fromFile(new File(args[0]));\n" +
 			"        <lexerName> lex = new <lexerName>(input);\n" +
 			"        CommonTokenStream tokens = new CommonTokenStream(lex);\n" +
 			"        tokens.fill();\n" +

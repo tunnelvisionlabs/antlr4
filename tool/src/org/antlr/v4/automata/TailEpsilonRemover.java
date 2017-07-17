@@ -46,7 +46,8 @@ public class TailEpsilonRemover extends ATNVisitor {
 						// skip over q
 						if (p.transition(0) instanceof RuleTransition) {
 							((RuleTransition) p.transition(0)).followState = r;
-						} else {
+						}
+						else {
 							p.transition(0).target = r;
 						}
 						_atn.removeState(q);

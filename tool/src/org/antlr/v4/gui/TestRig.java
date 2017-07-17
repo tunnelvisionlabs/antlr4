@@ -7,7 +7,6 @@
 package org.antlr.v4.gui;
 
 import javax.print.PrintException;
-import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonToken;
@@ -22,7 +21,6 @@ import org.antlr.v4.runtime.atn.PredictionMode;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -156,34 +154,12 @@ public class TestRig {
 
 		Charset charset = ( encoding == null ? Charset.defaultCharset () : Charset.forName(encoding) );
 		if ( inputFiles.isEmpty() ) {
-			CharStream charStream;
-			if ( charset.equals(Charset.forName("UTF-8"))) {
-				charStream = CharStreams.createWithUTF8Stream(System.in);
-			} else {
-				InputStreamReader r = new InputStreamReader(System.in, charset);
-				try {
-					charStream = new ANTLRInputStream(r);
-				}
-				finally {
-					r.close();
-				}
-			}
+			CharStream charStream = CharStreams.fromStream(System.in, charset);
 			process(lexer, parserClass, parser, charStream);
 			return;
 		}
 		for (String inputFile : inputFiles) {
-			CharStream charStream;
-			if ( charset.equals(Charset.forName("UTF-8")) ) {
-				charStream = CharStreams.createWithUTF8(new File(inputFile));
-			} else {
-				InputStreamReader r = new InputStreamReader(System.in, charset);
-				try {
-					charStream = new ANTLRInputStream(r);
-				}
-				finally {
-					r.close();
-				}
-			}
+			CharStream charStream = CharStreams.fromFile(new File(inputFile), charset);
 			if ( inputFiles.size()>1 ) {
 				System.err.println(inputFile);
 			}

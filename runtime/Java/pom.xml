@@ -10,7 +10,7 @@
     <parent>
         <groupId>com.tunnelvisionlabs</groupId>
         <artifactId>antlr4-master</artifactId>
-        <version>4.6.1-SNAPSHOT</version>
+        <version>4.7-SNAPSHOT</version>
         <relativePath>../..</relativePath>
     </parent>
 
@@ -31,6 +31,13 @@
             <artifactId>antlr4-annotations</artifactId>
             <version>${project.version}</version>
             <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.11</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
@@ -102,6 +109,13 @@
                 <directory>resources</directory>
             </resource>
         </resources>
+
+        <testSourceDirectory>test</testSourceDirectory>
+        <testResources>
+            <testResource>
+                <directory>test</directory>
+            </testResource>
+        </testResources>
 
         <plugins>
             <plugin>

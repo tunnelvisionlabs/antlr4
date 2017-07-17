@@ -21,5 +21,14 @@ TestTemplates ::= [
 	"NotCharSetWithLabel": [],
 	"NotCharSetWithRuleRef3": [],
 	"CharSetLiteral": [],
-	"ComplementSet": []
+	"ComplementSet": [],
+	"UnicodeUnescapedBMPSet": [],
+	"UnicodeUnescapedBMPRangeSet": [],
+	"UnicodeEscapedBMPSet": [],
+	"UnicodeEscapedBMPRangeSet": [],
+	"UnicodeEscapedSMPSet": [],
+	"UnicodeEscapedSMPRangeSet": [],
+	"UnicodeEscapedSMPRangeSetMismatch": [],
+	"UnicodeNegatedBMPSetIncludesSMPCodePoints": [],
+	"UnicodeNegatedSMPSetIncludesBMPCodePoints": []
 ]

@@ -19,7 +19,10 @@ import java.util.Arrays;
  * {@code char[]} to use.
  *
  * <p>If you need encoding, pass in stream/reader with correct encoding.</p>
+ *
+ * @deprecated as of 4.7 Please use {@link CharStreams} interface.
  */
+@Deprecated
 public class ANTLRInputStream implements CharStream {
     public static final int READ_BUFFER_SIZE = 1024;
    	public static final int INITIAL_BUFFER_SIZE = 1024;

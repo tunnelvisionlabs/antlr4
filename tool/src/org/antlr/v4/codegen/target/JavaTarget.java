@@ -101,7 +101,6 @@ public class JavaTarget extends Target {
 				switch (escapedCodePoint) {
 					// Pass through any escapes that Java also needs
 					//
-					case    '"':
 					case    'n':
 					case    'r':
 					case    't':

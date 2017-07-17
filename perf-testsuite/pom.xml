@@ -1,0 +1,135 @@
+<!--
+  ~ Copyright (c) 2012 The ANTLR Project. All rights reserved.
+  ~ Use of this file is governed by the BSD-3-Clause license that
+  ~ can be found in the LICENSE.txt file in the project root.
+  -->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.tunnelvisionlabs</groupId>
+        <artifactId>antlr4-master</artifactId>
+        <version>4.7-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>antlr4-perf-testsuite</artifactId>
+
+    <name>ANTLR 4 Performance Tests</name>
+    <description>The ANTLR 4 grammar compiler.</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.11</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.tunnelvisionlabs</groupId>
+            <artifactId>antlr4</artifactId>
+            <version>${project.version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.tunnelvisionlabs</groupId>
+            <artifactId>antlr4-runtime</artifactId>
+            <version>${project.version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.tunnelvisionlabs</groupId>
+            <artifactId>antlr4-annotations</artifactId>
+            <version>${project.version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.openjdk.jol</groupId>
+            <artifactId>jol-core</artifactId>
+            <version>0.8</version>
+            <scope>compile</scope>
+        </dependency>
+    </dependencies>
+
+    <profiles>
+        <profile>
+            <id>jacoco</id>
+            <activation>
+                <property>
+                    <name>ENABLE_JACOCO</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.jacoco</groupId>
+                        <artifactId>jacoco-maven-plugin</artifactId>
+                        <version>0.7.7.201606060606</version>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>prepare-agent</goal>
+                                </goals>
+                            </execution>
+                            <execution>
+                                <id>report</id>
+                                <phase>test</phase>
+                                <goals>
+                                    <goal>report</goal>
+                                </goals>
+                            </execution>
+                            <execution>
+                                <id>report-aggregate</id>
+                                <phase>test</phase>
+                                <goals>
+                                    <goal>report-aggregate</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
+    <build>
+
+        <sourceDirectory>src</sourceDirectory>
+        <resources>
+            <resource>
+                <directory>src</directory>
+            </resource>
+            <resource>
+                <directory>../runtime</directory>
+            </resource>
+        </resources>
+
+        <testSourceDirectory>test</testSourceDirectory>
+        <testResources>
+            <testResource>
+                <directory>test</directory>
+            </testResource>
+        </testResources>
+
+        <plugins>
+            <plugin>
+                <groupId>com.tunnelvisionlabs</groupId>
+                <artifactId>antlr4-maven-plugin</artifactId>
+                <version>${project.version}</version>
+                <configuration>
+                    <sourceDirectory>src</sourceDirectory>
+                    <verbose>true</verbose>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>antlr4</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

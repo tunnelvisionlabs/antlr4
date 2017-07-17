@@ -6,7 +6,7 @@
 
 package org.antlr.v4.test.tool;
 
-import org.antlr.v4.runtime.ANTLRInputStream;
+import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.LexerInterpreter;
 import org.antlr.v4.runtime.ParserInterpreter;
@@ -15,7 +15,6 @@ import org.antlr.v4.runtime.atn.DecisionInfo;
 import org.antlr.v4.tool.Grammar;
 import org.antlr.v4.tool.LexerGrammar;
 import org.antlr.v4.tool.Rule;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -243,7 +242,7 @@ public class TestParserProfiler extends BaseTest {
 		for (String s : input) {
 			lexEngine.reset();
 			parser.reset();
-			lexEngine.setInputStream(new ANTLRInputStream(s));
+			lexEngine.setInputStream(CharStreams.fromString(s));
 			CommonTokenStream tokens = new CommonTokenStream(lexEngine);
 			parser.setInputStream(tokens);
 			Rule r = g.rules.get(startRule);
