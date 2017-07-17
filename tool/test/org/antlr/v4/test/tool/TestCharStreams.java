@@ -34,6 +34,11 @@ public class TestCharStreams {
 	public ExpectedException thrown = ExpectedException.none();
 
 	@Test
+	public void fileEncodingShouldBeUTF8() {
+		assertEquals("UTF-8", System.getProperty("file.encoding"));
+	}
+
+	@Test
 	public void createWithBMPStringHasExpectedSize() {
 		CodePointCharStream s = CharStreams.createWithString("hello");
 		assertEquals(5, s.size());
