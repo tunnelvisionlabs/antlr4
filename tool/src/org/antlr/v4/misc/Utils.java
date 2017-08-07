@@ -7,7 +7,6 @@
 package org.antlr.v4.misc;
 
 import org.antlr.v4.runtime.misc.Func1;
-import org.antlr.v4.runtime.misc.IntegerList;
 import org.antlr.v4.runtime.misc.Predicate;
 import org.antlr.v4.tool.ast.GrammarAST;
 

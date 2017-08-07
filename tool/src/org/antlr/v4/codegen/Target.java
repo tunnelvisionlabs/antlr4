@@ -8,11 +8,9 @@ package org.antlr.v4.codegen;
 
 import org.antlr.v4.codegen.model.RuleFunction;
 import org.antlr.v4.codegen.model.SerializedATN;
-import org.antlr.v4.misc.CharSupport;
 import org.antlr.v4.misc.Utils;
 import org.antlr.v4.parse.ANTLRParser;
 import org.antlr.v4.runtime.Token;
-import org.antlr.v4.runtime.atn.ATNSimulator;
 import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.tool.ErrorType;
 import org.antlr.v4.tool.Grammar;

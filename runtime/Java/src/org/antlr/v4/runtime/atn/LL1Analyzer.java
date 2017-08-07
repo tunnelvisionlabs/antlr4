@@ -7,7 +7,6 @@
 package org.antlr.v4.runtime.atn;
 
 import org.antlr.v4.runtime.Token;
-import org.antlr.v4.runtime.misc.Args;
 import org.antlr.v4.runtime.misc.IntervalSet;
 import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.misc.Nullable;

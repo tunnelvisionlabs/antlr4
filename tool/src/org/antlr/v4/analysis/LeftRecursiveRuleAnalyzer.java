@@ -18,7 +18,6 @@ import org.antlr.v4.parse.GrammarASTAdaptor;
 import org.antlr.v4.parse.LeftRecursiveRuleWalker;
 import org.antlr.v4.runtime.misc.IntervalSet;
 import org.antlr.v4.runtime.misc.NotNull;
-import org.antlr.v4.runtime.misc.Nullable;
 import org.antlr.v4.runtime.misc.Tuple;
 import org.antlr.v4.runtime.misc.Tuple2;
 import org.antlr.v4.tool.ErrorType;

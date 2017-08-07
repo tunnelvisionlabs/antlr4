@@ -14,7 +14,6 @@ import org.antlr.v4.runtime.misc.Tuple;
 import org.antlr.v4.runtime.misc.Tuple2;
 import org.antlr.v4.tool.Attribute;
 import org.antlr.v4.tool.AttributeDict;
-import org.antlr.v4.tool.ErrorManager;
 import org.antlr.v4.tool.ErrorType;
 import org.antlr.v4.tool.Grammar;
 import org.antlr.v4.tool.ast.ActionAST;

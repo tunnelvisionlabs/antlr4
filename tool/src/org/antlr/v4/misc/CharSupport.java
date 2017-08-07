@@ -7,7 +7,6 @@
 package org.antlr.v4.misc;
 
 import org.antlr.v4.runtime.Lexer;
-import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.misc.Interval;
 import org.antlr.v4.runtime.misc.IntervalSet;
 

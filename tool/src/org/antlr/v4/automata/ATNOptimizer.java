@@ -6,9 +6,7 @@
 
 package org.antlr.v4.automata;
 
-import org.antlr.v4.codegen.model.MatchSet;
 import org.antlr.v4.misc.CharSupport;
-import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.atn.ATN;
 import org.antlr.v4.runtime.atn.ATNState;
 import org.antlr.v4.runtime.atn.AtomTransition;
