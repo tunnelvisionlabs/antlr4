@@ -7,9 +7,8 @@
 package org.antlr.v4.test.tool;
 
 import org.antlr.v4.unicode.UnicodeData;
-
-import org.junit.Test;
 import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 import static org.junit.Assert.assertFalse;

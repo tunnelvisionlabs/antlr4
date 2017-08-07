@@ -10,7 +10,6 @@ import com.ibm.icu.lang.UCharacter;
 import com.ibm.icu.lang.UProperty;
 import com.ibm.icu.text.UnicodeSet;
 import com.ibm.icu.util.RangeValueIterator;
-
 import org.antlr.v4.runtime.misc.IntervalSet;
 
 import java.util.LinkedHashMap;

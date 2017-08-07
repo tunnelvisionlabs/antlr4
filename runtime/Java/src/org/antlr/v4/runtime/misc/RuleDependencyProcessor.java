@@ -31,6 +31,7 @@ import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.MirroredTypeException;
 import javax.lang.model.type.TypeMirror;
 import javax.tools.Diagnostic;
+
 import java.lang.annotation.AnnotationTypeMismatchException;
 import java.util.ArrayList;
 import java.util.BitSet;

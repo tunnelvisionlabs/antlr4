@@ -6,8 +6,8 @@
 
 package org.antlr.v4.test.tool;
 
-import org.antlr.v4.runtime.atn.PredictionContextCache;
 import org.antlr.v4.runtime.atn.PredictionContext;
+import org.antlr.v4.runtime.atn.PredictionContextCache;
 import org.junit.Before;
 import org.junit.Test;
 

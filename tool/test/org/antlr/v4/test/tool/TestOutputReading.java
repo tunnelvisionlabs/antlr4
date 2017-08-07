@@ -5,13 +5,13 @@
  */
 package org.antlr.v4.test.tool;
 
-import java.nio.charset.Charset;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.Charset;
 
 public abstract class TestOutputReading {
 	public static void append(BufferedReader in, StringBuilder buf) throws IOException {

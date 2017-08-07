@@ -6,12 +6,12 @@
 
 package org.antlr.v4.test.tool;
 
-import static org.junit.Assert.assertArrayEquals;
-
 import org.antlr.v4.runtime.misc.IntegerList;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+
+import static org.junit.Assert.assertArrayEquals;
 
 public class TestIntegerList {
 	@Rule

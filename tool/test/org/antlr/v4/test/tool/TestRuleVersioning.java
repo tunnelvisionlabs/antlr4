@@ -5,9 +5,9 @@
  */
 package org.antlr.v4.test.tool;
 
-import org.antlr.v4.runtime.misc.Tuple2;
 import org.antlr.v4.runtime.misc.Predicate;
 import org.antlr.v4.runtime.misc.Tuple;
+import org.antlr.v4.runtime.misc.Tuple2;
 import org.antlr.v4.runtime.misc.Utils;
 import org.junit.Ignore;
 import org.junit.Test;

@@ -6,7 +6,6 @@
 
 package org.antlr.v4.gui;
 
-import javax.print.PrintException;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonToken;
@@ -18,6 +17,8 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.TokenStream;
 import org.antlr.v4.runtime.atn.PredictionMode;
+
+import javax.print.PrintException;
 
 import java.io.File;
 import java.io.IOException;
