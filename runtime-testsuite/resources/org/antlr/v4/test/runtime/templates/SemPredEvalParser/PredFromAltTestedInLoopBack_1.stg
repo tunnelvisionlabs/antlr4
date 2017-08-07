@@ -7,6 +7,6 @@ Output() ::= <<
 >>
 
 Errors() ::= <<
-line 5:0 mismatched input '\<EOF>' expecting '
-'<\n>
+line 5:0 mismatched input '\<EOF>' expecting {'s', '
+', 'x'}<\n>
 >>

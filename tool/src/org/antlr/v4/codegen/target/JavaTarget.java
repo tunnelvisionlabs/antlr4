@@ -121,10 +121,12 @@ public class JavaTarget extends Target {
 						} else {
 							toAdvance += 4;
 						}
-						String fullEscape = is.substring(i, i + toAdvance);
-						appendUnicodeEscapedCodePoint(
-								CharSupport.getCharValueFromCharInGrammarLiteral(fullEscape),
-								sb);
+						if ( i+toAdvance <= is.length() ) { // we might have an invalid \\uAB or something
+							String fullEscape = is.substring(i, i + toAdvance);
+							appendUnicodeEscapedCodePoint(
+									CharSupport.getCharValueFromCharInGrammarLiteral(fullEscape),
+									sb);
+						}
 						break;
 					default:
 						if (shouldUseUnicodeEscapeForCodePointInDoubleQuotedString(escapedCodePoint)) {

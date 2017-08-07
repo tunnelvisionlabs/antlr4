@@ -255,6 +255,8 @@ public class Trees {
 	public static Tree findNodeSuchThat(Tree t, Predicate<Tree> pred) {
 		if ( pred.eval(t) ) return t;
 
+		if ( t==null ) return null;
+
 		int n = t.getChildCount();
 		for (int i = 0 ; i < n ; i++){
 			Tree u = findNodeSuchThat(t.getChild(i), pred);

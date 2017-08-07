@@ -1,0 +1,29 @@
+TestType() ::= "Parser"
+
+Options ::= [
+	"Debug": false
+]
+
+Grammar ::= [
+	"T": {<grammar("T")>}
+]
+
+Input() ::= "baa"
+
+Rule() ::= "file"
+
+Output() ::= <<
+>>
+
+Errors() ::= <<
+line 1:0 mismatched input 'b' expecting {\<EOF>, 'a'}<\n>
+>>
+
+grammar(grammarName) ::= <<
+grammar <grammarName>;
+
+member : 'a';
+body : member*;
+file : body EOF;
+B : 'b';
+>>
