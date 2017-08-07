@@ -17,7 +17,7 @@ import org.junit.Test;
 
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 /**
  * Lexer rules are little quirky when it comes to wildcards. Problem

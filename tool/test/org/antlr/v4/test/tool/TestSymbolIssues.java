@@ -10,7 +10,7 @@ import org.antlr.v4.tool.ErrorType;
 import org.antlr.v4.tool.LexerGrammar;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 /** */
 public class TestSymbolIssues extends BaseTest {
