@@ -27,7 +27,6 @@ public class TerminalNodeImpl implements TerminalNode {
 	@Override
 	public RuleNode getParent() { return parent; }
 
-	@Override
 	public void setParent(RuleContext parent) {
 		this.parent = parent;
 	}
