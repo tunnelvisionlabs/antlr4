@@ -5,9 +5,11 @@
  */
 package org.antlr.v4.runtime;
 
+import org.antlr.v4.runtime.atn.ATN;
 import org.antlr.v4.runtime.atn.LexerATNSimulator;
 import org.antlr.v4.runtime.misc.IntegerStack;
 import org.antlr.v4.runtime.misc.Interval;
+import org.antlr.v4.runtime.misc.Nullable;
 import org.antlr.v4.runtime.misc.Tuple;
 import org.antlr.v4.runtime.misc.Tuple2;
 
@@ -206,11 +208,24 @@ public abstract class Lexer extends Recognizer<Integer, LexerATNSimulator>
 
 	/** Set the char stream and reset the lexer */
 	public void setInputStream(CharStream input) {
+		validateInputStream(getInterpreter().atn, input);
+
 		this._input = null;
 		this._tokenFactorySourcePair = Tuple.create(this, _input);
 		reset();
 		this._input = input;
 		this._tokenFactorySourcePair = Tuple.create(this, _input);
+	}
+
+	protected void validateInputStream(ATN atn, CharStream input) {
+		if (atn != null && !atn.hasUnicodeSMPTransitions()) {
+			// This grammar should work with inputs that stream UTF-16 or Unicode code points.
+			return;
+		}
+
+		if (!(input instanceof UnicodeCharStream) || !((UnicodeCharStream)input).supportsUnicodeCodePoints()) {
+			throw new UnsupportedOperationException("The input stream does not support code points required for this grammar.");
+		}
 	}
 
 	@Override
@@ -318,10 +333,12 @@ public abstract class Lexer extends Recognizer<Integer, LexerATNSimulator>
 		return _channel;
 	}
 
+	@Nullable
 	public String[] getChannelNames() {
 		return null;
 	}
 
+	@Nullable
 	public String[] getModeNames() {
 		return null;
 	}

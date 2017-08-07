@@ -14,6 +14,7 @@ import org.antlr.v4.runtime.LexerInterpreter;
 import org.antlr.v4.runtime.UnbufferedCharStream;
 import org.antlr.v4.runtime.misc.Interval;
 import org.antlr.v4.tool.LexerGrammar;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.Reader;
@@ -305,6 +306,7 @@ public class TestUnbufferedCharStream extends BaseTest {
 		assertEquals(expecting, tokens.getTokens().toString());
     }
 
+	@Ignore("UnbufferedCharStream does not support Unicode in this fork")
 	@Test public void testUnicodeSMP() throws Exception {
 		TestingUnbufferedCharStream input = createStream("\uD83C\uDF0E");
 		assertEquals(0x1F30E, input.LA(1));
@@ -314,16 +316,19 @@ public class TestUnbufferedCharStream extends BaseTest {
 		assertEquals("\uFFFF", input.getBuffer());
 	}
 
+	@Ignore("UnbufferedCharStream does not support Unicode in this fork")
 	@Test(expected = RuntimeException.class)
 	public void testDanglingHighSurrogateAtEOFThrows() throws Exception {
 		createStream("\uD83C");
 	}
 
+	@Ignore("UnbufferedCharStream does not support Unicode in this fork")
 	@Test(expected = RuntimeException.class)
 	public void testDanglingHighSurrogateThrows() throws Exception {
 		createStream("\uD83C\u0123");
 	}
 
+	@Ignore("UnbufferedCharStream does not support Unicode in this fork")
 	@Test(expected = RuntimeException.class)
 	public void testDanglingLowSurrogateThrows() throws Exception {
 		createStream("\uDF0E");

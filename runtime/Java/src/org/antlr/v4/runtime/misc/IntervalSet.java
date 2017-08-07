@@ -410,29 +410,41 @@ public class IntervalSet implements IntSet {
         return intervals==null || intervals.isEmpty();
     }
 
+	/** {@inheritDoc} */
+	@Override
+	public int getSingleElement() {
+		if ( intervals!=null && intervals.size()==1 ) {
+			Interval I = intervals.get(0);
+			if ( I.a == I.b ) {
+				return I.a;
+			}
+		}
+		return Token.INVALID_TYPE;
+	}
+
 	/**
-	 * Returns the maximum value contained in the set if not isNil().
+	 * Returns the maximum value contained in the set.
 	 *
-	 * @return the maximum value contained in the set.
-	 * @throws RuntimeException if set is empty
+	 * @return the maximum value contained in the set. If the set is empty, this
+	 * method returns {@link Token#INVALID_TYPE}.
 	 */
 	public int getMaxElement() {
 		if ( isNil() ) {
-			throw new RuntimeException("set is empty");
+			return Token.INVALID_TYPE;
 		}
 		Interval last = intervals.get(intervals.size()-1);
 		return last.b;
 	}
 
 	/**
-	 * Returns the minimum value contained in the set if not isNil().
+	 * Returns the minimum value contained in the set.
 	 *
-	 * @return the minimum value contained in the set.
-	 * @throws RuntimeException if set is empty
+	 * @return the minimum value contained in the set. If the set is empty, this
+	 * method returns {@link Token#INVALID_TYPE}.
 	 */
 	public int getMinElement() {
 		if ( isNil() ) {
-			throw new RuntimeException("set is empty");
+			return Token.INVALID_TYPE;
 		}
 
 		return intervals.get(0).a;

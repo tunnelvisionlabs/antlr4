@@ -186,9 +186,45 @@ public class Utils {
 		return m;
 	}
 
+	/** Convert the list to a UTF-16 encoded char array. If all values are less
+	 *  than the 0xFFFF 16-bit code point limit then this is just a char array
+	 *  of 16-bit char as usual. For values in the supplementary range, encode
+	 * them as two UTF-16 code units.
+	 */
 	public static char[] toCharArray(IntegerList data) {
 		if ( data==null ) return null;
-		return data.toCharArray();
+
+		// Optimize for the common case (all data values are
+		// < 0xFFFF) to avoid an extra scan
+		char[] resultArray = new char[data.size()];
+		int resultIdx = 0;
+		boolean calculatedPreciseResultSize = false;
+		for (int i = 0; i < data.size(); i++) {
+			int codePoint = data.get(i);
+			// Calculate the precise result size if we encounter
+			// a code point > 0xFFFF
+			if (!calculatedPreciseResultSize &&
+			    Character.isSupplementaryCodePoint(codePoint)) {
+				resultArray = Arrays.copyOf(resultArray, charArraySize(data));
+				calculatedPreciseResultSize = true;
+			}
+
+			// This will throw IllegalArgumentException if
+			// the code point is not a valid Unicode code point
+			int charsWritten = Character.toChars(codePoint, resultArray, resultIdx);
+			resultIdx += charsWritten;
+		}
+
+		return resultArray;
+	}
+
+	private static int charArraySize(IntegerList data) {
+		int result = 0;
+		for (int i = 0; i < data.size(); i++) {
+			result += Character.charCount(data.get(i));
+		}
+
+		return result;
 	}
 
 	/**

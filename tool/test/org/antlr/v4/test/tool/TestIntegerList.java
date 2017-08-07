@@ -7,6 +7,7 @@
 package org.antlr.v4.test.tool;
 
 import org.antlr.v4.runtime.misc.IntegerList;
+import org.antlr.v4.runtime.misc.Utils;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -20,7 +21,7 @@ public class TestIntegerList {
 	@Test
 	public void emptyListToEmptyCharArray() {
 		IntegerList l = new IntegerList();
-		assertArrayEquals(new char[0], l.toCharArray());
+		assertArrayEquals(new char[0], Utils.toCharArray(l));
 	}
 
 	@Test
@@ -28,7 +29,7 @@ public class TestIntegerList {
 		IntegerList l = new IntegerList();
 		l.add(-42);
 		thrown.expect(IllegalArgumentException.class);
-		l.toCharArray();
+		Utils.toCharArray(l);
 	}
 
 	@Test
@@ -38,7 +39,7 @@ public class TestIntegerList {
 		// as well. We could change this if desired.
 		l.add(0xDC00);
 		char expected[] = new char[] { 0xDC00 };
-		assertArrayEquals(expected, l.toCharArray());
+		assertArrayEquals(expected, Utils.toCharArray(l));
 	}
 
 	@Test
@@ -46,7 +47,7 @@ public class TestIntegerList {
 		IntegerList l = new IntegerList();
 		l.add(0x110000);
 		thrown.expect(IllegalArgumentException.class);
-		l.toCharArray();
+		Utils.toCharArray(l);
 	}
 
 	@Test
@@ -56,7 +57,7 @@ public class TestIntegerList {
 		l.add(0x4E94);
 		l.add(0xFF15);
 		char expected[] = new char[] { 0x35, 0x4E94, 0xFF15 };
-		assertArrayEquals(expected, l.toCharArray());
+		assertArrayEquals(expected, Utils.toCharArray(l));
 	}
 
 	@Test
@@ -66,6 +67,6 @@ public class TestIntegerList {
 		l.add(0x116C5);
 		l.add(0x1D7FB);
 		char expected[] = new char[] { 0xD801, 0xDCA5, 0xD805, 0xDEC5, 0xD835, 0xDFFB };
-		assertArrayEquals(expected, l.toCharArray());
+		assertArrayEquals(expected, Utils.toCharArray(l));
 	}
 }

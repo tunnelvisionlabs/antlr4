@@ -111,7 +111,7 @@ public class ParserRuleContext extends RuleContext {
 			// reset parent pointer for any error nodes
 			for (ParseTree child : ctx.children) {
 				if ( child instanceof ErrorNode ) {
-					addChild((ErrorNode)child);
+					addErrorNode((ErrorNode)child);
 				}
 			}
 		}
@@ -138,6 +138,8 @@ public class ParserRuleContext extends RuleContext {
 	 *  @since 4.7
 	 */
 	public <T extends ParseTree> T addAnyChild(T t) {
+		assert t.getParent() == null || t.getParent() == this;
+
 		if ( children==null ) children = new ArrayList<ParseTree>();
 		children.add(t);
 		return t;
@@ -147,9 +149,8 @@ public class ParserRuleContext extends RuleContext {
 		addAnyChild(ruleInvocation);
 	}
 
-	/** Add a token leaf node child and force its parent to be this node. */
+	/** Add a token leaf node child. */
 	public void addChild(TerminalNode t) {
-		t.setParent(this);
 		addAnyChild(t);
 	}
 

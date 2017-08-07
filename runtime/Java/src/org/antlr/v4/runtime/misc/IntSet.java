@@ -5,6 +5,7 @@
  */
 package org.antlr.v4.runtime.misc;
 
+import org.antlr.v4.runtime.Token;
 
 import java.util.List;
 
@@ -127,6 +128,15 @@ public interface IntSet {
 	 */
 	@Override
 	boolean equals(Object obj);
+
+	/**
+	 * Returns the single value contained in the set, if {@link #size} is 1;
+	 * otherwise, returns {@link Token#INVALID_TYPE}.
+	 *
+	 * @return the single value contained in the set, if {@link #size} is 1;
+	 * otherwise, returns {@link Token#INVALID_TYPE}.
+	 */
+	int getSingleElement();
 
 	/**
 	 * Returns {@code true} if the set contains the specified element.

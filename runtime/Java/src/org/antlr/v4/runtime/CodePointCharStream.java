@@ -17,7 +17,7 @@ import java.nio.charset.Charset;
  * Use this if you need to parse input which potentially contains
  * Unicode values > U+FFFF.
  */
-public abstract class CodePointCharStream implements CharStream {
+public abstract class CodePointCharStream implements UnicodeCharStream, CharStream {
 	protected final int size;
 	protected final String name;
 
@@ -134,6 +134,11 @@ public abstract class CodePointCharStream implements CharStream {
 	@Override
 	public final String toString() {
 		return getText(Interval.of(0, size - 1));
+	}
+
+	@Override
+	public final boolean supportsUnicodeCodePoints() {
+		return true;
 	}
 
 	// 8-bit storage for code points <= U+00FF.

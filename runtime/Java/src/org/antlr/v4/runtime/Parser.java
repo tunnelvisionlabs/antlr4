@@ -598,7 +598,9 @@ public abstract class Parser extends Recognizer<Token, ParserATNSimulator> {
 	 * @since 4.7
 	 */
 	public TerminalNode createTerminalNode(ParserRuleContext parent, Token t) {
-		return new TerminalNodeImpl(t);
+		TerminalNodeImpl node = new TerminalNodeImpl(t);
+		node.setParent(parent);
+		return node;
 	}
 
 	/** How to create an error node, given a token, associated with a parent.
@@ -607,7 +609,9 @@ public abstract class Parser extends Recognizer<Token, ParserATNSimulator> {
 	 * @since 4.7
 	 */
 	public ErrorNode createErrorNode(ParserRuleContext parent, Token t) {
-		return new ErrorNodeImpl(t);
+		ErrorNodeImpl node = new ErrorNodeImpl(t);
+		node.setParent(parent);
+		return node;
 	}
 
 	protected void addContextToParseTree() {

@@ -155,7 +155,7 @@ public class ATNDeserializer {
 	 * serialized ATN at or after the feature identified by {@code feature} was
 	 * introduced; otherwise, {@code false}.
 	 */
-	static protected boolean isFeatureSupported(UUID feature, UUID actualUuid) {
+	protected boolean isFeatureSupported(UUID feature, UUID actualUuid) {
 		int featureIndex = SUPPORTED_UUIDS.indexOf(feature);
 		if (featureIndex < 0) {
 			return false;
@@ -334,7 +334,9 @@ public class ATNDeserializer {
 		// Next, if the ATN was serialized with the Unicode SMP feature,
 		// deserialize sets with 32-bit arguments <= U+10FFFF.
 		if (isFeatureSupported(ADDED_UNICODE_SMP, uuid)) {
+			int previousSetCount = sets.size();
 			p = deserializeSets(data, p, sets, getUnicodeDeserializer(UnicodeDeserializingMode.UNICODE_SMP));
+			atn.setHasUnicodeSMPTransitions(sets.size() > previousSetCount);
 		}
 
 		//

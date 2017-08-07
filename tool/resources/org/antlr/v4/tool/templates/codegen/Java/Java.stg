@@ -961,6 +961,7 @@ public <if(lexer.abstractRecognizer)>abstract <endif>class <lexer.name> extends 
 	public <lexer.name>(CharStream input) {
 		super(input);
 		_interp = new LexerATNSimulator(this,_ATN);
+		validateInputStream(_ATN, input);
 	}
 
 	@Override
@@ -973,9 +974,11 @@ public <if(lexer.abstractRecognizer)>abstract <endif>class <lexer.name> extends 
 	public String getSerializedATN() { return _serializedATN; }
 
 	@Override
+	@NotNull
 	public String[] getChannelNames() { return channelNames; }
 
 	@Override
+	@NotNull
 	public String[] getModeNames() { return modeNames; }
 
 	<dumpActions(lexer, "", actionFuncs, sempredFuncs)>
