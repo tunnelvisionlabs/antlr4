@@ -73,6 +73,7 @@ import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -433,7 +434,7 @@ public abstract class BaseTest {
 //			new DiagnosticCollector<JavaFileObject>();
 
 		StandardJavaFileManager fileManager =
-			compiler.getStandardFileManager(null, null, null);
+			compiler.getStandardFileManager(null, null, Charset.forName("UTF-8"));
 
 		Iterable<? extends JavaFileObject> compilationUnits =
 			fileManager.getJavaFileObjectsFromFiles(files);
@@ -815,11 +816,11 @@ public abstract class BaseTest {
 				StreamVacuum stderrVacuum = new StreamVacuum(stderrIn);
 
 				PrintStream originalOut = System.out;
-				System.setOut(new PrintStream(stdoutOut));
+				System.setOut(new PrintStream(stdoutOut, false, "UTF-8"));
 				try {
 					PrintStream originalErr = System.err;
 					try {
-						System.setErr(new PrintStream(stderrOut));
+						System.setErr(new PrintStream(stderrOut, false, "UTF-8"));
 						stdoutVacuum.start();
 						stderrVacuum.start();
 						mainMethod.invoke(null, (Object)new String[] { new File(tmpdir, "input").getAbsolutePath() });
