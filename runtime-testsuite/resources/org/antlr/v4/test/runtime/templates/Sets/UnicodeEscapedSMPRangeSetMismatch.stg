@@ -1,0 +1,30 @@
+TestType() ::= "Parser"
+
+Options ::= [
+	"Debug": false
+]
+
+Grammar ::= [
+	"T": {<grammar("T")>}
+]
+
+Input() ::= "a🗿🥄d"
+
+Rule() ::= "a"
+
+Output() ::= <<
+ad<\n>
+>>
+
+Errors() ::= <<
+line 1:1 token recognition error at: '🗿'
+line 1:2 token recognition error at: '🥄'<\n>
+>>
+
+grammar(grammarName) ::= <<
+grammar <grammarName>;
+a : LETTERS* 'd' {<InputText():writeln()>} ;
+// Note the double-backslash to avoid Java passing
+// unescaped values as part of the grammar.
+LETTERS : ('a'|'\\u{1F600}'..'\\u{1F943}');
+>>

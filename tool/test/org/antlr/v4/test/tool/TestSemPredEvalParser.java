@@ -596,7 +596,7 @@ public class TestSemPredEvalParser extends BaseTest {
 		String found = execParser("T2.g4", grammar, "T2Parser", "T2Lexer", "file",
 								  input, true);
 		assertEquals("(file (para (paraContent s) \\n \\n) (para (paraContent \\n x \\n)) <EOF>)\n", found);
-		assertEquals(stderrDuringParse, "line 5:0 mismatched input '<EOF>' expecting '\n'\n");
+		assertEquals("line 5:0 mismatched input '<EOF>' expecting {'\n', 's', 'x'}\n", stderrDuringParse);
 
 		input = "s\n\n\nx\n\n";
 		found = execParser("T2.g4", grammar, "T2Parser", "T2Lexer", "file",

@@ -6,13 +6,14 @@
 package org.antlr.v4.test.tool;
 
 import org.antlr.v4.Tool;
+import org.antlr.v4.analysis.AnalysisPipeline;
 import org.antlr.v4.automata.ATNFactory;
 import org.antlr.v4.automata.ATNPrinter;
 import org.antlr.v4.automata.LexerATNFactory;
 import org.antlr.v4.automata.ParserATNFactory;
 import org.antlr.v4.codegen.CodeGenerator;
-import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonToken;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.IntStream;
@@ -34,6 +35,8 @@ import org.antlr.v4.runtime.misc.IntegerList;
 import org.antlr.v4.runtime.misc.Interval;
 import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.misc.Nullable;
+import org.antlr.v4.runtime.misc.Tuple;
+import org.antlr.v4.runtime.misc.Tuple2;
 import org.antlr.v4.runtime.misc.Utils;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.semantics.SemanticPipeline;
@@ -56,11 +59,7 @@ import javax.tools.JavaCompiler;
 import javax.tools.JavaFileObject;
 import javax.tools.StandardJavaFileManager;
 import javax.tools.ToolProvider;
-import org.antlr.v4.analysis.AnalysisPipeline;
-import org.antlr.v4.runtime.misc.Tuple;
-import org.antlr.v4.runtime.misc.Tuple2;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -68,13 +67,13 @@ import java.io.InputStreamReader;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.io.PrintStream;
-import java.io.StringReader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -289,7 +288,7 @@ public abstract class BaseTest {
 	}
 
 	public IntegerList getTokenTypesViaATN(String input, LexerATNSimulator lexerATN) {
-		ANTLRInputStream in = new ANTLRInputStream(input);
+		CharStream in = CharStreams.fromString(input);
 		IntegerList tokenTypes = new IntegerList();
 		int ttype;
 		do {
@@ -435,7 +434,7 @@ public abstract class BaseTest {
 //			new DiagnosticCollector<JavaFileObject>();
 
 		StandardJavaFileManager fileManager =
-			compiler.getStandardFileManager(null, null, null);
+			compiler.getStandardFileManager(null, null, Charset.forName("UTF-8"));
 
 		Iterable<? extends JavaFileObject> compilationUnits =
 			fileManager.getJavaFileObjectsFromFiles(files);
@@ -673,11 +672,9 @@ public abstract class BaseTest {
 		final Class<? extends Lexer> lexerClass = loadLexerClassFromTempDir(lexerName);
 		final Class<? extends Parser> parserClass = loadParserClassFromTempDir(parserName);
 
-		ANTLRInputStream in = new ANTLRInputStream(new StringReader(input));
-
 		Class<? extends Lexer> c = lexerClass.asSubclass(Lexer.class);
 		Constructor<? extends Lexer> ctor = c.getConstructor(CharStream.class);
-		Lexer lexer = ctor.newInstance(in);
+		Lexer lexer = ctor.newInstance(CharStreams.fromString(input));
 
 		Class<? extends Parser> pc = parserClass.asSubclass(Parser.class);
 		Constructor<? extends Parser> pctor = pc.getConstructor(TokenStream.class);
@@ -819,11 +816,11 @@ public abstract class BaseTest {
 				StreamVacuum stderrVacuum = new StreamVacuum(stderrIn);
 
 				PrintStream originalOut = System.out;
-				System.setOut(new PrintStream(stdoutOut));
+				System.setOut(new PrintStream(stdoutOut, false, "UTF-8"));
 				try {
 					PrintStream originalErr = System.err;
 					try {
-						System.setErr(new PrintStream(stderrOut));
+						System.setErr(new PrintStream(stderrOut, false, "UTF-8"));
 						stdoutVacuum.start();
 						stderrVacuum.start();
 						mainMethod.invoke(null, (Object)new String[] { new File(tmpdir, "input").getAbsolutePath() });
@@ -879,6 +876,7 @@ public abstract class BaseTest {
 		try {
 			String[] args = new String[] {
 				"java", "-classpath", tmpdir+pathSep+CLASSPATH,
+				"-Dfile.encoding=UTF-8",
 				className, new File(tmpdir, "input").getAbsolutePath()
 			};
 			//String cmdLine = "java -classpath "+CLASSPATH+pathSep+tmpdir+" Test " + new File(tmpdir, "input").getAbsolutePath();
@@ -1031,41 +1029,6 @@ public abstract class BaseTest {
 		}
 	}
 
-	public static class StreamVacuum implements Runnable {
-		StringBuilder buf = new StringBuilder();
-		BufferedReader in;
-		Thread sucker;
-		public StreamVacuum(InputStream in) {
-			this.in = new BufferedReader( new InputStreamReader(in) );
-		}
-		public void start() {
-			sucker = new Thread(this);
-			sucker.start();
-		}
-		@Override
-		public void run() {
-			try {
-				String line = in.readLine();
-				while (line!=null) {
-					buf.append(line);
-					buf.append('\n');
-					line = in.readLine();
-				}
-			}
-			catch (IOException ioe) {
-				System.err.println("can't read output from process");
-			}
-		}
-		/** wait for the thread to finish */
-		public void join() throws InterruptedException {
-			sucker.join();
-		}
-		@Override
-		public String toString() {
-			return buf.toString();
-		}
-	}
-
 	protected void checkGrammarSemanticsError(ErrorQueue equeue,
 											  GrammarSemanticsMessage expectedMessage)
 		throws Exception
@@ -1174,11 +1137,12 @@ public abstract class BaseTest {
 			"import org.antlr.v4.runtime.*;\n" +
 			"import org.antlr.v4.runtime.tree.*;\n" +
 			"import org.antlr.v4.runtime.atn.*;\n" +
+			"import java.io.File;\n"+
 			"import java.util.Arrays;\n"+
 			"\n" +
 			"public class Test {\n" +
 			"    public static void main(String[] args) throws Exception {\n" +
-			"        CharStream input = new ANTLRFileStream(args[0]);\n" +
+			"        CharStream input = CharStreams.fromFile(new File(args[0]));\n" +
 			"        <lexerName> lex = new <lexerName>(input);\n" +
 			"        CommonTokenStream tokens = new CommonTokenStream(lex);\n" +
 			"        <createParser>\n"+
@@ -1231,11 +1195,12 @@ public abstract class BaseTest {
 
 	protected void writeLexerTestFile(String lexerName, boolean showDFA) {
 		ST outputFileST = new ST(
+			"import java.io.File;\n" +
 			"import org.antlr.v4.runtime.*;\n" +
 			"\n" +
 			"public class Test {\n" +
 			"    public static void main(String[] args) throws Exception {\n" +
-			"        CharStream input = new ANTLRFileStream(args[0]);\n" +
+			"        CharStream input = CharStreams.fromFile(new File(args[0]));\n" +
 			"        <lexerName> lex = new <lexerName>(input);\n" +
 			"        CommonTokenStream tokens = new CommonTokenStream(lex);\n" +
 			"        tokens.fill();\n" +

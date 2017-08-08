@@ -1,0 +1,25 @@
+TestType() ::= "Parser"
+
+Options ::= [
+	"Debug": false
+]
+
+Grammar ::= [
+	"T": {<grammar("T")>}
+]
+
+Input() ::= "aáäáâåd"
+
+Rule() ::= "a"
+
+Output() ::= <<
+aáäáâåd<\n>
+>>
+
+Errors() ::= ""
+
+grammar(grammarName) ::= <<
+grammar <grammarName>;
+a : LETTERS* 'd' {<InputText():writeln()>} ;
+LETTERS : ('a'|'à'..'å');
+>>

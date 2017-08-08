@@ -19,7 +19,7 @@ import java.util.Arrays;
  *  lookahead prediction in parser). "Unbuffered" here refers to fact
  *  that it doesn't buffer all data, not that's it's on demand loading of char.
  */
-public class UnbufferedCharStream implements CharStream {
+public class UnbufferedCharStream implements UnicodeCharStream, CharStream {
 	/**
 	 * A moving window buffer of the data being scanned. While there's a marker,
 	 * we keep adding to buffer. Otherwise, {@link #consume consume()} resets so
@@ -304,5 +304,13 @@ public class UnbufferedCharStream implements CharStream {
 
 	protected final int getBufferStartIndex() {
 		return currentCharIndex - p;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public boolean supportsUnicodeCodePoints() {
+		return false;
 	}
 }

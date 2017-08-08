@@ -15,7 +15,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.tunnelvisionlabs</groupId>
     <artifactId>antlr4-master</artifactId>
-    <version>4.6.1-SNAPSHOT</version>
+    <version>4.7.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>ANTLR 4</name>
@@ -75,6 +75,7 @@
         <module>antlr4-maven-plugin</module>
         <module>antlr4-testgen-maven-plugin</module>
         <module>runtime-testsuite</module>
+        <module>perf-testsuite</module>
     </modules>
 
     <properties>

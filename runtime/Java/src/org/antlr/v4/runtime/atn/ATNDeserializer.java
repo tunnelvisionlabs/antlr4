@@ -53,6 +53,12 @@ public class ATNDeserializer {
 	 */
 	private static final UUID ADDED_LEXER_ACTIONS;
 	/**
+	 * This UUID indicates the serialized ATN contains two sets of
+	 * IntervalSets, where the second set's values are encoded as
+	 * 32-bit integers to support the full Unicode SMP range up to U+10FFFF.
+	 */
+	private static final UUID ADDED_UNICODE_SMP;
+	/**
 	 * This list contains all of the currently supported UUIDs, ordered by when
 	 * the feature first appeared in this branch.
 	 */
@@ -68,12 +74,57 @@ public class ATNDeserializer {
 		 */
 		BASE_SERIALIZED_UUID = UUID.fromString("E4178468-DF95-44D0-AD87-F22A5D5FB6D3");
 		ADDED_LEXER_ACTIONS = UUID.fromString("AB35191A-1603-487E-B75A-479B831EAF6D");
+		ADDED_UNICODE_SMP = UUID.fromString("C23FEA89-0605-4f51-AFB8-058BCAB8C91B");
 
 		SUPPORTED_UUIDS = new ArrayList<UUID>();
 		SUPPORTED_UUIDS.add(BASE_SERIALIZED_UUID);
 		SUPPORTED_UUIDS.add(ADDED_LEXER_ACTIONS);
+		SUPPORTED_UUIDS.add(ADDED_UNICODE_SMP);
 
-		SERIALIZED_UUID = ADDED_LEXER_ACTIONS;
+		SERIALIZED_UUID = ADDED_UNICODE_SMP;
+	}
+
+	interface UnicodeDeserializer {
+		// Wrapper for readInt() or readInt32()
+		int readUnicode(char[] data, int p);
+
+		// Work around Java not allowing mutation of captured variables
+		// by returning amount by which to increment p after each read
+		int size();
+	}
+
+	enum UnicodeDeserializingMode {
+		UNICODE_BMP,
+		UNICODE_SMP
+	}
+
+	static UnicodeDeserializer getUnicodeDeserializer(UnicodeDeserializingMode mode) {
+		if (mode == UnicodeDeserializingMode.UNICODE_BMP) {
+			return new UnicodeDeserializer() {
+				@Override
+				public int readUnicode(char[] data, int p) {
+					return toInt(data[p]);
+				}
+
+				@Override
+				public int size() {
+					return 1;
+				}
+			};
+		}
+		else {
+			return new UnicodeDeserializer() {
+				@Override
+				public int readUnicode(char[] data, int p) {
+					return toInt32(data, p);
+				}
+
+				@Override
+				public int size() {
+					return 2;
+				}
+			};
+		}
 	}
 
 	@NotNull
@@ -276,22 +327,16 @@ public class ATNDeserializer {
 		// SETS
 		//
 		List<IntervalSet> sets = new ArrayList<IntervalSet>();
-		int nsets = toInt(data[p++]);
-		for (int i=0; i<nsets; i++) {
-			int nintervals = toInt(data[p]);
-			p++;
-			IntervalSet set = new IntervalSet();
-			sets.add(set);
 
-			boolean containsEof = toInt(data[p++]) != 0;
-			if (containsEof) {
-				set.add(-1);
-			}
+		// First, read all sets with 16-bit Unicode code points <= U+FFFF.
+		p = deserializeSets(data, p, sets, getUnicodeDeserializer(UnicodeDeserializingMode.UNICODE_BMP));
 
-			for (int j=0; j<nintervals; j++) {
-				set.add(toInt(data[p]), toInt(data[p + 1]));
-				p += 2;
-			}
+		// Next, if the ATN was serialized with the Unicode SMP feature,
+		// deserialize sets with 32-bit arguments <= U+10FFFF.
+		if (isFeatureSupported(ADDED_UNICODE_SMP, uuid)) {
+			int previousSetCount = sets.size();
+			p = deserializeSets(data, p, sets, getUnicodeDeserializer(UnicodeDeserializingMode.UNICODE_SMP));
+			atn.setHasUnicodeSMPTransitions(sets.size() > previousSetCount);
 		}
 
 		//
@@ -564,6 +609,30 @@ public class ATNDeserializer {
 		identifyTailCalls(atn);
 
 		return atn;
+	}
+
+	private int deserializeSets(char[] data, int p, List<IntervalSet> sets, UnicodeDeserializer unicodeDeserializer) {
+		int nsets = toInt(data[p++]);
+		for (int i=0; i<nsets; i++) {
+			int nintervals = toInt(data[p]);
+			p++;
+			IntervalSet set = new IntervalSet();
+			sets.add(set);
+
+			boolean containsEof = toInt(data[p++]) != 0;
+			if (containsEof) {
+				set.add(-1);
+			}
+
+			for (int j=0; j<nintervals; j++) {
+				int a = unicodeDeserializer.readUnicode(data, p);
+				p += unicodeDeserializer.size();
+				int b = unicodeDeserializer.readUnicode(data, p);
+				p += unicodeDeserializer.size();
+				set.add(a, b);
+			}
+		}
+		return p;
 	}
 
 	/**

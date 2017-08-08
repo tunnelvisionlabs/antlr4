@@ -36,6 +36,11 @@ public final class RangeTransition extends Transition {
 	@Override
 	@NotNull
 	public String toString() {
-		return "'"+(char)from+"'..'"+(char)to+"'";
+		return new StringBuilder("'")
+				.appendCodePoint(from)
+				.append("'..'")
+				.appendCodePoint(to)
+				.append("'")
+				.toString();
 	}
 }

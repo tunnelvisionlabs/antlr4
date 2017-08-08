@@ -6,13 +6,14 @@
 
 package org.antlr.v4.gui;
 
-import javax.print.PrintException;
-import javax.swing.JDialog;
 import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.misc.Nullable;
 import org.antlr.v4.runtime.misc.Utils;
 import org.antlr.v4.runtime.tree.Tree;
+
+import javax.print.PrintException;
+import javax.swing.JDialog;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;

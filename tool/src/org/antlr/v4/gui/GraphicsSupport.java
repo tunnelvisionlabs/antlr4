@@ -15,8 +15,12 @@ import javax.print.SimpleDoc;
 import javax.print.StreamPrintServiceFactory;
 import javax.print.attribute.HashPrintRequestAttributeSet;
 import javax.print.attribute.PrintRequestAttributeSet;
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.awt.print.PageFormat;
 import java.awt.print.Printable;
@@ -65,7 +69,8 @@ public class GraphicsSupport {
 				job.print(doc, attributes);
 				out.close();
 			}
-		} else {
+		}
+		else {
 			// parrt: works with [image/jpeg, image/png, image/x-png, image/vnd.wap.wbmp, image/bmp, image/gif]
 			Rectangle rect = comp.getBounds();
 			BufferedImage image = new BufferedImage(rect.width, rect.height,

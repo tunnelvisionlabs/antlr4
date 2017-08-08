@@ -7,7 +7,7 @@
 package org.antlr.v4.test.tool;
 
 import org.antlr.v4.gui.Trees;
-import org.antlr.v4.runtime.ANTLRInputStream;
+import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.LexerInterpreter;
 import org.antlr.v4.runtime.ParserInterpreter;
@@ -24,11 +24,12 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.tool.Grammar;
 import org.antlr.v4.tool.GrammarParserInterpreter;
 import org.antlr.v4.tool.LexerGrammar;
-import static org.junit.Assert.assertEquals;
 import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.List;
+
+import static org.junit.Assert.assertEquals;
 
 public class TestAmbigParseTrees {
 	@Test public void testParseDecisionWithinAmbiguousStartRule() throws Exception {
@@ -227,7 +228,7 @@ public class TestAmbigParseTrees {
 	{
 		InterpreterTreeTextProvider nodeTextProvider = new InterpreterTreeTextProvider(g.getRuleNames());
 
-		LexerInterpreter lexEngine = lg.createLexerInterpreter(new ANTLRInputStream(input));
+		LexerInterpreter lexEngine = lg.createLexerInterpreter(CharStreams.fromString(input));
 		CommonTokenStream tokens = new CommonTokenStream(lexEngine);
 		final GrammarParserInterpreter parser = g.createGrammarParserInterpreter(tokens);
 		parser.setProfile(true);
@@ -267,7 +268,7 @@ public class TestAmbigParseTrees {
 								 String input,
 								 String expectedParseTree)
 	{
-		LexerInterpreter lexEngine = lg.createLexerInterpreter(new ANTLRInputStream(input));
+		LexerInterpreter lexEngine = lg.createLexerInterpreter(CharStreams.fromString(input));
 		CommonTokenStream tokens = new CommonTokenStream(lexEngine);
 		ParserInterpreter parser = g.createGrammarParserInterpreter(tokens);
 		RuleStartState ruleStartState = g.atn.ruleToStartState[g.getRule(startRule).index];

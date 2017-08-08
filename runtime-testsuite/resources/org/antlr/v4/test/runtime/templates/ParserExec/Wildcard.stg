@@ -1,0 +1,32 @@
+// Match assignments, ignore other tokens with wildcard.
+TestType() ::= "Parser"
+
+Options ::= [
+	"Debug": false
+]
+
+Grammar ::= [
+	"T": {<grammar("T")>}
+]
+
+Input() ::= "x=10; abc;;;; y=99;"
+
+Rule() ::= "a"
+
+Output() ::= <<
+x=10;
+y=99;<\n>
+>>
+
+Errors() ::= ""
+
+grammar(grammarName) ::= <<
+grammar <grammarName>;
+a : (assign|.)+ EOF ;
+assign : ID '=' INT ';' {
+<writeln("$text")>
+} ;
+ID : 'a'..'z'+ ;
+INT : '0'..'9'+;
+WS : (' '|'\n') -> skip;
+>>

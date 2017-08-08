@@ -100,6 +100,7 @@ tokens { SEMPRED; TOKEN_REF; RULE_REF; LEXER_CHAR_SET; ARG_ACTION; }
  */
 package org.antlr.v4.parse;
 import org.antlr.v4.tool.*;
+import org.antlr.v4.runtime.misc.Interval;
 }
 
 
@@ -569,8 +570,8 @@ SRC : 'src' WSCHARS+ file=ACTION_STRING_LITERAL WSCHARS+ line=INT
 //
 // ANTLR makes no disticintion between a single character literal and a
 // multi-character string. All literals are single quote delimited and
-// may contain unicode escape sequences of the form \uxxxx, where x
-// is a valid hexadecimal number (as per Java basically).
+// may contain unicode escape sequences of the form \uxxxx or \u{xxxxxx},
+// where x is a valid hexadecimal number.
 STRING_LITERAL
     :  '\'' ( ( ESC_SEQ | ~('\\'|'\''|'\r'|'\n') ) )*
        (    '\''
@@ -597,30 +598,29 @@ fragment
 ESC_SEQ
     : '\\'
         (
-              // The standard escaped character set such as tab, newline,
-              // etc.
-              //
-    		  'b'|'t'|'n'|'f'|'r'|'\"'|'\''|'\\'
+              // The standard escaped character set such as tab, newline, etc...
+    		  'b'|'t'|'n'|'f'|'r'|'\''|'\\'
 
     	    | // A Java style Unicode escape sequence
-    	      //
     	      UNICODE_ESC
 
+            | // A Swift/Hack style Unicode escape sequence
+              UNICODE_EXTENDED_ESC
+
     	    | // An illegal escape seqeunce
-    	      //
+    	      ~('b'|'t'|'n'|'f'|'r'|'\''|'\\'|'u') // \x for any invalid x (make sure to match char here)
     	      {
-                Token t = new CommonToken(input, state.type, state.channel, getCharIndex()-1, getCharIndex());
+                Token t = new CommonToken(input, state.type, state.channel, getCharIndex()-2, getCharIndex()-1);
                 t.setText(t.getText());
                 t.setLine(input.getLine());
-                t.setCharPositionInLine(input.getCharPositionInLine()-1);
-                grammarError(ErrorType.INVALID_ESCAPE_SEQUENCE, t);
+                t.setCharPositionInLine(input.getCharPositionInLine()-2);
+                grammarError(ErrorType.INVALID_ESCAPE_SEQUENCE, t, input.substring(getCharIndex()-2,getCharIndex()-1));
     	      }
         )
     ;
 
 fragment
 UNICODE_ESC
-
 @init {
 
 	// Flag to tell us whether we have a valid number of
@@ -664,14 +664,40 @@ UNICODE_ESC
     	// Now check the digit count and issue an error if we need to
     	//
     	{
-    		if (hCount != 4) {
-                Token t = new CommonToken(input, state.type, state.channel, getCharIndex()-3-hCount, getCharIndex()-1);
-                t.setText(t.getText());
-                t.setLine(input.getLine());
-                t.setCharPositionInLine(input.getCharPositionInLine()-hCount-2);
-                grammarError(ErrorType.INVALID_ESCAPE_SEQUENCE, t);
+    		if (hCount < 4) {
+				Interval badRange = Interval.of(getCharIndex()-2-hCount, getCharIndex());
+				String lastChar = input.substring(badRange.b, badRange.b);
+				if ( lastChar.codePointAt(0)=='\'' ) {
+					badRange = new Interval(badRange.a, badRange.b - 1);
+				}
+				String bad = input.substring(badRange.a, badRange.b);
+				Token t = new CommonToken(input, state.type, state.channel, badRange.a, badRange.b);
+				t.setLine(input.getLine());
+				t.setCharPositionInLine(input.getCharPositionInLine()-hCount-2);
+				grammarError(ErrorType.INVALID_ESCAPE_SEQUENCE, t, bad);
     		}
     	}
+    ;
+
+fragment
+UNICODE_EXTENDED_ESC
+    :   'u{' // Leadin for unicode extended escape sequence
+
+        HEX_DIGIT+ // One or more hexadecimal digits
+
+        '}' // Leadout for unicode extended escape sequence
+
+        // Now check the digit count and issue an error if we need to
+        {
+            int numDigits = getCharIndex()-state.tokenStartCharIndex-6;
+            if (numDigits > 6) {
+                Token t = new CommonToken(input, state.type, state.channel, state.tokenStartCharIndex, getCharIndex()-1);
+                t.setText(t.getText());
+                t.setLine(input.getLine());
+                t.setCharPositionInLine(input.getCharPositionInLine()-numDigits);
+                grammarError(ErrorType.INVALID_ESCAPE_SEQUENCE, t, input.substring(state.tokenStartCharIndex,getCharIndex()-1));
+			}
+        }
     ;
 
 // ----------

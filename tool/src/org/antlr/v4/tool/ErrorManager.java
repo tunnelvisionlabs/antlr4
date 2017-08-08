@@ -6,7 +6,6 @@
 
 package org.antlr.v4.tool;
 
-import org.antlr.runtime.Token;
 import org.antlr.v4.Tool;
 import org.stringtemplate.v4.ST;
 import org.stringtemplate.v4.STGroup;
@@ -17,7 +16,6 @@ import java.io.File;
 import java.net.URL;
 import java.util.Collection;
 import java.util.EnumSet;
-import java.util.Locale;
 import java.util.Set;
 
 public class ErrorManager {
@@ -33,8 +31,6 @@ public class ErrorManager {
     /** The group of templates that represent the current message format. */
     STGroup format;
 
-    /** Messages should be sensitive to the locale. */
-    Locale locale;
     String formatName;
 
     ErrorBuffer initSTListener = new ErrorBuffer();

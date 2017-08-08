@@ -21,6 +21,7 @@ ANTLR project lead and supreme dictator for life
 [University of San Francisco](http://www.usfca.edu/)
 * [Sam Harwell](http://tunnelvisionlabs.com/) (Tool co-author, lead developer for the optimized fork along with the optimized Java, C#, and TypeScript targets)
 * Burt Harris (Co-author of the optimized TypeScript target)
+* [Ben Hamilton](https://github.com/bhamiltoncx) (Full Unicode support)
 
 ## Useful information
 

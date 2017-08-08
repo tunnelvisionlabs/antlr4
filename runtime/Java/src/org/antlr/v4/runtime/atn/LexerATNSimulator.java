@@ -363,7 +363,7 @@ public class LexerATNSimulator extends ATNSimulator {
 
 	@Nullable
 	protected ATNState getReachableTarget(Transition trans, int t) {
-		if (trans.matches(t, Character.MIN_VALUE, Character.MAX_VALUE)) {
+		if (trans.matches(t, Lexer.MIN_CHAR_VALUE, Lexer.MAX_CHAR_VALUE)) {
 			return trans.target;
 		}
 
@@ -545,7 +545,7 @@ public class LexerATNSimulator extends ATNSimulator {
 		case Transition.RANGE:
 		case Transition.SET:
 			if (treatEofAsEpsilon) {
-				if (t.matches(CharStream.EOF, Character.MIN_VALUE, Character.MAX_VALUE)) {
+				if (t.matches(CharStream.EOF, Lexer.MIN_CHAR_VALUE, Lexer.MAX_CHAR_VALUE)) {
 					c = config.transform(t.target, false);
 					break;
 				}
@@ -731,7 +731,8 @@ public class LexerATNSimulator extends ATNSimulator {
 		if ( curChar=='\n' ) {
 			line++;
 			charPositionInLine=0;
-		} else {
+		}
+		else {
 			charPositionInLine++;
 		}
 		input.consume();

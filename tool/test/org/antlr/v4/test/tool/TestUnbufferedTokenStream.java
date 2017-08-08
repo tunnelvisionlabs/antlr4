@@ -6,8 +6,8 @@
 
 package org.antlr.v4.test.tool;
 
-import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.LexerInterpreter;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.TokenSource;
@@ -16,7 +16,6 @@ import org.antlr.v4.runtime.UnbufferedTokenStream;
 import org.antlr.v4.tool.LexerGrammar;
 import org.junit.Test;
 
-import java.io.StringReader;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -36,9 +35,7 @@ public class TestUnbufferedTokenStream extends BaseTest {
             "WS : ' '+;\n");
         // Tokens: 012345678901234567
         // Input:  x = 302;
-        CharStream input = new ANTLRInputStream(
-			new StringReader("x = 302;")
-		);
+        CharStream input = CharStreams.fromString("x = 302;");
         LexerInterpreter lexEngine = g.createLexerInterpreter(input);
         TokenStream tokens = new UnbufferedTokenStream(lexEngine);
 
@@ -62,9 +59,7 @@ public class TestUnbufferedTokenStream extends BaseTest {
             "WS : ' '+;\n");
         // Tokens: 012345678901234567
         // Input:  x = 302;
-        CharStream input = new ANTLRInputStream(
-			new StringReader("x = 302;")
-		);
+        CharStream input = CharStreams.fromString("x = 302;");
         LexerInterpreter lexEngine = g.createLexerInterpreter(input);
 		TestingUnbufferedTokenStream tokens = new TestingUnbufferedTokenStream(lexEngine);
 
@@ -99,9 +94,7 @@ public class TestUnbufferedTokenStream extends BaseTest {
             "WS : ' '+;\n");
         // Tokens: 012345678901234567
         // Input:  x = 302;
-        CharStream input = new ANTLRInputStream(
-			new StringReader("x = 302;")
-		);
+        CharStream input = CharStreams.fromString("x = 302;");
         LexerInterpreter lexEngine = g.createLexerInterpreter(input);
 		TestingUnbufferedTokenStream tokens = new TestingUnbufferedTokenStream(lexEngine);
 
@@ -134,9 +127,7 @@ public class TestUnbufferedTokenStream extends BaseTest {
             "WS : ' '+;\n");
         // Tokens: 012345678901234567
         // Input:  x = 302;
-        CharStream input = new ANTLRInputStream(
-			new StringReader("x = 302 + 1;")
-		);
+        CharStream input = CharStreams.fromString("x = 302 + 1;");
         LexerInterpreter lexEngine = g.createLexerInterpreter(input);
 		TestingUnbufferedTokenStream tokens = new TestingUnbufferedTokenStream(lexEngine);
 

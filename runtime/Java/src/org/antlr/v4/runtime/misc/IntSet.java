@@ -5,7 +5,6 @@
  */
 package org.antlr.v4.runtime.misc;
 
-
 import org.antlr.v4.runtime.Token;
 
 import java.util.List;

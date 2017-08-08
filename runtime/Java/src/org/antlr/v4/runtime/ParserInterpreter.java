@@ -423,14 +423,17 @@ public class ParserInterpreter extends Parser {
 			if ( e instanceof InputMismatchException ) {
 				InputMismatchException ime = (InputMismatchException)e;
 				Token tok = e.getOffendingToken();
-				int expectedTokenType = ime.getExpectedTokens().getMinElement(); // get any element
+				int expectedTokenType = Token.INVALID_TYPE;
+				if ( !ime.getExpectedTokens().isNil() ) {
+					expectedTokenType = ime.getExpectedTokens().getMinElement(); // get any element
+				}
 				Token errToken =
 					getTokenFactory().create(Tuple.create(tok.getTokenSource(), tok.getTokenSource().getInputStream()),
 				                             expectedTokenType, tok.getText(),
 				                             Token.DEFAULT_CHANNEL,
 				                            -1, -1, // invalid start/stop
 				                             tok.getLine(), tok.getCharPositionInLine());
-				_ctx.addErrorNode(errToken);
+				_ctx.addErrorNode(createErrorNode(_ctx,errToken));
 			}
 			else { // NoViableAlt
 				Token tok = e.getOffendingToken();
@@ -440,7 +443,7 @@ public class ParserInterpreter extends Parser {
 				                             Token.DEFAULT_CHANNEL,
 				                            -1, -1, // invalid start/stop
 				                             tok.getLine(), tok.getCharPositionInLine());
-				_ctx.addErrorNode(errToken);
+				_ctx.addErrorNode(createErrorNode(_ctx,errToken));
 			}
 		}
 	}
@@ -461,3 +464,4 @@ public class ParserInterpreter extends Parser {
 		return rootContext;
 	}
 }
+

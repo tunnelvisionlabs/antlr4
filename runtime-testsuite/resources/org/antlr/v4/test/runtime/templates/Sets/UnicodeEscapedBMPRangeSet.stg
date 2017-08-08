@@ -1,0 +1,27 @@
+TestType() ::= "Parser"
+
+Options ::= [
+	"Debug": false
+]
+
+Grammar ::= [
+	"T": {<grammar("T")>}
+]
+
+Input() ::= "aáäáâåd"
+
+Rule() ::= "a"
+
+Output() ::= <<
+aáäáâåd<\n>
+>>
+
+Errors() ::= ""
+
+grammar(grammarName) ::= <<
+grammar <grammarName>;
+a : LETTERS* 'd' {<InputText():writeln()>} ;
+// Note the double-backslash to avoid Java passing
+// unescaped values as part of the grammar.
+LETTERS : ('a'|'\\u00E0'..'\\u00E5');
+>>

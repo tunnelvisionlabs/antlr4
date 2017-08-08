@@ -8,7 +8,8 @@ package org.antlr.v4.test.tool;
 
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 public class TestLexerErrors extends BaseTest {
 	// TEST DETECTION
@@ -30,7 +31,7 @@ public class TestLexerErrors extends BaseTest {
 		String grammar =
 			"lexer grammar Actions;\n"
 			+ "ACTION2 : '[' (STRING | ~'\"')*? ']';\n"
-			+ "STRING : '\"' ('\\\"' | .)*? '\"';\n"
+			+ "STRING : '\"' ('\\\\\"' | .)*? '\"';\n"
 			+ "WS : [ \\t\\r\\n]+ -> skip;\n";
 		String tokens = execLexer("Actions.g4", grammar, "Actions", "[\"foo\"]");
 		String expectingTokens =

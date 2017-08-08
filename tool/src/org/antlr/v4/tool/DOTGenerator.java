@@ -93,7 +93,7 @@ public class DOTGenerator {
 				if ( target.stateNumber == Integer.MAX_VALUE ) continue;
 				int ttype = entry.getKey();
 				String label = String.valueOf(ttype);
-				if ( isLexer ) label = "'"+getEdgeLabel(String.valueOf((char)ttype))+"'";
+				if ( isLexer ) label = "'"+getEdgeLabel(new StringBuilder().appendCodePoint(entry.getKey()).toString())+"'";
 				else if ( grammar!=null ) label = grammar.getTokenDisplayName(ttype);
 				ST st = stlib.getInstanceOf("edge");
 				st.add("label", label);
@@ -249,7 +249,7 @@ public class DOTGenerator {
 					edgeST = stlib.getInstanceOf("edge");
 					AtomTransition atom = (AtomTransition)edge;
 					String label = String.valueOf(atom.label);
-					if ( isLexer ) label = "'"+getEdgeLabel(String.valueOf((char)atom.label))+"'";
+					if ( isLexer ) label = "'"+getEdgeLabel(new StringBuilder().appendCodePoint(atom.label).toString())+"'";
 					else if ( grammar!=null ) label = grammar.getTokenDisplayName(atom.label);
 					edgeST.add("label", getEdgeLabel(label));
 				}
@@ -279,7 +279,8 @@ public class DOTGenerator {
 				edgeST.add("arrowhead", arrowhead);
 				if (s.getNumberOfTransitions() > 1) {
 					edgeST.add("transitionIndex", i);
-				} else {
+				}
+				else {
 					edgeST.add("transitionIndex", false);
 				}
 				dot.add("edges", edgeST);

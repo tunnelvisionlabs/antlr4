@@ -6,12 +6,7 @@
 
 package org.antlr.v4.test.tool;
 
-import org.antlr.v4.runtime.misc.Nullable;
 import org.junit.Test;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;

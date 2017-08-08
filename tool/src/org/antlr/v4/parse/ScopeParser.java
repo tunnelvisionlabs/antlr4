@@ -14,7 +14,6 @@ import org.antlr.v4.runtime.misc.Tuple;
 import org.antlr.v4.runtime.misc.Tuple2;
 import org.antlr.v4.tool.Attribute;
 import org.antlr.v4.tool.AttributeDict;
-import org.antlr.v4.tool.ErrorManager;
 import org.antlr.v4.tool.ErrorType;
 import org.antlr.v4.tool.Grammar;
 import org.antlr.v4.tool.ast.ActionAST;
@@ -316,7 +315,8 @@ public class ScopeParser {
 						// do we see a matching '>' ahead?  if so, hope it's a generic
 						// and not less followed by expr with greater than
 						p = _splitArgumentList(actionText, p + 1, '>', separatorChar, args);
-					} else {
+					}
+					else {
 						p++; // treat as normal char
 					}
 					break;

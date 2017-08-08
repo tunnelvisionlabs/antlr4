@@ -384,30 +384,24 @@ public class IntervalSet implements IntSet {
     @Override
     public boolean contains(int el) {
 		int n = intervals.size();
-		for (int i = 0; i < n; i++) {
-			Interval I = intervals.get(i);
+		int l = 0;
+		int r = n - 1;
+		// Binary search for the element in the (sorted,
+		// disjoint) array of intervals.
+		while (l <= r) {
+			int m = (l + r) / 2;
+			Interval I = intervals.get(m);
 			int a = I.a;
 			int b = I.b;
-			if ( el<a ) {
-				break; // list is sorted and el is before this interval; not here
-			}
-			if ( el>=a && el<=b ) {
-				return true; // found in this interval
+			if ( b<el ) {
+				l = m + 1;
+			} else if ( a>el ) {
+				r = m - 1;
+			} else { // el >= a && el <= b
+				return true;
 			}
 		}
 		return false;
-/*
-		for (ListIterator iter = intervals.listIterator(); iter.hasNext();) {
-            Interval I = (Interval) iter.next();
-            if ( el<I.a ) {
-                break; // list is sorted and el is before this interval; not here
-            }
-            if ( el>=I.a && el<=I.b ) {
-                return true; // found in this interval
-            }
-        }
-        return false;
-        */
     }
 
     /** {@inheritDoc} */
@@ -416,17 +410,17 @@ public class IntervalSet implements IntSet {
         return intervals==null || intervals.isEmpty();
     }
 
-    /** {@inheritDoc} */
-    @Override
-    public int getSingleElement() {
-        if ( intervals!=null && intervals.size()==1 ) {
-            Interval I = intervals.get(0);
-            if ( I.a == I.b ) {
-                return I.a;
-            }
-        }
-        return Token.INVALID_TYPE;
-    }
+	/** {@inheritDoc} */
+	@Override
+	public int getSingleElement() {
+		if ( intervals!=null && intervals.size()==1 ) {
+			Interval I = intervals.get(0);
+			if ( I.a == I.b ) {
+				return I.a;
+			}
+		}
+		return Token.INVALID_TYPE;
+	}
 
 	/**
 	 * Returns the maximum value contained in the set.
@@ -505,11 +499,11 @@ public class IntervalSet implements IntSet {
 			int b = I.b;
 			if ( a==b ) {
 				if ( a==Token.EOF ) buf.append("<EOF>");
-				else if ( elemAreChar ) buf.append("'").append((char)a).append("'");
+				else if ( elemAreChar ) buf.append("'").appendCodePoint(a).append("'");
 				else buf.append(a);
 			}
 			else {
-				if ( elemAreChar ) buf.append("'").append((char)a).append("'..'").append((char)b).append("'");
+				if ( elemAreChar ) buf.append("'").appendCodePoint(a).append("'..'").appendCodePoint(b).append("'");
 				else buf.append(a).append("..").append(b);
 			}
 			if ( iter.hasNext() ) {

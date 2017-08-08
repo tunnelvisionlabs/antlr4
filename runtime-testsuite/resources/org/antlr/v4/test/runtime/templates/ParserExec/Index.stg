@@ -35,5 +35,6 @@ TestTemplates ::= [
 	//"AlternateQuotes": []
 	"OpenDeviceStatement_1": [],
 	"OpenDeviceStatement_2": [],
-	"OpenDeviceStatement_3": []
+	"OpenDeviceStatement_3": [],
+	"Wildcard": []
 ]

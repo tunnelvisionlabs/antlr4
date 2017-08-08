@@ -7,7 +7,6 @@
 package org.antlr.v4.misc;
 
 import org.antlr.v4.runtime.misc.Func1;
-import org.antlr.v4.runtime.misc.IntegerList;
 import org.antlr.v4.runtime.misc.Predicate;
 import org.antlr.v4.tool.ast.GrammarAST;
 
@@ -113,7 +112,8 @@ public class Utils {
 	public static void setSize(List<?> list, int size) {
 		if (size < list.size()) {
 			list.subList(size, list.size()).clear();
-		} else {
+		}
+		else {
 			while (size > list.size()) {
 				list.add(null);
 			}

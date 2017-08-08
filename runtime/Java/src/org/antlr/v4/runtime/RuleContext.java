@@ -166,6 +166,11 @@ public class RuleContext implements RuleNode {
 	 */
 	public void setAltNumber(int altNumber) { }
 
+	/** @since 4.7. */
+	public void setParent(RuleContext parent) {
+		this.parent = parent;
+	}
+
 	@Override
 	public ParseTree getChild(int i) {
 		return null;

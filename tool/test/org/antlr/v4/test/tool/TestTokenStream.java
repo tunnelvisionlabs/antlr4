@@ -5,9 +5,9 @@
  */
 package org.antlr.v4.test.tool;
 
-import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.BufferedTokenStream;
 import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.TokenStream;
 import org.antlr.v4.runtime.tree.xpath.XPathLexer;
@@ -24,14 +24,14 @@ public class TestTokenStream {
 	 */
 	@Test
 	public void testBufferedTokenStreamReuseAfterFill() {
-		CharStream firstInput = new ANTLRInputStream("A");
+		CharStream firstInput = CharStreams.fromString("A");
 		BufferedTokenStream tokenStream = new BufferedTokenStream(new XPathLexer(firstInput));
 		tokenStream.fill();
 		Assert.assertEquals(2, tokenStream.size());
 		Assert.assertEquals(XPathLexer.TOKEN_REF, tokenStream.get(0).getType());
 		Assert.assertEquals(Token.EOF, tokenStream.get(1).getType());
 
-		CharStream secondInput = new ANTLRInputStream("A/");
+		CharStream secondInput = CharStreams.fromString("A/");
 		tokenStream.setTokenSource(new XPathLexer(secondInput));
 		tokenStream.fill();
 		Assert.assertEquals(3, tokenStream.size());

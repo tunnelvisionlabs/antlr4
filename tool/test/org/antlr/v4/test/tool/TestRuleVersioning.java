@@ -5,9 +5,9 @@
  */
 package org.antlr.v4.test.tool;
 
-import org.antlr.v4.runtime.misc.Tuple2;
 import org.antlr.v4.runtime.misc.Predicate;
 import org.antlr.v4.runtime.misc.Tuple;
+import org.antlr.v4.runtime.misc.Tuple2;
 import org.antlr.v4.runtime.misc.Utils;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -28,7 +28,10 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  *

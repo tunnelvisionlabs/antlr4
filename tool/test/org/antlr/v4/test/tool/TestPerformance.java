@@ -7,11 +7,12 @@
 package org.antlr.v4.test.tool;
 
 import org.antlr.v4.runtime.ANTLRErrorListener;
-import org.antlr.v4.runtime.ANTLRFileStream;
-import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.BailErrorStrategy;
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CodePointBuffer;
+import org.antlr.v4.runtime.CodePointCharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.DefaultErrorStrategy;
 import org.antlr.v4.runtime.DiagnosticErrorListener;
@@ -37,11 +38,11 @@ import org.antlr.v4.runtime.dfa.DFA;
 import org.antlr.v4.runtime.dfa.DFAState;
 import org.antlr.v4.runtime.dfa.EmptyEdgeMap;
 import org.antlr.v4.runtime.misc.Interval;
+import org.antlr.v4.runtime.misc.MurmurHash;
 import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.misc.Nullable;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.antlr.v4.runtime.misc.Tuple2;
-import org.antlr.v4.runtime.misc.Utils;
 import org.antlr.v4.runtime.tree.ErrorNode;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeListener;
@@ -51,14 +52,22 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.lang.ref.Reference;
+import java.lang.ref.SoftReference;
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.channels.Channels;
+import java.nio.channels.ReadableByteChannel;
+import java.nio.charset.Charset;
+import java.nio.charset.CodingErrorAction;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
@@ -76,18 +85,13 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.antlr.v4.runtime.misc.MurmurHash;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-
-import java.lang.ref.Reference;
-import java.lang.ref.SoftReference;
-import java.lang.ref.WeakReference;
-import java.util.concurrent.atomic.AtomicIntegerArray;
 
 public class TestPerformance extends BaseTest {
     /**
@@ -1187,7 +1191,7 @@ public class TestPerformance extends BaseTest {
             final Constructor<? extends Parser> parserCtor = parserClass.getConstructor(TokenStream.class);
 
             // construct initial instances of the lexer and parser to deserialize their ATNs
-            TokenSource tokenSource = lexerCtor.newInstance(new ANTLRInputStream(""));
+            TokenSource tokenSource = lexerCtor.newInstance(CharStreams.fromString(""));
             parserCtor.newInstance(new CommonTokenStream(tokenSource));
 
 			if (!REUSE_LEXER_DFA) {
@@ -1981,7 +1985,7 @@ public class TestPerformance extends BaseTest {
 
 	protected static final class InputDescriptor {
 		private final String source;
-		private Reference<CloneableANTLRFileStream> inputStream;
+		private Reference<CodePointBuffer> inputStream;
 
 		public InputDescriptor(@NotNull String source) {
 			this.source = source;
@@ -1992,36 +1996,30 @@ public class TestPerformance extends BaseTest {
 
 		@NotNull
 		public CharStream getInputStream() {
-			CloneableANTLRFileStream stream = inputStream != null ? inputStream.get() : null;
-			if (stream == null) {
+			CodePointBuffer buffer = inputStream != null ? inputStream.get() : null;
+			if (buffer == null) {
 				try {
-					stream = new CloneableANTLRFileStream(source, ENCODING);
+					buffer = bufferFromFileName(source, Charset.forName(ENCODING));
 				} catch (IOException ex) {
 					Logger.getLogger(TestPerformance.class.getName()).log(Level.SEVERE, null, ex);
 					throw new RuntimeException(ex);
 				}
 
 				if (PRELOAD_SOURCES) {
-					inputStream = new StrongReference<CloneableANTLRFileStream>(stream);
+					inputStream = new StrongReference<CodePointBuffer>(buffer);
 				} else {
-					inputStream = new SoftReference<CloneableANTLRFileStream>(stream);
+					inputStream = new SoftReference<CodePointBuffer>(buffer);
 				}
 			}
 
-			return new JavaUnicodeInputStream(stream.createCopy());
-		}
-	}
-
-	protected static class CloneableANTLRFileStream extends ANTLRFileStream {
-
-		public CloneableANTLRFileStream(String fileName, String encoding) throws IOException {
-			super(fileName, encoding);
+			return new JavaUnicodeInputStream(CodePointCharStream.fromBuffer(buffer, source));
 		}
 
-		public ANTLRInputStream createCopy() {
-			ANTLRInputStream stream = new ANTLRInputStream(this.data, this.n);
-			stream.name = this.getSourceName();
-			return stream;
+		private CodePointBuffer bufferFromFileName(String source, Charset charset) throws IOException {
+			File file = new File(source);
+			long size = file.length();
+			ReadableByteChannel channel = Channels.newChannel(new FileInputStream(file));
+			return CharStreams.bufferFromChannel(channel, charset, 4096, CodingErrorAction.REPLACE, size);
 		}
 	}
 

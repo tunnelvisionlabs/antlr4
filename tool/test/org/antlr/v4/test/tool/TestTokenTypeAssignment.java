@@ -16,7 +16,9 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.StringTokenizer;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 public class TestTokenTypeAssignment extends BaseTest {
 
@@ -137,6 +139,24 @@ public class TestTokenTypeAssignment extends BaseTest {
 		Set<?> literals = g.stringLiteralToTypeMap.keySet();
 		// must store literals how they appear in the antlr grammar
 		assertEquals("'\\n'", literals.toArray()[0]);
+	}
+
+	@Test public void testParserCharLiteralWithBasicUnicodeEscape() throws Exception {
+		Grammar g = new Grammar(
+				"grammar t;\n"+
+				"a : '\\uABCD';\n");
+		Set<?> literals = g.stringLiteralToTypeMap.keySet();
+		// must store literals how they appear in the antlr grammar
+		assertEquals("'\\uABCD'", literals.toArray()[0]);
+	}
+
+	@Test public void testParserCharLiteralWithExtendedUnicodeEscape() throws Exception {
+		Grammar g = new Grammar(
+				"grammar t;\n"+
+				"a : '\\u{1ABCD}';\n");
+		Set<?> literals = g.stringLiteralToTypeMap.keySet();
+		// must store literals how they appear in the antlr grammar
+		assertEquals("'\\u{1ABCD}'", literals.toArray()[0]);
 	}
 
 	protected void checkSymbols(Grammar g,

@@ -7,7 +7,7 @@
 package org.antlr.v4.test.tool;
 
 import org.antlr.v4.gui.Trees;
-import org.antlr.v4.runtime.ANTLRInputStream;
+import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.LexerInterpreter;
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -17,11 +17,12 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.tool.Grammar;
 import org.antlr.v4.tool.GrammarParserInterpreter;
 import org.antlr.v4.tool.LexerGrammar;
-import static org.junit.Assert.assertEquals;
 import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.List;
+
+import static org.junit.Assert.assertEquals;
 
 public class TestLookaheadTrees {
 	public static final String lexerText =
@@ -129,7 +130,7 @@ public class TestLookaheadTrees {
 		InterpreterTreeTextProvider nodeTextProvider =
 					new InterpreterTreeTextProvider(g.getRuleNames());
 
-		LexerInterpreter lexEngine = lg.createLexerInterpreter(new ANTLRInputStream(input));
+		LexerInterpreter lexEngine = lg.createLexerInterpreter(CharStreams.fromString(input));
 		CommonTokenStream tokens = new CommonTokenStream(lexEngine);
 		GrammarParserInterpreter parser = g.createGrammarParserInterpreter(tokens);
 		parser.setProfile(true);

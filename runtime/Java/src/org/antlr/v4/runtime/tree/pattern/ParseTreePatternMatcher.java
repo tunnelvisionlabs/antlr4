@@ -6,8 +6,8 @@
 
 package org.antlr.v4.runtime.tree.pattern;
 
-import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.BailErrorStrategy;
+import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.ListTokenSource;
@@ -396,8 +396,7 @@ public class ParseTreePatternMatcher {
 			}
 			else {
 				TextChunk textChunk = (TextChunk)chunk;
-				ANTLRInputStream in = new ANTLRInputStream(textChunk.getText());
-				lexer.setInputStream(in);
+				lexer.setInputStream(CharStreams.fromString(textChunk.getText()));
 				Token t = lexer.nextToken();
 				while ( t.getType()!=Token.EOF ) {
 					tokens.add(t);

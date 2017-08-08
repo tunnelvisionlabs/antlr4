@@ -5,6 +5,13 @@
  */
 package org.antlr.v4.testgen;
 
+import org.stringtemplate.v4.ST;
+import org.stringtemplate.v4.STGroup;
+import org.stringtemplate.v4.STGroupFile;
+import org.stringtemplate.v4.StringRenderer;
+import org.stringtemplate.v4.gui.STViz;
+import org.stringtemplate.v4.misc.ErrorBuffer;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -14,12 +21,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import org.stringtemplate.v4.ST;
-import org.stringtemplate.v4.STGroup;
-import org.stringtemplate.v4.STGroupFile;
-import org.stringtemplate.v4.StringRenderer;
-import org.stringtemplate.v4.gui.STViz;
-import org.stringtemplate.v4.misc.ErrorBuffer;
 
 public class TestGenerator {
 	// This project uses UTF-8, but the plugin might be used in another project

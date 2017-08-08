@@ -19,8 +19,11 @@ import java.util.Arrays;
  * {@code char[]} to use.
  *
  * <p>If you need encoding, pass in stream/reader with correct encoding.</p>
+ *
+ * @deprecated as of 4.7 Please use {@link CharStreams} interface.
  */
-public class ANTLRInputStream implements CharStream {
+@Deprecated
+public class ANTLRInputStream implements UnicodeCharStream, CharStream {
     public static final int READ_BUFFER_SIZE = 1024;
    	public static final int INITIAL_BUFFER_SIZE = 1024;
 
@@ -223,4 +226,12 @@ public class ANTLRInputStream implements CharStream {
 
     @Override
     public String toString() { return new String(data); }
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public boolean supportsUnicodeCodePoints() {
+		return false;
+	}
 }

@@ -8,7 +8,7 @@ package org.antlr.v4.test.tool;
 
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 public class TestParseTrees extends BaseTest {
 	@Test public void testTokenAndRuleContextString() throws Exception {
