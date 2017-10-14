@@ -16,9 +16,11 @@ import java.util.Map;
 import java.util.Set;
 
 /**
+ * @deprecated Use {@link HashEdgeMap} instead.
  *
  * @author Sam Harwell
  */
+@Deprecated
 public final class SparseEdgeMap<T> extends AbstractEdgeMap<T> {
 	private static final int DEFAULT_MAX_SIZE = 5;
 

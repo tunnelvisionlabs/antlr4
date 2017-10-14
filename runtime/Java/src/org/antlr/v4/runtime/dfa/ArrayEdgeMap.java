@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
 /**
@@ -80,7 +81,20 @@ public final class ArrayEdgeMap<T> extends AbstractEdgeMap<T> {
 			return this;
 		}
 
-		if (m instanceof ArrayEdgeMap<?>) {
+		if (m instanceof HashEdgeMap<?>) {
+			HashEdgeMap<? extends T> other = (HashEdgeMap<? extends T>)m;
+			AtomicIntegerArray keys = other.getKeys();
+			T[] values = other.getValues();
+			ArrayEdgeMap<T> result = this;
+			for (int i = 0; i < values.length; i++) {
+				T value = values[i];
+				if (value != null) {
+					result = result.put(keys.get(i), value);
+				}
+			}
+
+			return result;
+		} else if (m instanceof ArrayEdgeMap<?>) {
 			ArrayEdgeMap<? extends T> other = (ArrayEdgeMap<? extends T>)m;
 			int minOverlap = Math.max(minIndex, other.minIndex);
 			int maxOverlap = Math.min(maxIndex, other.maxIndex);
