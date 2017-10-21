@@ -57,16 +57,16 @@ public final class HashEdgeMap<T> extends AbstractEdgeMap<T> {
 		}
 	}
 
-	private static int bucket(int minIndex, int length, int key) {
+	private static int bucket(int length, int key) {
 		// Note: this returns a valid array index even if key is outside the
-		// allowed range
-		return (key - minIndex) & (length - 1);
+		// allowed range or the minIndex is negative.
+		return key & (length - 1);
 	}
 
 	private int bucket(int key) {
 		// Note: this returns a valid array index even if key is outside the
-		// allowed range
-		return (key - minIndex) & (values.length - 1);
+		// allowed range or the minIndex is negative.
+		return key & (values.length - 1);
 	}
 
 	public final AtomicIntegerArray getKeys() {
@@ -150,7 +150,7 @@ public final class HashEdgeMap<T> extends AbstractEdgeMap<T> {
 				}
 
 				// Check for another collision
-				if (bucket(minIndex, newSize, currentKey) != bucket(minIndex, newSize, key)) {
+				if (bucket(newSize, currentKey) != bucket(newSize, key)) {
 					break;
 				}
 			}
