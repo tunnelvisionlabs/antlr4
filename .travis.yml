@@ -6,10 +6,21 @@ script:
   - mvn test -Dantlr.testinprocess=true -DJDK_SOURCE_ROOT=../runtime/Java/src -Dperformance.package=
 matrix:
   include:
-    - jdk: openjdk6
+    - addons:
+        apt:
+          packages:
+            - openjdk-6-jdk
+      jdk: openjdk6
       env:
         - CUSTOM_MAVEN_OPTS=-Xmx1g
-    - jdk: oraclejdk7
+      install:
+        - echo "Download Maven 3.2.5...";
+          wget https://archive.apache.org/dist/maven/maven-3/3.2.5/binaries/apache-maven-3.2.5-bin.zip || travis_terminate 1;
+          unzip -qq apache-maven-3.2.5-bin.zip || travis_terminate 1;
+          export M2_HOME=$PWD/apache-maven-3.2.5;
+          export PATH=$M2_HOME/bin:$PATH;
+          mvn -version;
+    - jdk: openjdk7
       env:
         - CUSTOM_MAVEN_OPTS="-Xmx1g -DENABLE_JACOCO=true"
     - jdk: oraclejdk8
