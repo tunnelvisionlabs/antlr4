@@ -1793,11 +1793,6 @@ public class ParserATNSimulator extends ATNSimulator {
 					}
 				}
 
-				if (!t.isEpsilon() && !closureBusy.add(c)) {
-					// avoid infinite recursion for EOF* and EOF+
-					continue;
-				}
-
 				int newDepth = depth;
 				if ( config.getState() instanceof RuleStopState ) {
 					// target fell off end of rule; mark resulting c as having dipped into outer context
@@ -1805,11 +1800,6 @@ public class ParserATNSimulator extends ATNSimulator {
 					// track how far we dip into outer context.  Might
 					// come in handy and we avoid evaluating context dependent
 					// preds if this is > 0.
-
-					if (!closureBusy.add(c)) {
-						// avoid infinite recursion for right-recursive rules
-						continue;
-					}
 
 					if (dfa != null && dfa.isPrecedenceDfa()) {
 						int outermostPrecedenceReturn = ((EpsilonTransition)t).outermostPrecedenceReturn();
@@ -1819,6 +1809,11 @@ public class ParserATNSimulator extends ATNSimulator {
 					}
 
 					c.setOuterContextDepth(c.getOuterContextDepth() + 1);
+
+					if (!closureBusy.add(c)) {
+						// avoid infinite recursion for right-recursive rules
+						continue;
+					}
 
 					assert newDepth > Integer.MIN_VALUE;
 					newDepth--;
@@ -1842,6 +1837,12 @@ public class ParserATNSimulator extends ATNSimulator {
 						if (newDepth >= 0) {
 							newDepth++;
 						}
+					}
+				}
+				else {
+					if (!t.isEpsilon() && !closureBusy.add(c)) {
+						// avoid infinite recursion for EOF* and EOF+
+						continue;
 					}
 				}
 

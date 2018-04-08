@@ -932,8 +932,10 @@ import org.antlr.v4.runtime.misc.*;
 
 Lexer(lexer, atn, actionFuncs, sempredFuncs, superClass) ::= <<
 public <if(lexer.abstractRecognizer)>abstract <endif>class <lexer.name> extends <superClass; null="Lexer"> {
+	<if(lexer.tokens)>
 	public static final int
 		<lexer.tokens:{k | <k>=<lexer.tokens.(k)>}; separator=", ", wrap, anchor>;
+	<endif>
 	<if(lexer.channels)>
 	public static final int
 		<lexer.channels:{c | <c>=<lexer.channels.(c)>}; separator=", ", wrap, anchor>;

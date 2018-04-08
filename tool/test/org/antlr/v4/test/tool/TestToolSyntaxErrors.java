@@ -8,6 +8,7 @@ package org.antlr.v4.test.tool;
 
 import org.antlr.v4.Tool;
 import org.antlr.v4.tool.ErrorType;
+import org.junit.Assert;
 import org.junit.Test;
 
 public class TestToolSyntaxErrors extends BaseTest {
@@ -52,6 +53,16 @@ public class TestToolSyntaxErrors extends BaseTest {
 		"error(" + ErrorType.SYNTAX_ERROR.code + "): A.g4:2:11: syntax error: mismatched input ')' expecting SEMI while matching a rule\n" +
 		"error(" + ErrorType.SYNTAX_ERROR.code + "): A.g4:2:15: syntax error: mismatched input ';' expecting COLON while matching a lexer rule\n",
     };
+
+	@Test
+	public void AllErrorCodesDistinct() {
+		ErrorType[] errorTypes = ErrorType.class.getEnumConstants();
+		for (int i = 0; i < errorTypes.length; i++) {
+			for (int j = i + 1; j < errorTypes.length; j++) {
+				Assert.assertNotEquals(errorTypes[i].code, errorTypes[j].code);
+			}
+		}
+	}
 
 	@Test public void testA() { super.testErrors(A, true); }
 
