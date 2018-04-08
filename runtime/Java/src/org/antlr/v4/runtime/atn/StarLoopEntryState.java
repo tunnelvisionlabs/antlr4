@@ -38,7 +38,7 @@ public final class StarLoopEntryState extends DecisionState {
 	 * rule.</li>
 	 * </ul>
 	 *
-	 * <p>This field is {@code null} when {@link #isPrecedenceDecision} is
+	 * <p>This field is {@code null} when {@link #precedenceRuleDecision} is
 	 * {@code false}.</p>
 	 */
 	public BitSet precedenceLoopbackStates;
