@@ -706,21 +706,21 @@ public class Tool {
 		content.append("token literal names:\n");
 		String[] names = g.getTokenLiteralNames();
 		for (String name : names) {
-			content.append(name + "\n");
+			content.append(name).append("\n");
 		}
 		content.append("\n");
 
 		content.append("token symbolic names:\n");
 		names = g.getTokenSymbolicNames();
 		for (String name : names) {
-			content.append(name + "\n");
+			content.append(name).append("\n");
 		}
 		content.append("\n");
 
 		content.append("rule names:\n");
 		names = g.getRuleNames();
 		for (String name : names) {
-			content.append(name + "\n");
+			content.append(name).append("\n");
 		}
 		content.append("\n");
 
@@ -729,13 +729,13 @@ public class Tool {
 			content.append("DEFAULT_TOKEN_CHANNEL\n");
 			content.append("HIDDEN\n");
 			for (String channel : g.channelValueToNameList) {
-				content.append(channel + "\n");
+				content.append(channel).append("\n");
 			}
 			content.append("\n");
 
 			content.append("mode names:\n");
 			for (String mode : ((LexerGrammar)g).modes.keySet()) {
-				content.append(mode + "\n");
+				content.append(mode).append("\n");
 			}
 		}
 		content.append("\n");
@@ -823,10 +823,6 @@ public class Tool {
 	 * @param fileNameWithPath path to input source
 	 */
 	public File getOutputDirectory(String fileNameWithPath) {
-		if ( exact_output_dir ) {
-			return new_getOutputDirectory(fileNameWithPath);
-		}
-
 		File outputDir;
 		String fileDirectory;
 
@@ -847,12 +843,21 @@ public class Tool {
 			fileDirectory = fileNameWithPath.substring(0, fileNameWithPath.lastIndexOf(File.separatorChar));
 		}
 		if ( haveOutputDir ) {
-			// -o /tmp /var/lib/t.g4 => /tmp/T.java
-			// -o subdir/output /usr/lib/t.g4 => subdir/output/T.java
-			// -o . /usr/lib/t.g4 => ./T.java
-			if (fileDirectory != null &&
+			if (exact_output_dir) {
+				// -o /tmp /var/lib/t.g4 => /tmp/T.java
+				// -o subdir/output /usr/lib/t.g4 => subdir/output/T.java
+				// -o . /usr/lib/t.g4 => ./T.java
+				// -o /tmp subdir/t.g4 => /tmp/T.java
+				outputDir = new File(outputDirectory);
+			}
+			else if (fileDirectory != null &&
 				(new File(fileDirectory).isAbsolute() ||
 					fileDirectory.startsWith("~"))) { // isAbsolute doesn't count this :(
+
+				// -o /tmp /var/lib/t.g4 => /tmp/T.java
+				// -o subdir/output /usr/lib/t.g4 => subdir/output/T.java
+				// -o . /usr/lib/t.g4 => ./T.java
+
 				// somebody set the dir, it takes precendence; write new file there
 				outputDir = new File(outputDirectory);
 			}
@@ -865,37 +870,6 @@ public class Tool {
 					outputDir = new File(outputDirectory);
 				}
 			}
-		}
-		else {
-			// they didn't specify a -o dir so just write to location
-			// where grammar is, absolute or relative, this will only happen
-			// with command line invocation as build tools will always
-			// supply an output directory.
-			outputDir = new File(fileDirectory);
-		}
-		return outputDir;
-	}
-
-	/** @since 4.7.1 in response to -Xexact-output-dir */
-	public File new_getOutputDirectory(String fileNameWithPath) {
-		File outputDir;
-		String fileDirectory;
-
-		if (fileNameWithPath.lastIndexOf(File.separatorChar) == -1) {
-			// No path is included in the file name, so make the file
-			// directory the same as the parent grammar (which might still be just ""
-			// but when it is not, we will write the file in the correct place.
-			fileDirectory = ".";
-		}
-		else {
-			fileDirectory = fileNameWithPath.substring(0, fileNameWithPath.lastIndexOf(File.separatorChar));
-		}
-		if ( haveOutputDir ) {
-			// -o /tmp /var/lib/t.g4 => /tmp/T.java
-			// -o subdir/output /usr/lib/t.g4 => subdir/output/T.java
-			// -o . /usr/lib/t.g4 => ./T.java
-			// -o /tmp subdir/t.g4 => /tmp/T.java
-			outputDir = new File(outputDirectory);
 		}
 		else {
 			// they didn't specify a -o dir so just write to location
