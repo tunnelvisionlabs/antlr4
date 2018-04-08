@@ -76,6 +76,7 @@ public final class ArrayEdgeMap<T> extends AbstractEdgeMap<T> {
 	}
 
 	@Override
+	@SuppressWarnings("deprecation")
 	public ArrayEdgeMap<T> putAll(EdgeMap<? extends T> m) {
 		if (m.isEmpty()) {
 			return this;
