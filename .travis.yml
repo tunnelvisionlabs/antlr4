@@ -1,5 +1,8 @@
 sudo: true
 language: java
+branches:
+  only:
+  - master
 before_script:
   - echo "MAVEN_OPTS='$CUSTOM_MAVEN_OPTS'" > ~/.mavenrc
 script:
