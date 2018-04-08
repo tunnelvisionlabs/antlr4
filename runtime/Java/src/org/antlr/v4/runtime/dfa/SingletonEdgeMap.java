@@ -72,7 +72,7 @@ public final class SingletonEdgeMap<T> extends AbstractEdgeMap<T> {
 		if (key == this.key || this.value == null) {
 			return new SingletonEdgeMap<T>(minIndex, maxIndex, key, value);
 		} else if (value != null) {
-			AbstractEdgeMap<T> result = new SparseEdgeMap<T>(minIndex, maxIndex);
+			AbstractEdgeMap<T> result = new HashEdgeMap<T>(minIndex, maxIndex);
 			result = result.put(this.key, this.value);
 			result = result.put(key, value);
 			return result;
