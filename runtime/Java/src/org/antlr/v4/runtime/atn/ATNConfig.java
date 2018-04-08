@@ -279,7 +279,7 @@ public class ATNConfig {
 	 *
 	 * <p>This method implements a conservative approximation of containment. As
 	 * a result, when this method returns {code true} it is known that parsing
-	 * from {@link subconfig} can only recognize a subset of the inputs which
+	 * from {@code subconfig} can only recognize a subset of the inputs which
 	 * can be recognized starting at the current {@link ATNConfig}. However, due
 	 * to the imprecise evaluation of implication for the semantic contexts, no
 	 * assumptions can be made about the relationship between the configurations

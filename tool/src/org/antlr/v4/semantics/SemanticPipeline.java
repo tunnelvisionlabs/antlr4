@@ -129,6 +129,7 @@ public class SemanticPipeline {
 		}
 
 		symcheck.checkForModeConflicts(g);
+		symcheck.checkForUnreachableTokens(g);
 
 		assignChannelTypes(g, collector.channelDefs);
 
