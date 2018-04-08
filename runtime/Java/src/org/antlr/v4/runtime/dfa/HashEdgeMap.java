@@ -8,7 +8,6 @@ package org.antlr.v4.runtime.dfa;
 import org.antlr.v4.runtime.misc.NotNull;
 
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -69,11 +68,13 @@ public final class HashEdgeMap<T> extends AbstractEdgeMap<T> {
 		return key & (values.length - 1);
 	}
 
-	public final AtomicIntegerArray getKeys() {
+	@NotNull
+	/*package*/ AtomicIntegerArray getKeys() {
 		return keys;
 	}
 
-	public final T[] getValues() {
+	@NotNull
+	/*package*/ T[] getValues() {
 		return values;
 	}
 
