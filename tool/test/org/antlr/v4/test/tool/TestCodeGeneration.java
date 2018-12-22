@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 
 public class TestCodeGeneration extends BaseTest {
 	@Test public void testArgDecl() throws Exception { // should use template not string
@@ -42,6 +43,24 @@ public class TestCodeGeneration extends BaseTest {
 			String eval = evals.get(i);
 			assertFalse("eval should not be POJO: "+eval, eval.startsWith("<pojo:"));
 		}
+	}
+
+	@Test public void AssignTokenNamesToStringLiteralsInGeneratedParserRuleContexts() throws Exception {
+		String g =
+			"grammar T;\n" +
+			"root: 't1';\n" +
+			"Token: 't1';";
+		List<String> evals = getEvalInfoForString(g, "() { return getToken(");
+		assertNotEquals(0, evals.size());
+	}
+
+	@Test public void AssignTokenNamesToStringLiteralArraysInGeneratedParserRuleContexts() throws Exception {
+		String g =
+			"grammar T;\n" +
+				"root: 't1' 't1';\n" +
+				"Token: 't1';";
+		List<String> evals = getEvalInfoForString(g, "() { return getTokens(");
+		assertNotEquals(0, evals.size());
 	}
 
 	/** Add tags around each attribute/template/value write */

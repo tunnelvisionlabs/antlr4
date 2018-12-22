@@ -7,6 +7,7 @@
 package org.antlr.v4.codegen.model;
 
 import org.antlr.runtime.RecognitionException;
+import org.antlr.runtime.tree.CommonTree;
 import org.antlr.runtime.tree.CommonTreeNodeStream;
 import org.antlr.v4.codegen.OutputModelFactory;
 import org.antlr.v4.codegen.model.decl.AltLabelStructDecl;
@@ -35,6 +36,7 @@ import org.antlr.v4.tool.Rule;
 import org.antlr.v4.tool.ast.ActionAST;
 import org.antlr.v4.tool.ast.AltAST;
 import org.antlr.v4.tool.ast.GrammarAST;
+import org.antlr.v4.tool.ast.PredAST;
 import org.antlr.v4.tool.ast.RuleAST;
 
 import java.util.ArrayList;
@@ -48,6 +50,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.antlr.v4.parse.ANTLRParser.RULE_REF;
+import static org.antlr.v4.parse.ANTLRParser.STRING_LITERAL;
 import static org.antlr.v4.parse.ANTLRParser.TOKEN_REF;
 
 /** */
@@ -191,7 +194,7 @@ public class RuleFunction extends OutputModelObject {
 	}
 
 	/** for all alts, find which ref X or r needs List
-	   Must see across alts.  If any alt needs X or r as list, then
+	   Must see across alts. If any alt needs X or r as list, then
 	   define as list.
 	 */
 	public Set<Decl> getDeclsForAllElements(List<AltAST> altASTs) {
@@ -200,25 +203,27 @@ public class RuleFunction extends OutputModelObject {
 		Set<String> suppress = new HashSet<String>();
 		List<GrammarAST> allRefs = new ArrayList<GrammarAST>();
 		boolean firstAlt = true;
+		IntervalSet reftypes = new IntervalSet(RULE_REF, TOKEN_REF, STRING_LITERAL);
 		for (AltAST ast : altASTs) {
-			IntervalSet reftypes = new IntervalSet(RULE_REF, TOKEN_REF);
-			List<GrammarAST> refs = ast.getNodesWithType(reftypes);
+			List<GrammarAST> refs = getRuleTokens(ast.getNodesWithType(reftypes));
 			allRefs.addAll(refs);
 			Tuple2<FrequencySet<String>, FrequencySet<String>> minAndAltFreq = getElementFrequenciesForAlt(ast);
 			FrequencySet<String> minFreq = minAndAltFreq.getItem1();
 			FrequencySet<String> altFreq = minAndAltFreq.getItem2();
 			for (GrammarAST t : refs) {
 				String refLabelName = getLabelName(rule.g, t);
-				if (altFreq.count(refLabelName)==0) {
-					suppress.add(refLabelName);
-				}
+				if (refLabelName != null) {
+					if (altFreq.count(refLabelName)==0) {
+						suppress.add(refLabelName);
+					}
 
-				if ( altFreq.count(refLabelName)>1 ) {
-					needsList.add(refLabelName);
-				}
+					if (altFreq.count(refLabelName) > 1) {
+						needsList.add(refLabelName);
+					}
 
-				if (firstAlt && minFreq.count(refLabelName) != 0) {
-					nonOptional.add(refLabelName);
+					if (firstAlt && minFreq.count(refLabelName) != 0) {
+						nonOptional.add(refLabelName);
+					}
 				}
 			}
 
@@ -233,9 +238,10 @@ public class RuleFunction extends OutputModelObject {
 		Set<Decl> decls = new LinkedHashSet<Decl>();
 		for (GrammarAST t : allRefs) {
 			String refLabelName = getLabelName(rule.g, t);
-			if (suppress.contains(refLabelName)) {
+			if (refLabelName == null || suppress.contains(refLabelName)) {
 				continue;
 			}
+
 			List<Decl> d = getDeclForAltElement(t,
 												refLabelName,
 												needsList.contains(refLabelName),
@@ -245,8 +251,38 @@ public class RuleFunction extends OutputModelObject {
 		return decls;
 	}
 
+	private List<GrammarAST> getRuleTokens(List<GrammarAST> refs) {
+		List<GrammarAST> result = new ArrayList<GrammarAST>(refs.size());
+		for (GrammarAST ref : refs) {
+			CommonTree r = ref;
+
+			boolean ignore = false;
+			while (r != null) {
+				// Ignore string literals in predicates
+				if (r instanceof PredAST) {
+					ignore = true;
+					break;
+				}
+				r = r.parent;
+			}
+
+			if (!ignore) {
+				result.add(ref);
+			}
+		}
+
+		return result;
+	}
+
 	public static String getLabelName(Grammar g, GrammarAST t) {
-		String labelName = t.getText();
+		String tokenText = t.getText();
+		String tokenName = t.getType() != STRING_LITERAL ? tokenText : g.getTokenName(tokenText);
+		if (tokenName == null || tokenName.startsWith("T__")) {
+			// Do not include tokens with auto generated names
+			return null;
+		}
+
+		String labelName = tokenName;
 		Rule referencedRule = g.rules.get(labelName);
 		if (referencedRule != null) {
 			labelName = referencedRule.getBaseContext();

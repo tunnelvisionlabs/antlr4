@@ -1,0 +1,43 @@
+/**
+ * This is a regression test for antlr/antlr4#2301.
+ */
+
+TestType() ::= "Parser"
+
+Options ::= [
+	"Debug": false
+]
+
+Grammar ::= [
+	"Issue2301": {<grammar("Issue2301")>}
+]
+
+Input() ::= "POINT AT X"
+
+Rule() ::= "expr"
+
+Output() ::= ""
+
+Errors() ::= ""
+
+grammar(grammarName) ::= <<
+grammar <grammarName>;
+
+constant
+	: 'DUMMY'
+	;
+
+expr
+	: ID constant?
+	| expr AT X
+	| expr AT Y
+	;
+
+SPACES: [ \t\r\n]+ -> skip;
+
+AT: 'AT';
+X : 'X';
+Y : 'Y';
+
+ID: [A-Z]+;
+>>
