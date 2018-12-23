@@ -13,8 +13,9 @@ matrix:
         apt:
           packages:
             - openjdk-6-jdk
-      jdk: openjdk6
+      name: openjdk6
       env:
+        - JDK=openjdk6
         - CUSTOM_MAVEN_OPTS=-Xmx1g
       install:
         - echo "Download Maven 3.2.5...";
