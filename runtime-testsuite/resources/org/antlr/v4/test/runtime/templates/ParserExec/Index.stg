@@ -36,5 +36,6 @@ TestTemplates ::= [
 	"OpenDeviceStatement_1": [],
 	"OpenDeviceStatement_2": [],
 	"OpenDeviceStatement_3": [],
-	"Wildcard": []
+	"Wildcard": [],
+	"OrderingPredicates": []
 ]

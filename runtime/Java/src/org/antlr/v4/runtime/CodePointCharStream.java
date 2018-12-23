@@ -207,8 +207,8 @@ public abstract class CodePointCharStream implements UnicodeCharStream, CharStre
 		/** Return the UTF-16 encoded string for the given interval */
 		@Override
 		public String getText(Interval interval) {
-			int startIdx = Math.min(interval.a, size - 1);
-			int len = Math.min(interval.b - interval.a + 1, size);
+			int startIdx = Math.min(interval.a, size);
+			int len = Math.min(interval.b - interval.a + 1, size - startIdx);
 
 			// We know there are no surrogates in this
 			// array, since otherwise we would be given a
@@ -262,8 +262,8 @@ public abstract class CodePointCharStream implements UnicodeCharStream, CharStre
 		/** Return the UTF-16 encoded string for the given interval */
 		@Override
 		public String getText(Interval interval) {
-			int startIdx = Math.min(interval.a, size - 1);
-			int len = Math.min(interval.b - interval.a + 1, size);
+			int startIdx = Math.min(interval.a, size);
+			int len = Math.min(interval.b - interval.a + 1, size - startIdx);
 
 			// Note that we pass the int[] code points to the String constructor --
 			// this is supported, and the constructor will convert to UTF-16 internally.
