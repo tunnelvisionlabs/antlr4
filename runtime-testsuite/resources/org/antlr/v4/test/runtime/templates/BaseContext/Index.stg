@@ -1,0 +1,14 @@
+TestTemplates ::= [
+	"BaseLeftRecursiveDerivedNot": [],
+	"Basic": [],
+	"BasicWithAltLabels": [],
+	"BasicWithElementLabelAliasing": [],
+	"BasicWithElementLabels": [],
+	"DerivedLeftRecursiveBaseNot": [],
+	"LeftRecursive": [],
+	"LeftRecursiveWithAltLabelAliasing": [],
+	"LeftRecursiveWithAltLabelAliasingAndElementLabels": [],
+	"LeftRecursiveWithAltLabels": [],
+	"LeftRecursiveWithMultipleElementLabels": [],
+	"LeftRecursiveWithSingleElementLabel": []
+]

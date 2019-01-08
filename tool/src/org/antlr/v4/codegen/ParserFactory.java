@@ -54,10 +54,14 @@ import org.antlr.v4.tool.ast.BlockAST;
 import org.antlr.v4.tool.ast.GrammarAST;
 import org.antlr.v4.tool.ast.TerminalAST;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /** */
 public class ParserFactory extends DefaultOutputModelFactory {
+	private final Map<Rule, RuleFunction> ruleFunctions = new HashMap<Rule, RuleFunction>();
+
 	public ParserFactory(CodeGenerator gen) { super(gen); }
 
 	@Override
@@ -72,19 +76,26 @@ public class ParserFactory extends DefaultOutputModelFactory {
 
 	@Override
 	public RuleFunction rule(Rule r) {
-		if ( r instanceof LeftRecursiveRule ) {
-			return new LeftRecursiveRuleFunction(this, (LeftRecursiveRule)r);
-		}
-		else if (r.name.contains(ATNSimulator.RULE_LF_VARIANT_MARKER)) {
-			return new LeftFactoredRuleFunction(this, r);
-		}
-		else if (r.name.contains(ATNSimulator.RULE_NOLF_VARIANT_MARKER)) {
-			return new LeftUnfactoredRuleFunction(this, r);
-		}
-		else {
-			RuleFunction rf = new RuleFunction(this, r);
+		RuleFunction rf = ruleFunctions.get(r);
+		if (rf != null) {
 			return rf;
 		}
+
+		if ( r instanceof LeftRecursiveRule ) {
+			rf = new LeftRecursiveRuleFunction(this, (LeftRecursiveRule)r);
+		}
+		else if (r.name.contains(ATNSimulator.RULE_LF_VARIANT_MARKER)) {
+			rf = new LeftFactoredRuleFunction(this, r);
+		}
+		else if (r.name.contains(ATNSimulator.RULE_NOLF_VARIANT_MARKER)) {
+			rf = new LeftUnfactoredRuleFunction(this, r);
+		}
+		else {
+			rf = new RuleFunction(this, r);
+		}
+
+		ruleFunctions.put(r, rf);
+		return rf;
 	}
 
 	@Override

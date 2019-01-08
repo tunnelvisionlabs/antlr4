@@ -67,7 +67,7 @@ public abstract class DefaultOutputModelFactory extends BlankOutputModelFactory 
 			CodeGenerator gen = getGenerator();
 			STGroup codegenTemplates = gen.getTemplates();
 			ST setStopTokenAST = codegenTemplates.getInstanceOf("recRuleSetStopToken");
-			Action setStopTokenAction = new Action(this, function.ruleCtx, setStopTokenAST);
+			Action setStopTokenAction = new Action(this, function.getEffectiveRuleContext(controller), setStopTokenAST);
 			List<SrcOp> ops = new ArrayList<SrcOp>(1);
 			ops.add(setStopTokenAction);
 			return ops;

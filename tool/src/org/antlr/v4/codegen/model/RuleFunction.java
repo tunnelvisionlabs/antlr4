@@ -9,6 +9,7 @@ package org.antlr.v4.codegen.model;
 import org.antlr.runtime.RecognitionException;
 import org.antlr.runtime.tree.CommonTree;
 import org.antlr.runtime.tree.CommonTreeNodeStream;
+import org.antlr.v4.codegen.OutputModelController;
 import org.antlr.v4.codegen.OutputModelFactory;
 import org.antlr.v4.codegen.model.decl.AltLabelStructDecl;
 import org.antlr.v4.codegen.model.decl.AttributeDecl;
@@ -132,6 +133,34 @@ public class RuleFunction extends OutputModelObject {
 		}
 
 		startState = factory.getGrammar().atn.ruleToStartState[r.index];
+	}
+
+	public StructDecl getEffectiveRuleContext(OutputModelController controller) {
+		if (ruleCtx != null) {
+			return ruleCtx;
+		}
+
+		RuleFunction effectiveRuleFunction = controller.rule(controller.getGrammar().getRule(rule.getBaseContext()));
+		if (effectiveRuleFunction == this) {
+			throw new IllegalStateException("Rule function does not have an effective context");
+		}
+
+		assert effectiveRuleFunction.ruleCtx != null;
+		return effectiveRuleFunction.ruleCtx;
+	}
+
+	public Map<String, AltLabelStructDecl> getEffectiveAltLabelContexts(OutputModelController controller) {
+		if (altLabelCtxs != null) {
+			return altLabelCtxs;
+		}
+
+		RuleFunction effectiveRuleFunction = controller.rule(controller.getGrammar().getRule(rule.getBaseContext()));
+		if (effectiveRuleFunction == this) {
+			throw new IllegalStateException("Rule function does not have an effective context");
+		}
+
+		assert effectiveRuleFunction.altLabelCtxs != null;
+		return effectiveRuleFunction.altLabelCtxs;
 	}
 
 	public void addContextGetters(OutputModelFactory factory, Collection<RuleAST> contextASTs) {
@@ -353,15 +382,15 @@ public class RuleFunction extends OutputModelObject {
 	public void addContextDecl(String altLabel, Decl d) {
 		CodeBlockForOuterMostAlt alt = d.getOuterMostAltCodeBlock();
 		// if we found code blk and might be alt label, try to add to that label ctx
-		if ( alt!=null && altLabelCtxs!=null ) {
+		if ( alt!=null ) {
 //			System.out.println(d.name+" lives in alt "+alt.alt.altNum);
-			AltLabelStructDecl altCtx = altLabelCtxs.get(altLabel);
+			AltLabelStructDecl altCtx = getEffectiveAltLabelContexts(factory.getController()).get(altLabel);
 			if ( altCtx!=null ) { // we have an alt ctx
 //				System.out.println("ctx is "+ altCtx.name);
 				altCtx.addDecl(d);
 				return;
 			}
 		}
-		ruleCtx.addDecl(d); // stick in overall rule's ctx
+		getEffectiveRuleContext(factory.getController()).addDecl(d); // stick in overall rule's ctx
 	}
 }

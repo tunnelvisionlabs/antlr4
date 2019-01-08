@@ -29,7 +29,9 @@ import org.antlr.v4.codegen.model.RuleSempredFunction;
 import org.antlr.v4.codegen.model.SrcOp;
 import org.antlr.v4.codegen.model.StarBlock;
 import org.antlr.v4.codegen.model.VisitorFile;
+import org.antlr.v4.codegen.model.decl.AltLabelStructDecl;
 import org.antlr.v4.codegen.model.decl.CodeBlock;
+import org.antlr.v4.codegen.model.decl.StructDecl;
 import org.antlr.v4.misc.Utils;
 import org.antlr.v4.parse.ANTLRParser;
 import org.antlr.v4.parse.GrammarASTAdaptor;
@@ -47,6 +49,7 @@ import org.stringtemplate.v4.STGroup;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Stack;
 
 /** This receives events from SourceGenTriggers.g and asks factory to do work.
@@ -187,6 +190,9 @@ public class OutputModelController {
 	public void buildLeftRecursiveRuleFunction(LeftRecursiveRule r, LeftRecursiveRuleFunction function) {
 		buildNormalRuleFunction(r, function);
 
+		StructDecl ruleCtx = function.getEffectiveRuleContext(this);
+		Map<String, AltLabelStructDecl> altLabelCtxs = function.getEffectiveAltLabelContexts(this);
+
 		// now inject code to start alts
 		Target target = delegate.getTarget();
 		STGroup codegenTemplates = target.getTemplates();
@@ -223,19 +229,19 @@ public class OutputModelController {
 			ST altActionST = codegenTemplates.getInstanceOf("recRuleReplaceContext");
 			altActionST.add("ctxName", Utils.capitalize(altInfo.altLabel));
 			Action altAction =
-				new Action(delegate, function.altLabelCtxs.get(altInfo.altLabel), altActionST);
+				new Action(delegate, altLabelCtxs.get(altInfo.altLabel), altActionST);
 			CodeBlockForAlt alt = primaryAltsCode.get(i);
 			alt.insertOp(0, altAction);
 		}
 
 		// Insert code to set ctx.stop after primary block and before op * loop
 		ST setStopTokenAST = codegenTemplates.getInstanceOf("recRuleSetStopToken");
-		Action setStopTokenAction = new Action(delegate, function.ruleCtx, setStopTokenAST);
+		Action setStopTokenAction = new Action(delegate, ruleCtx, setStopTokenAST);
 		outerAlt.insertOp(1, setStopTokenAction);
 
 		// Insert code to set _prevctx at start of * loop
 		ST setPrevCtx = codegenTemplates.getInstanceOf("recRuleSetPrevCtx");
-		Action setPrevCtxAction = new Action(delegate, function.ruleCtx, setPrevCtx);
+		Action setPrevCtxAction = new Action(delegate, ruleCtx, setPrevCtx);
 		opAltStarBlock.addIterationOp(setPrevCtxAction);
 
 		// Insert code in front of each op alt to create specialized ctx if there was an alt label
@@ -247,11 +253,12 @@ public class OutputModelController {
 				templateName = "recRuleLabeledAltStartAction";
 				altActionST = codegenTemplates.getInstanceOf(templateName);
 				altActionST.add("currentAltLabel", altInfo.altLabel);
+				altActionST.add("ctxName", delegate.getTarget().getRuleFunctionContextStructName(function));
 			}
 			else {
 				templateName = "recRuleAltStartAction";
 				altActionST = codegenTemplates.getInstanceOf(templateName);
-				altActionST.add("ctxName", Utils.capitalize(r.name));
+				altActionST.add("ctxName", delegate.getTarget().getRuleFunctionContextStructName(function));
 			}
 			altActionST.add("ruleName", r.name);
 			// add label of any lr ref we deleted
@@ -263,7 +270,7 @@ public class OutputModelController {
 				delegate.getGenerator().tool.errMgr.toolError(ErrorType.CODE_TEMPLATE_ARG_ISSUE, templateName, "isListLabel");
 			}
 			Action altAction =
-				new Action(delegate, function.altLabelCtxs.get(altInfo.altLabel), altActionST);
+				new Action(delegate, altLabelCtxs.get(altInfo.altLabel), altActionST);
 			CodeBlockForAlt alt = opAltsCode.get(i);
 			alt.insertOp(0, altAction);
 		}

@@ -1,4 +1,5 @@
 TestFolders ::= [
+	"BaseContext": [],
 	"CompositeLexers": [],
 	"CompositeParsers": [],
 	"FullContextParsing": [],

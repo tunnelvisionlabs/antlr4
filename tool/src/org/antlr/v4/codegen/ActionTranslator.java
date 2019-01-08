@@ -135,8 +135,8 @@ public class ActionTranslator implements ActionSplitterListener {
         factory.getGrammar().tool.log("action-translator", "translate " + action);
 		String altLabel = node.getAltLabel();
 		if ( rf!=null ) {
-		    translator.nodeContext = rf.ruleCtx;
-	        if ( altLabel!=null ) translator.nodeContext = rf.altLabelCtxs.get(altLabel);
+		    translator.nodeContext = rf.getEffectiveRuleContext(factory.getController());
+	        if ( altLabel!=null ) translator.nodeContext = rf.getEffectiveAltLabelContexts(factory.getController()).get(altLabel);
 		}
 		ANTLRStringStream in = new ANTLRStringStream(action);
 		in.setLine(tokenWithinAction.getLine());
@@ -154,7 +154,7 @@ public class ActionTranslator implements ActionSplitterListener {
 		if ( a!=null ) {
 			switch ( a.dict.type ) {
 				case ARG: chunks.add(new ArgRef(nodeContext,x.getText())); break;
-				case RET: chunks.add(new RetValueRef(rf.ruleCtx, x.getText())); break;
+				case RET: chunks.add(new RetValueRef(rf.getEffectiveRuleContext(factory.getController()), x.getText())); break;
 				case LOCAL: chunks.add(new LocalRef(nodeContext,x.getText())); break;
 				case PREDEFINED_RULE: chunks.add(getRulePropertyRef(x));	break;
 			}

@@ -38,11 +38,9 @@ public class LeftRecursiveRuleFunction extends RuleFunction {
 					d = new RuleContextListDecl(factory, label, ctxName);
 				}
 
-				StructDecl struct = ruleCtx;
-				if ( altLabelCtxs!=null ) {
-					StructDecl s = altLabelCtxs.get(altLabel);
-					if ( s!=null ) struct = s; // if alt label, use subctx
-				}
+				StructDecl struct = getEffectiveRuleContext(factory.getController());
+				StructDecl s = getEffectiveAltLabelContexts(factory.getController()).get(altLabel);
+				if ( s!=null ) struct = s; // if alt label, use subctx
 				struct.addDecl(d); // stick in overall rule's ctx
 			}
 		}

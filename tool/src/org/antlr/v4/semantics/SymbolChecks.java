@@ -208,7 +208,21 @@ public class SymbolChecks {
 					labelPair.label.getText(),
 					labelPair.type + "!=" + prevLabelPair.type);
 		}
-		if (!prevLabelPair.element.getText().equals(labelPair.element.getText()) &&
+
+		String prevLabelPairElementText = prevLabelPair.element.getText();
+		String labelPairElementText = labelPair.element.getText();
+		if (labelPair.type.equals(LabelType.RULE_LABEL) || labelPair.type.equals(LabelType.RULE_LIST_LABEL)) {
+			// These are rule labels, so the element text needs to be adjusted according to the baseContext
+			if (g.getRule(prevLabelPairElementText) != null) {
+				prevLabelPairElementText = g.getRule(prevLabelPairElementText).getBaseContext();
+			}
+
+			if (g.getRule(labelPairElementText) != null) {
+				labelPairElementText = g.getRule(labelPairElementText).getBaseContext();
+			}
+		}
+
+		if (!prevLabelPairElementText.equals(labelPairElementText) &&
 			(prevLabelPair.type.equals(LabelType.RULE_LABEL) || prevLabelPair.type.equals(LabelType.RULE_LIST_LABEL)) &&
 			(labelPair.type.equals(LabelType.RULE_LABEL) || labelPair.type.equals(LabelType.RULE_LIST_LABEL))) {
 
@@ -221,8 +235,8 @@ public class SymbolChecks {
 					ErrorType.LABEL_TYPE_CONFLICT,
 					g.fileName,
 					token,
-					labelPair.label.getText() + labelOp + labelPair.element.getText(),
-					prevLabelPair.label.getText() + prevLabelOp + prevLabelPair.element.getText());
+					labelPair.label.getText() + labelOp + labelPairElementText,
+					prevLabelPair.label.getText() + prevLabelOp + prevLabelPairElementText);
 		}
 	}
 

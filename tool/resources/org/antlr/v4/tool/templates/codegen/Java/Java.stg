@@ -886,7 +886,7 @@ recRuleSetReturnAction(src,name)	  ::= "$<name>=$<src>.<name>;"
 recRuleSetStopToken()                 ::= "_ctx.stop = _input.LT(-1);"
 
 recRuleAltStartAction(ruleName, ctxName, label, isListLabel) ::= <<
-_localctx = new <ctxName>Context(_parentctx, _parentState);
+_localctx = new <ctxName>(_parentctx, _parentState);
 <if(label)>
 <if(isListLabel)>
 _localctx.<label>.add(_prevctx);
@@ -897,8 +897,8 @@ _localctx.<label> = _prevctx;
 pushNewRecursionContext(_localctx, _startState, RULE_<ruleName>);
 >>
 
-recRuleLabeledAltStartAction(ruleName, currentAltLabel, label, isListLabel) ::= <<
-_localctx = new <currentAltLabel; format="cap">Context(new <ruleName; format="cap">Context(_parentctx, _parentState));
+recRuleLabeledAltStartAction(ruleName, ctxName, currentAltLabel, label, isListLabel) ::= <<
+_localctx = new <currentAltLabel; format="cap">Context(new <ctxName>(_parentctx, _parentState));
 <if(label)>
 <if(isListLabel)>
 ((<currentAltLabel; format="cap">Context)_localctx).<label>.add(_prevctx);

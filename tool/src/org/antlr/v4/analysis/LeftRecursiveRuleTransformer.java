@@ -115,6 +115,9 @@ public class LeftRecursiveRuleTransformer {
 		}
 		if ( !isLeftRec ) return false;
 
+		// Before replacing the AST, make sure to preserve the baseContext option
+		r.setBaseContext(r.getBaseContext());
+
 		// replace old rule's AST; first create text of altered rule
 		GrammarAST RULES = (GrammarAST)ast.getFirstChildWithType(ANTLRParser.RULES);
 		String newRuleText = leftRecursiveRuleWalker.getArtificialOpPrecRule();
