@@ -379,7 +379,13 @@ public class BasicSemanticChecks extends GrammarTreeVisitor {
 				// Now verify that label X or x doesn't conflict with label
 				// in another rule. altLabelToRuleName has both X and x mapped.
 				String prevRuleForLabel = ruleCollector.altLabelToRuleName.get(altLabel);
-				if ( prevRuleForLabel!=null && !prevRuleForLabel.equals(rule.getRuleName()) ) {
+				if (prevRuleForLabel == null) {
+					continue;
+				}
+
+				String prevContextForLabel = ruleCollector.rules.get(prevRuleForLabel).getBaseContext();
+				String currentContextForLabel = ruleCollector.rules.get(rule.getRuleName()).getBaseContext();
+				if ( !prevContextForLabel.equals(currentContextForLabel) ) {
 					g.tool.errMgr.grammarError(ErrorType.ALT_LABEL_REDEF,
 											   g.fileName, altAST.altLabel.token,
 											   altLabel,

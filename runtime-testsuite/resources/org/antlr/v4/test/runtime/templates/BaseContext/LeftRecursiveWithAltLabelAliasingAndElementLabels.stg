@@ -1,0 +1,41 @@
+TestType() ::= "Parser"
+
+Options ::= [
+	"Debug": false
+]
+
+Grammar ::= [
+	"T": {<grammar("T")>}
+]
+
+Input() ::= "3 a"
+
+Rule() ::= "input"
+
+Output() ::= ""
+
+Errors() ::= ""
+
+grammar(grammarName) ::= <<
+grammar <grammarName>;
+
+input
+	:	e=expression e=expressionNoNumber EOF
+	;
+
+expression
+	:	i=ID # alt1
+	|	i=NUMBER # alt1
+	|	left=expression op='+' right=expression # alt2
+	;
+
+expressionNoNumber
+options { baseContext = expression; }
+	:	i=ID # alt1
+	|	left=expressionNoNumber op='+' right=expressionNoNumber # alt2
+	;
+
+ID : 'a'..'z'+;
+NUMBER : [0-9]+;
+WS : (' '|'\n') -> skip;
+>>
