@@ -20,6 +20,7 @@ import java.util.Locale;
  */
 public class FailedPredicateException extends RecognitionException {
 	private static final long serialVersionUID = 5379330841495778709L;
+	private static final boolean IGNORE_STACK_TRACE = Boolean.getBoolean("antlr.ignore.stacktrace.FailedPredicateException");
 
 	private final int ruleIndex;
 	private final int predicateIndex;
@@ -74,5 +75,14 @@ public class FailedPredicateException extends RecognitionException {
 		}
 
 		return String.format(Locale.getDefault(), "failed predicate: {%s}?", predicate);
+	}
+
+	@Override
+	public Throwable fillInStackTrace() {
+		if (IGNORE_STACK_TRACE) {
+			return this;
+		}
+
+		return super.fillInStackTrace();
 	}
 }
