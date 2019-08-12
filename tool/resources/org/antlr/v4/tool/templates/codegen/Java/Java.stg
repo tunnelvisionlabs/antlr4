@@ -232,11 +232,11 @@ public <if(parser.abstractRecognizer)>abstract <endif>class <parser.name> extend
 	@Override
 	public String getSerializedATN() { return _serializedATN; }
 
-	protected FailedPredicateException createFailedPredicateException(Parser recognizer) {
-		return new FailedPredicateException(recognizer);
+	private FailedPredicateException createFailedPredicateException(Parser recognizer) {
+		return createFailedPredicateException(recognizer, null);
 	}
-	protected FailedPredicateException createFailedPredicateException(Parser recognizer, String predicate) {
-		return new FailedPredicateException(recognizer, predicate);
+	private FailedPredicateException createFailedPredicateException(Parser recognizer, String predicate) {
+		return createFailedPredicateException(recognizer, predicate, null);
 	}
 	protected FailedPredicateException createFailedPredicateException(Parser recognizer, String predicate, String message) {
         return new FailedPredicateException(recognizer, predicate, message);
