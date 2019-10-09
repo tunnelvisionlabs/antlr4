@@ -34,8 +34,8 @@ public class FailedPredicateException extends RecognitionException {
 	}
 
 	public FailedPredicateException(@NotNull Parser recognizer,
-														   @Nullable String predicate,
-														   @Nullable String message)
+									@Nullable String predicate,
+									@Nullable String message)
 	{
 		super(formatMessage(predicate, message), recognizer, recognizer.getInputStream(), recognizer._ctx);
 		ATNState s = recognizer.getInterpreter().atn.states.get(recognizer.getState());
