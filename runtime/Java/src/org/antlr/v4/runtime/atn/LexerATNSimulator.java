@@ -82,8 +82,6 @@ public class LexerATNSimulator extends ATNSimulator {
 	@NotNull
 	protected final SimState prevAccept = new SimState();
 
-	public static int match_calls = 0;
-
 	public LexerATNSimulator(@NotNull ATN atn) {
 		this(null, atn);
 	}
@@ -101,7 +99,6 @@ public class LexerATNSimulator extends ATNSimulator {
 	}
 
 	public int match(@NotNull CharStream input, int mode) {
-		match_calls++;
 		this.mode = mode;
 		int mark = input.mark();
 		try {
@@ -510,9 +507,9 @@ public class LexerATNSimulator extends ATNSimulator {
 			else {
 				c = null;
 			}
-			
+
 			break;
-			
+
 		case Transition.ACTION:
 			if (config.getContext().hasEmpty()) {
 				// execute actions anywhere in the start rule for a token.
