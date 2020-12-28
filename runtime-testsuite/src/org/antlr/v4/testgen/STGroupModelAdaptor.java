@@ -15,11 +15,11 @@ import org.stringtemplate.v4.misc.STNoSuchPropertyException;
  *
  * @author sam
  */
-public class STGroupModelAdaptor implements ModelAdaptor {
+public class STGroupModelAdaptor implements ModelAdaptor<STGroup> {
 
 	@Override
-	public Object getProperty(Interpreter interp, ST self, Object o, Object property, String propertyName) throws STNoSuchPropertyException {
-		STGroup group = (STGroup)o;
+	public Object getProperty(Interpreter interp, ST self, STGroup o, Object property, String propertyName) throws STNoSuchPropertyException {
+		STGroup group = o;
 		if (group.isDictionary(propertyName)) {
 			return group.rawGetDictionary(propertyName);
 		}

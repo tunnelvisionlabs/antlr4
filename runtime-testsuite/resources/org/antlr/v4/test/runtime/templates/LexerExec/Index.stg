@@ -36,5 +36,6 @@ TestTemplates ::= [
 	"CharSetWithQuote2": [],
 	"PositionAdjustingLexer": [],
 	"LargeLexer": [],
-	"ZeroLengthToken": []
+	"ZeroLengthToken": [],
+	"EscapeTargetStringLiteral": []
 ]

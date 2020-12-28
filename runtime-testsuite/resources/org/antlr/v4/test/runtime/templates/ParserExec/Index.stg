@@ -37,5 +37,6 @@ TestTemplates ::= [
 	"OpenDeviceStatement_2": [],
 	"OpenDeviceStatement_3": [],
 	"Wildcard": [],
-	"OrderingPredicates": []
+	"OrderingPredicates": [],
+	"TokenOffset": []
 ]

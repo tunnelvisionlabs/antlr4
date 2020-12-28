@@ -1,0 +1,23 @@
+/*
+ * This is a regression test for antlr/antlr4#2709 "PHP target generates
+ * invalid output when $ is used as part of the literal in lexer rule"
+ * https://github.com/antlr/antlr4/issues/2709
+ */
+TestType() ::= "Lexer"
+
+Grammar ::= [
+	"L": {<grammar("L")>}
+]
+
+Input() ::= ""
+
+Output() ::= <<
+[@0,0:-1='\<EOF>',\<-1>,1:0]<\n>
+>>
+
+Errors() ::= ""
+
+grammar(grammarName) ::= <<
+lexer grammar <grammarName>;
+ACTION_WITH_DOLLAR: '$ACTION';
+>>

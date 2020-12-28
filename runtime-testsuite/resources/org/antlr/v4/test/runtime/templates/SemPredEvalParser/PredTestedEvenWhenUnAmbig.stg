@@ -14,7 +14,7 @@ grammar(grammarName) ::= <<
 grammar <grammarName>;
 @parser::members {<InitBooleanMember("enumKeyword",True())>}
 primary
-    :   ID {<writeln("\"ID \"+$ID.text")>}
+    :   ID {<AppendStr("\"ID \"", "$ID.text"):writeln()>}
     |   {<GetMember("enumKeyword"):Not()>}? 'enum' {<writeln("\"enum\"")>}
     ;
 ID : [a-z]+ ;
