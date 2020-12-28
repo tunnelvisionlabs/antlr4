@@ -82,6 +82,8 @@ public class LexerATNSimulator extends ATNSimulator {
 	@NotNull
 	protected final SimState prevAccept = new SimState();
 
+	/** @deprecated This field is no longer used. */
+	@Deprecated
 	public static int match_calls = 0;
 
 	public LexerATNSimulator(@NotNull ATN atn) {
@@ -101,7 +103,6 @@ public class LexerATNSimulator extends ATNSimulator {
 	}
 
 	public int match(@NotNull CharStream input, int mode) {
-		match_calls++;
 		this.mode = mode;
 		int mark = input.mark();
 		try {

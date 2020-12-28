@@ -16,11 +16,13 @@ import java.util.ArrayList;
 
 /** A StructDecl to handle a '#' label on alt */
 public class AltLabelStructDecl extends StructDecl {
+	public String parentRule;
 	public AltLabelStructDecl(OutputModelFactory factory, Rule r, String label)
 	{
 		super(factory, r);
 		this.name = // override name set in super to the label ctx
 			factory.getTarget().getAltLabelContextStructName(label);
+		this.parentRule = r.name;
 		derivedFromName = label;
 	}
 

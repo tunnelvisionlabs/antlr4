@@ -171,9 +171,9 @@ Cast(t,v) ::= "((<t>)<v>)"
 
 Append(a,b) ::= "<a> + <b>"
 
-Concat(a,b) ::= "<a><b>"
+AppendStr(a,b) ::= <%<Append(a,b)>%>
 
-DeclareLocal(s,v) ::= "Object <s> = <v>;"
+Concat(a,b) ::= "<a><b>"
 
 AssertIsList(v) ::= "List\<?> __ttt__ = <v>;" // just use static type system
 
@@ -184,13 +184,17 @@ InitLocalIntMember ::= InitIntMember
 
 InitBooleanMember(n,v) ::= <%boolean <n> = <v>;%>
 
+InitLocalIntVar(n,v) ::= <%<InitLocalIntMember(n,v)>%>
+
+IntArg(n) ::= "int <n>"
+
+VarRef(n) ::= "<n>"
+
 GetMember(n) ::= <%this.<n>%>
 
 SetMember(n,v) ::= <%this.<n> = <v>;%>
 
 AddMember(n,v) ::= <%this.<n> += <v>;%>
-
-PlusMember(v,n) ::= <%<v> + this.<n>%>
 
 MemberEquals(n,v) ::= <%this.<n> == <v>%>
 
@@ -258,8 +262,9 @@ boolean Property() {
 
 ParserPropertyCall(p, call) ::= "<p>.<call>"
 
+PositionAdjustingLexerDef() ::= ""
+
 PositionAdjustingLexer() ::= <<
-@members {
 @Override
 public Token nextToken() {
 	if (!(_interp instanceof PositionAdjustingLexerATNSimulator)) {
@@ -335,7 +340,6 @@ protected static class PositionAdjustingLexerATNSimulator extends LexerATNSimula
 		consume(input);
 	}
 
-}
 }
 >>
 
