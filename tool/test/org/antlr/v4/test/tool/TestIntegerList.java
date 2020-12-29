@@ -8,16 +8,13 @@ package org.antlr.v4.test.tool;
 
 import org.antlr.v4.runtime.misc.IntegerList;
 import org.antlr.v4.runtime.misc.Utils;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.function.ThrowingRunnable;
 
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertThrows;
 
 public class TestIntegerList {
-	@Rule
-	public ExpectedException thrown = ExpectedException.none();
-
 	@Test
 	public void emptyListToEmptyCharArray() {
 		IntegerList l = new IntegerList();
@@ -26,10 +23,15 @@ public class TestIntegerList {
 
 	@Test
 	public void negativeIntegerToCharArrayThrows() {
-		IntegerList l = new IntegerList();
+		final IntegerList l = new IntegerList();
 		l.add(-42);
-		thrown.expect(IllegalArgumentException.class);
-		Utils.toCharArray(l);
+
+		assertThrows(IllegalArgumentException.class, new ThrowingRunnable() {
+			@Override
+			public void run() throws Throwable {
+				Utils.toCharArray(l);
+			}
+		});
 	}
 
 	@Test
@@ -44,10 +46,15 @@ public class TestIntegerList {
 
 	@Test
 	public void tooLargeIntegerToCharArrayThrows() {
-		IntegerList l = new IntegerList();
+		final IntegerList l = new IntegerList();
 		l.add(0x110000);
-		thrown.expect(IllegalArgumentException.class);
-		Utils.toCharArray(l);
+
+		assertThrows(IllegalArgumentException.class, new ThrowingRunnable() {
+			@Override
+			public void run() throws Throwable {
+				Utils.toCharArray(l);
+			}
+		});
 	}
 
 	@Test

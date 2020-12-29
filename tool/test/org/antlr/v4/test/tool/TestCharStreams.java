@@ -10,7 +10,7 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.misc.Utils;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.function.ThrowingRunnable;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
@@ -25,13 +25,11 @@ import java.nio.charset.Charset;
 import java.nio.charset.CodingErrorAction;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 
 public class TestCharStreams {
 	@Rule
 	public TemporaryFolder folder = new TemporaryFolder();
-
-	@Rule
-	public ExpectedException thrown = ExpectedException.none();
 
 	@Test
 	public void fromBMPStringHasExpectedSize() {
@@ -164,10 +162,14 @@ public class TestCharStreams {
 		File p = folder.newFile();
 		byte[] toWrite = new byte[] { (byte)0xCA, (byte)0xFE };
 		Utils.writeFile(p, toWrite);
-		ReadableByteChannel c = Channels.newChannel(new FileInputStream(p));
+		final ReadableByteChannel c = Channels.newChannel(new FileInputStream(p));
 		try {
-			thrown.expect(CharacterCodingException.class);
-			CharStreams.fromChannel(c, 4096, CodingErrorAction.REPORT, "foo");
+			assertThrows(CharacterCodingException.class, new ThrowingRunnable() {
+				@Override
+				public void run() throws Throwable {
+					CharStreams.fromChannel(c, 4096, CodingErrorAction.REPORT, "foo");
+				}
+			});
 		}
 		finally {
 			c.close();
