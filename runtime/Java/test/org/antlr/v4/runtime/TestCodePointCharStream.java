@@ -6,17 +6,14 @@
 package org.antlr.v4.runtime;
 
 import org.antlr.v4.runtime.misc.Interval;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.function.ThrowingRunnable;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 public class TestCodePointCharStream {
-	@Rule
-	public ExpectedException thrown = ExpectedException.none();
-
 	@Test
 	public void emptyBytesHasSize0() {
 		CodePointCharStream s = CharStreams.fromString("");
@@ -34,10 +31,15 @@ public class TestCodePointCharStream {
 
 	@Test
 	public void consumingEmptyStreamShouldThrow() {
-		CodePointCharStream s = CharStreams.fromString("");
-		thrown.expect(IllegalStateException.class);
-		thrown.expectMessage("cannot consume EOF");
-		s.consume();
+		final CodePointCharStream s = CharStreams.fromString("");
+		Throwable t = assertThrows(IllegalStateException.class, new ThrowingRunnable() {
+			@Override
+			public void run() throws Throwable {
+				s.consume();
+			}
+		});
+
+		assertEquals("cannot consume EOF", t.getMessage());
 	}
 
 	@Test
@@ -56,11 +58,17 @@ public class TestCodePointCharStream {
 
 	@Test
 	public void consumingPastSingleLatinCodePointShouldThrow() {
-		CodePointCharStream s = CharStreams.fromString("X");
+		final CodePointCharStream s = CharStreams.fromString("X");
 		s.consume();
-		thrown.expect(IllegalStateException.class);
-		thrown.expectMessage("cannot consume EOF");
-		s.consume();
+
+		Throwable t = assertThrows(IllegalStateException.class, new ThrowingRunnable() {
+			@Override
+			public void run() throws Throwable {
+				s.consume();
+			}
+		});
+
+		assertEquals("cannot consume EOF", t.getMessage());
 	}
 
 	@Test
@@ -104,11 +112,17 @@ public class TestCodePointCharStream {
 
 	@Test
 	public void consumingPastSingleCJKCodePointShouldThrow() {
-		CodePointCharStream s = CharStreams.fromString("\u611B");
+		final CodePointCharStream s = CharStreams.fromString("\u611B");
 		s.consume();
-		thrown.expect(IllegalStateException.class);
-		thrown.expectMessage("cannot consume EOF");
-		s.consume();
+
+		Throwable t = assertThrows(IllegalStateException.class, new ThrowingRunnable() {
+			@Override
+			public void run() throws Throwable {
+				s.consume();
+			}
+		});
+
+		assertEquals("cannot consume EOF", t.getMessage());
 	}
 
 	@Test
@@ -144,14 +158,20 @@ public class TestCodePointCharStream {
 
 	@Test
 	public void consumingPastEndOfEmojiCodePointWithShouldThrow() {
-		CodePointCharStream s = CharStreams.fromString(
+		final CodePointCharStream s = CharStreams.fromString(
 				new StringBuilder().appendCodePoint(0x1F4A9).toString());
 		assertEquals(0, s.index());
 		s.consume();
 		assertEquals(1, s.index());
-		thrown.expect(IllegalStateException.class);
-		thrown.expectMessage("cannot consume EOF");
-		s.consume();
+
+		Throwable t = assertThrows(IllegalStateException.class, new ThrowingRunnable() {
+			@Override
+			public void run() throws Throwable {
+				s.consume();
+			}
+		});
+
+		assertEquals("cannot consume EOF", t.getMessage());
 	}
 
 	@Test

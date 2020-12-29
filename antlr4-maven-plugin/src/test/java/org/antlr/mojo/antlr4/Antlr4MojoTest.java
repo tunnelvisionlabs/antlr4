@@ -16,21 +16,20 @@ import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.function.ThrowingRunnable;
 
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 public class Antlr4MojoTest {
-    @Rule
-    public ExpectedException thrown = ExpectedException.none();
-
     @Rule
     public final TestResources resources = new TestResources();
 
@@ -347,9 +346,9 @@ public class Antlr4MojoTest {
 
         File baseGrammar = new File(antlrDir, "imports/HelloBase.g4");
 
-        MavenProject project = maven.readMavenProject(baseDir);
-        MavenSession session = maven.newMavenSession(project);
-        MojoExecution exec = maven.newMojoExecution("antlr4");
+        final MavenProject project = maven.readMavenProject(baseDir);
+        final MavenSession session = maven.newMavenSession(project);
+        final MojoExecution exec = maven.newMojoExecution("antlr4");
 
         maven.executeMojo(session, project, exec);
 
@@ -358,10 +357,14 @@ public class Antlr4MojoTest {
             // if the base grammar no longer exists, processing must be performed
 			assertTrue(baseGrammar.delete());
 
-            thrown.expect(MojoExecutionException.class);
-            thrown.expectMessage("ANTLR 4 caught 1 build errors.");
+			Throwable t = assertThrows(MojoExecutionException.class, new ThrowingRunnable() {
+				@Override
+				public void run() throws Throwable {
+					maven.executeMojo(session, project, exec);
+				}
+			});
 
-            maven.executeMojo(session, project, exec);
+			assertEquals("ANTLR 4 caught 1 build errors.", t.getMessage());
         } finally {
 			temp.close();
 		}

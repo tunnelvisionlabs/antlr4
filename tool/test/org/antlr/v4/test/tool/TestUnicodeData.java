@@ -7,17 +7,15 @@
 package org.antlr.v4.test.tool;
 
 import org.antlr.v4.unicode.UnicodeData;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.function.ThrowingRunnable;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 public class TestUnicodeData {
-	@Rule
-	public ExpectedException thrown = ExpectedException.none();
-
 	@Test
 	public void testUnicodeGeneralCategoriesLatin() {
 		assertTrue(UnicodeData.getPropertyCodePoints("Lu").contains('X'));
@@ -208,8 +206,13 @@ public class TestUnicodeData {
 
 	@Test
 	public void modifyingUnicodeDataShouldThrow() {
-		thrown.expect(IllegalStateException.class);
-		thrown.expectMessage("can't alter readonly IntervalSet");
-		UnicodeData.getPropertyCodePoints("L").add(0x12345);
+		Throwable t = assertThrows(IllegalStateException.class, new ThrowingRunnable() {
+			@Override
+			public void run() throws Throwable {
+				UnicodeData.getPropertyCodePoints("L").add(0x12345);
+			}
+		});
+
+		assertEquals("can't alter readonly IntervalSet", t.getMessage());
 	}
 }
