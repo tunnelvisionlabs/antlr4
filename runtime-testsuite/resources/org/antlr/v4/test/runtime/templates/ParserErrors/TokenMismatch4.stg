@@ -1,0 +1,49 @@
+TestType() ::= "Parser"
+
+Options ::= [
+	"Debug": false
+]
+
+Grammar ::= [
+	"T": {<grammar("T")>}
+]
+
+Input() ::= "SELECT CONCAT() FROM tbl"
+
+Rule() ::= "s"
+
+Output() ::= <<
+(selectStatement (selectQuery SELECT (expr (func CONCAT ( (expr )))) (fromClause FROM tbl)) limitOpt)
+Error encountered: [@3,14:14=')',\<7>,1:14]<\n>
+>>
+
+Errors() ::= <<
+line 1:14 mismatched input ')' expecting {IDENTIFIER, NUMBER}<\n>
+>>
+
+grammar(grammarName) ::= <<
+grammar <grammarName>;
+
+<ImportVisitor("T")>
+<ErrorVisitor("T")>
+
+s
+@init {
+<BuildParseTrees()>
+}
+@after {
+<ToStringTree("$r.ctx"):writeln()>
+<WalkVisitor("$ctx")>
+}
+  : r=selectStatement ;
+selectStatement : selectQuery limitOpt ;
+selectQuery : 'SELECT' (expr | '*') fromClause? ;
+limitOpt : ('LIMIT' NUMBER)? ;
+expr : func | IDENTIFIER | NUMBER ;
+fromClause : 'FROM' IDENTIFIER ;
+func : IDENTIFIER '(' expr ',' expr (',' expr)* ')' ;
+parenthesizedSelectQueryOrExpr : '(' (selectQuery limitOpt | expr) ')' ;
+IDENTIFIER : [a-zA-Z]+ ;
+NUMBER : [1-9][0-9]* ;
+WS : [ \r\t\n]+ -> skip ;
+>>

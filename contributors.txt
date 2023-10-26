@@ -281,3 +281,4 @@ YYYY/MM/DD, github id, Full name, email
 2020/10/20, adamwojs, Adam Wójs, adam[at]wojs.pl
 2020/10/24, cliid, Jiwu Jang, jiwujang@naver.com
 2020/11/05, MichelHartmann, Michel Hartmann, MichelHartmann@users.noreply.github.com
+2023/10/26, br0nstein, Aaron Braunstein, aa(last name)@gmail.com

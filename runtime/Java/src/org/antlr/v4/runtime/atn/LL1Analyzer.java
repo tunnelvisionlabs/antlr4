@@ -190,6 +190,9 @@ public class LL1Analyzer {
 					calledRuleStack.set(s.ruleIndex);
 				}
 			}
+			if (!PredictionContext.isEmptyLocal(ctx)) {
+				return;
+			}
         }
 
         int n = s.getNumberOfTransitions();
