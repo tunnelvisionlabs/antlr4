@@ -32,5 +32,6 @@ TestTemplates ::= [
 	"NoViableAltAvoidance": [],
 	"TokenMismatch2": [],
 	"TokenMismatch3": [],
+	"TokenMismatch4": [],
 	"ExtraneousInput": []
 ]
