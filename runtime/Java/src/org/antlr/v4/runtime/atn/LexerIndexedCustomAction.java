@@ -9,7 +9,7 @@ package org.antlr.v4.runtime.atn;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.misc.MurmurHash;
-import org.antlr.v4.runtime.misc.NotNull;
+import org.antlr.v4.runtime.annotations.NotNull;
 
 /**
  * This implementation of {@link LexerAction} is used for tracking input offsets

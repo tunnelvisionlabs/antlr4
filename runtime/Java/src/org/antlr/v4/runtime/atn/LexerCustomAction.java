@@ -10,7 +10,7 @@ import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.Recognizer;
 import org.antlr.v4.runtime.misc.MurmurHash;
-import org.antlr.v4.runtime.misc.NotNull;
+import org.antlr.v4.runtime.annotations.NotNull;
 
 /**
  * Executes a custom lexer action by calling {@link Recognizer#action} with the

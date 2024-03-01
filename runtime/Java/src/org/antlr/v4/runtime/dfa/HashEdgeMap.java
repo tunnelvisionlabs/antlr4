@@ -5,7 +5,7 @@
  */
 package org.antlr.v4.runtime.dfa;
 
-import org.antlr.v4.runtime.misc.NotNull;
+import org.antlr.v4.runtime.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.Map;

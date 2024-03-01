@@ -8,8 +8,8 @@ package org.antlr.v4.runtime;
 import org.antlr.v4.runtime.atn.ATNState;
 import org.antlr.v4.runtime.atn.AbstractPredicateTransition;
 import org.antlr.v4.runtime.atn.PredicateTransition;
-import org.antlr.v4.runtime.misc.NotNull;
-import org.antlr.v4.runtime.misc.Nullable;
+import org.antlr.v4.runtime.annotations.NotNull;
+import org.antlr.v4.runtime.annotations.Nullable;
 
 import java.util.Locale;
 

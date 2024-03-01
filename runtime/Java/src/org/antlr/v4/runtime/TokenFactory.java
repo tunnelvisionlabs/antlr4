@@ -6,7 +6,7 @@
 
 package org.antlr.v4.runtime;
 
-import org.antlr.v4.runtime.misc.NotNull;
+import org.antlr.v4.runtime.annotations.NotNull;
 import org.antlr.v4.runtime.misc.Tuple2;
 
 /** The default mechanism for creating tokens. It's used by default in Lexer and

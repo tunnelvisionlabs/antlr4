@@ -7,7 +7,7 @@
 package org.antlr.v4.runtime.atn;
 
 import org.antlr.v4.runtime.misc.IntervalSet;
-import org.antlr.v4.runtime.misc.NotNull;
+import org.antlr.v4.runtime.annotations.NotNull;
 
 /** TODO: make all transitions sets? no, should remove set edges */
 public final class AtomTransition extends Transition {

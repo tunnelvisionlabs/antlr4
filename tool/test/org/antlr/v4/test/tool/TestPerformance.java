@@ -39,8 +39,8 @@ import org.antlr.v4.runtime.dfa.DFAState;
 import org.antlr.v4.runtime.dfa.EmptyEdgeMap;
 import org.antlr.v4.runtime.misc.Interval;
 import org.antlr.v4.runtime.misc.MurmurHash;
-import org.antlr.v4.runtime.misc.NotNull;
-import org.antlr.v4.runtime.misc.Nullable;
+import org.antlr.v4.runtime.annotations.NotNull;
+import org.antlr.v4.runtime.annotations.Nullable;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.antlr.v4.runtime.misc.Tuple2;
 import org.antlr.v4.runtime.tree.ErrorNode;
@@ -424,7 +424,7 @@ public class TestPerformance extends BaseTest {
     private final AtomicIntegerArray tokenCount = new AtomicIntegerArray(PASSES);
 
     @Test
-    //@org.junit.Ignore
+    @org.junit.Ignore
     public void compileJdk() throws IOException, InterruptedException, ExecutionException {
         String jdkSourceRoot = getSourceRoot("JDK");
 		assertTrue("The JDK_SOURCE_ROOT environment variable must be set for performance testing.", jdkSourceRoot != null && !jdkSourceRoot.isEmpty());

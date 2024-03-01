@@ -9,6 +9,8 @@ import org.antlr.v4.runtime.Dependents;
 import org.antlr.v4.runtime.RuleDependencies;
 import org.antlr.v4.runtime.RuleDependency;
 import org.antlr.v4.runtime.RuleVersion;
+import org.antlr.v4.runtime.annotations.NotNull;
+import org.antlr.v4.runtime.annotations.Nullable;
 import org.antlr.v4.runtime.atn.ATN;
 import org.antlr.v4.runtime.atn.ATNDeserializer;
 import org.antlr.v4.runtime.atn.ATNSimulator;
@@ -61,15 +63,15 @@ public class RuleDependencyProcessor extends AbstractProcessor {
 	public SourceVersion getSupportedSourceVersion() {
 		SourceVersion latestSupported = SourceVersion.latestSupported();
 
-		if (latestSupported.ordinal() <= 6) {
-			return SourceVersion.RELEASE_6;
+		if (latestSupported.ordinal() <= 11) {
+			return SourceVersion.RELEASE_11;
 		}
-		else if (latestSupported.ordinal() <= 8) {
+		else if (latestSupported.ordinal() <= 21) {
 			return latestSupported;
 		}
 		else {
-			// this annotation processor is tested through Java 8
-			return SourceVersion.values()[8];
+			// this annotation processor is tested through Java 21
+			return SourceVersion.values()[21];
 		}
 	}
 

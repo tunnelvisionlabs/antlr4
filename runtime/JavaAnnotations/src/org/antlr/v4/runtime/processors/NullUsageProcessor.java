@@ -4,32 +4,22 @@
  * can be found in the LICENSE.txt file in the project root.
  */
 
-package org.antlr.v4.runtime.misc;
+package org.antlr.v4.runtime.processors;
+
+import org.antlr.v4.runtime.annotations.NotNull;
+import org.antlr.v4.runtime.annotations.Nullable;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
 import javax.lang.model.SourceVersion;
-import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.ElementKind;
-import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.TypeElement;
-import javax.lang.model.element.VariableElement;
+import javax.lang.model.element.*;
 import javax.lang.model.type.NoType;
 import javax.lang.model.type.PrimitiveType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.tools.Diagnostic;
-
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * A compile-time validator for correct usage of the {@link NotNull} and
@@ -59,8 +49,8 @@ import java.util.Set;
  */
 @SupportedAnnotationTypes({NullUsageProcessor.NotNullClassName, NullUsageProcessor.NullableClassName})
 public class NullUsageProcessor extends AbstractProcessor {
-	public static final String NotNullClassName = "org.antlr.v4.runtime.misc.NotNull";
-	public static final String NullableClassName = "org.antlr.v4.runtime.misc.Nullable";
+	public static final String NotNullClassName = "org.antlr.v4.runtime.annotations.NotNull";
+	public static final String NullableClassName = "org.antlr.v4.runtime.annotations.Nullable";
 
 	private TypeElement notNullType;
 	private TypeElement nullableType;
@@ -72,15 +62,15 @@ public class NullUsageProcessor extends AbstractProcessor {
 	public SourceVersion getSupportedSourceVersion() {
 		SourceVersion latestSupported = SourceVersion.latestSupported();
 
-		if (latestSupported.ordinal() <= 6) {
-			return SourceVersion.RELEASE_6;
+		if (latestSupported.ordinal() <= 11) {
+			return SourceVersion.RELEASE_11;
 		}
-		else if (latestSupported.ordinal() <= 8) {
+		else if (latestSupported.ordinal() <= 21) {
 			return latestSupported;
 		}
 		else {
-			// this annotation processor is tested through Java 8
-			return SourceVersion.values()[8];
+			// this annotation processor is tested through Java 11
+			return SourceVersion.values()[21];
 		}
 	}
 

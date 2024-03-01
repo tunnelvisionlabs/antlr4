@@ -11,8 +11,8 @@ import org.antlr.v4.runtime.atn.ATNState;
 import org.antlr.v4.runtime.atn.PredictionContext;
 import org.antlr.v4.runtime.atn.RuleTransition;
 import org.antlr.v4.runtime.misc.IntervalSet;
-import org.antlr.v4.runtime.misc.NotNull;
-import org.antlr.v4.runtime.misc.Nullable;
+import org.antlr.v4.runtime.annotations.NotNull;
+import org.antlr.v4.runtime.annotations.Nullable;
 import org.antlr.v4.runtime.misc.Tuple;
 
 /**

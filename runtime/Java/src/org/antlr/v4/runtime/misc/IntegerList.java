@@ -5,6 +5,8 @@
  */
 package org.antlr.v4.runtime.misc;
 
+import org.antlr.v4.runtime.annotations.NotNull;
+
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;

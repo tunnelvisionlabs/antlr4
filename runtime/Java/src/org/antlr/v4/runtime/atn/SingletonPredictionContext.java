@@ -6,7 +6,7 @@
 
 package org.antlr.v4.runtime.atn;
 
-import org.antlr.v4.runtime.misc.NotNull;
+import org.antlr.v4.runtime.annotations.NotNull;
 
 public class SingletonPredictionContext extends PredictionContext {
 

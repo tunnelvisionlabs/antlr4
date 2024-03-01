@@ -8,7 +8,7 @@ package org.antlr.v4.runtime.tree;
 
 import org.antlr.v4.runtime.TokenStream;
 import org.antlr.v4.runtime.misc.Interval;
-import org.antlr.v4.runtime.misc.NotNull;
+import org.antlr.v4.runtime.annotations.NotNull;
 
 /** A tree that knows about an interval in a token stream
  *  is some kind of syntax tree. Subinterfaces distinguish

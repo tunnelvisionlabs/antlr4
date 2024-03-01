@@ -11,7 +11,7 @@ import org.antlr.v4.analysis.LeftRecursiveRuleTransformer;
 import org.antlr.v4.automata.LexerATNFactory;
 import org.antlr.v4.parse.ANTLRParser;
 import org.antlr.v4.runtime.Token;
-import org.antlr.v4.runtime.misc.NotNull;
+import org.antlr.v4.runtime.annotations.NotNull;
 import org.antlr.v4.runtime.misc.Tuple2;
 import org.antlr.v4.tool.ErrorType;
 import org.antlr.v4.tool.Grammar;

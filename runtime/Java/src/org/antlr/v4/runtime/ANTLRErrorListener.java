@@ -6,8 +6,8 @@
 
 package org.antlr.v4.runtime;
 
-import org.antlr.v4.runtime.misc.NotNull;
-import org.antlr.v4.runtime.misc.Nullable;
+import org.antlr.v4.runtime.annotations.NotNull;
+import org.antlr.v4.runtime.annotations.Nullable;
 
 /** How to emit recognition errors. */
 public interface ANTLRErrorListener<Symbol> {

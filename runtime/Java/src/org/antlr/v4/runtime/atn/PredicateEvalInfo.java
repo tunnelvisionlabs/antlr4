@@ -10,7 +10,7 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Recognizer;
 import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.TokenStream;
-import org.antlr.v4.runtime.misc.NotNull;
+import org.antlr.v4.runtime.annotations.NotNull;
 
 /**
  * This class represents profiling event information for semantic predicate
@@ -41,7 +41,7 @@ public class PredicateEvalInfo extends DecisionEventInfo {
 	 * Constructs a new instance of the {@link PredicateEvalInfo} class with the
 	 * specified detailed predicate evaluation information.
 	 *
-	 * @param state The simulator state 
+	 * @param state The simulator state
 	 * @param decision The decision number
 	 * @param input The input token stream
 	 * @param startIndex The start index for the current prediction

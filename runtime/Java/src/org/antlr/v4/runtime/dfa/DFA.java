@@ -16,8 +16,8 @@ import org.antlr.v4.runtime.atn.ATNType;
 import org.antlr.v4.runtime.atn.LexerATNSimulator;
 import org.antlr.v4.runtime.atn.StarLoopEntryState;
 import org.antlr.v4.runtime.atn.TokensStartState;
-import org.antlr.v4.runtime.misc.NotNull;
-import org.antlr.v4.runtime.misc.Nullable;
+import org.antlr.v4.runtime.annotations.NotNull;
+import org.antlr.v4.runtime.annotations.Nullable;
 
 import java.util.Map;
 import java.util.Set;

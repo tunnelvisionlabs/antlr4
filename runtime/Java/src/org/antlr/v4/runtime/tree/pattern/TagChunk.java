@@ -6,8 +6,8 @@
 
 package org.antlr.v4.runtime.tree.pattern;
 
-import org.antlr.v4.runtime.misc.NotNull;
-import org.antlr.v4.runtime.misc.Nullable;
+import org.antlr.v4.runtime.annotations.NotNull;
+import org.antlr.v4.runtime.annotations.Nullable;
 
 /**
  * Represents a placeholder tag in a tree pattern. A tag can have any of the

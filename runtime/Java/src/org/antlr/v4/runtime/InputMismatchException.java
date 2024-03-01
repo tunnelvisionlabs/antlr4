@@ -5,7 +5,7 @@
  */
 package org.antlr.v4.runtime;
 
-import org.antlr.v4.runtime.misc.NotNull;
+import org.antlr.v4.runtime.annotations.NotNull;
 
 /** This signifies any kind of mismatched input exceptions such as
  *  when the current input does not match the expected token.

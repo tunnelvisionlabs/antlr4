@@ -8,8 +8,8 @@ package org.antlr.v4.runtime;
 import org.antlr.v4.runtime.atn.ATNConfigSet;
 import org.antlr.v4.runtime.atn.SimulatorState;
 import org.antlr.v4.runtime.dfa.DFA;
-import org.antlr.v4.runtime.misc.NotNull;
-import org.antlr.v4.runtime.misc.Nullable;
+import org.antlr.v4.runtime.annotations.NotNull;
+import org.antlr.v4.runtime.annotations.Nullable;
 
 import java.util.BitSet;
 

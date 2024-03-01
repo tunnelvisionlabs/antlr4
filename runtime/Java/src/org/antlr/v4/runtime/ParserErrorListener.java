@@ -12,8 +12,8 @@ import org.antlr.v4.runtime.atn.ParserATNSimulator;
 import org.antlr.v4.runtime.atn.PredictionMode;
 import org.antlr.v4.runtime.atn.SimulatorState;
 import org.antlr.v4.runtime.dfa.DFA;
-import org.antlr.v4.runtime.misc.NotNull;
-import org.antlr.v4.runtime.misc.Nullable;
+import org.antlr.v4.runtime.annotations.NotNull;
+import org.antlr.v4.runtime.annotations.Nullable;
 
 import java.util.BitSet;
 

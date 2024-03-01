@@ -6,7 +6,7 @@
 package org.antlr.mojo.antlr4;
 
 import org.antlr.v4.Tool;
-import org.antlr.v4.runtime.misc.NotNull;
+import org.antlr.v4.runtime.annotations.NotNull;
 import org.antlr.v4.tool.ANTLRMessage;
 import org.antlr.v4.tool.ANTLRToolListener;
 import org.apache.maven.plugin.logging.Log;

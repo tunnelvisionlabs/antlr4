@@ -6,7 +6,7 @@
 
 package org.antlr.v4.runtime;
 
-import org.antlr.v4.runtime.misc.NotNull;
+import org.antlr.v4.runtime.annotations.NotNull;
 
 /**
  * A simple stream of symbols whose values are represented as integers. This

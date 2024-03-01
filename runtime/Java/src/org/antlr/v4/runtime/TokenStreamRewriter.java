@@ -6,7 +6,7 @@
 package org.antlr.v4.runtime;
 
 import org.antlr.v4.runtime.misc.Interval;
-import org.antlr.v4.runtime.misc.Nullable;
+import org.antlr.v4.runtime.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
