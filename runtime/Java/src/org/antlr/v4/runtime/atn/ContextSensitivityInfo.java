@@ -8,7 +8,7 @@ package org.antlr.v4.runtime.atn;
 
 import org.antlr.v4.runtime.ParserErrorListener;
 import org.antlr.v4.runtime.TokenStream;
-import org.antlr.v4.runtime.misc.NotNull;
+import org.antlr.v4.runtime.annotations.NotNull;
 
 /**
  * This class represents profiling event information for a context sensitivity.

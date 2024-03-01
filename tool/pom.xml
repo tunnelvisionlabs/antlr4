@@ -10,7 +10,7 @@
     <parent>
         <groupId>com.tunnelvisionlabs</groupId>
         <artifactId>antlr4-master</artifactId>
-        <version>4.9.1-SNAPSHOT</version>
+        <version>4.10.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>antlr4</artifactId>
@@ -22,7 +22,6 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.13.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -40,26 +39,22 @@
         <dependency>
             <groupId>org.antlr</groupId>
             <artifactId>antlr-runtime</artifactId>
-            <version>3.5.2</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.antlr</groupId>
             <artifactId>ST4</artifactId>
-            <version>4.3</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.abego.treelayout</groupId>
             <artifactId>org.abego.treelayout.core</artifactId>
             <version>1.0.1</version>
-            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>com.ibm.icu</groupId>
             <artifactId>icu4j</artifactId>
             <version>58.2</version>
-            <scope>provided</scope>
         </dependency>
     </dependencies>
 
@@ -82,7 +77,6 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-shade-plugin</artifactId>
-                        <version>2.2</version>
                         <inherited>false</inherited>
                         <executions>
                             <execution>
@@ -136,7 +130,6 @@
                     <plugin>
                         <groupId>org.jacoco</groupId>
                         <artifactId>jacoco-maven-plugin</artifactId>
-                        <version>0.7.7.201606060606</version>
                         <executions>
                             <execution>
                                 <goals>
@@ -184,7 +177,6 @@
             <plugin>
                 <groupId>com.webguys</groupId>
                 <artifactId>string-template-maven-plugin</artifactId>
-                <version>1.1</version>
                 <!-- this nonsense is for some reason needed to make this plugin work with maven 3 -->
                 <dependencies>
                     <dependency>
@@ -206,8 +198,8 @@
                             <target>${basedir}/target/generated-sources/tool/src/org/antlr/v4/unicode/UnicodeData.java</target>
                             <controller>
                                 <className>org.antlr.v4.unicode.UnicodeDataTemplateController</className>
-                                <sourceVersion>1.6</sourceVersion>
-                                <targetVersion>1.6</targetVersion>
+                                <sourceVersion>11</sourceVersion>
+                                <targetVersion>11</targetVersion>
                                 <method>getProperties</method>
                             </controller>
                         </template>
@@ -226,7 +218,6 @@
             <plugin>
                 <groupId>org.antlr</groupId>
                 <artifactId>antlr3-maven-plugin</artifactId>
-                <version>3.5.2</version>
                 <configuration>
                     <sourceDirectory>src</sourceDirectory>
                     <verbose>true</verbose>
@@ -267,8 +258,6 @@
                     </execution>
                 </executions>
             </plugin>
-
         </plugins>
     </build>
-
 </project>

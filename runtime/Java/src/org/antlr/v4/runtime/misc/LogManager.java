@@ -6,6 +6,8 @@
 
 package org.antlr.v4.runtime.misc;
 
+import org.antlr.v4.runtime.annotations.Nullable;
+
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;

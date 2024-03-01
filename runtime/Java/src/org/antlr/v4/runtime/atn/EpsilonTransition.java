@@ -6,7 +6,7 @@
 
 package org.antlr.v4.runtime.atn;
 
-import org.antlr.v4.runtime.misc.NotNull;
+import org.antlr.v4.runtime.annotations.NotNull;
 
 public final class EpsilonTransition extends Transition {
 
@@ -26,7 +26,7 @@ public final class EpsilonTransition extends Transition {
 	 * returning from, where the precedence value is 0; otherwise, -1.
 	 *
 	 * @see ATNConfig#isPrecedenceFilterSuppressed()
-	 * @see ParserATNSimulator#applyPrecedenceFilter(ATNConfigSet, ParserRuleContext, PredictionContextCache) 
+	 * @see ParserATNSimulator#applyPrecedenceFilter(ATNConfigSet, ParserRuleContext, PredictionContextCache)
 	 * @since 4.4.1
 	 */
 	public int outermostPrecedenceReturn() {

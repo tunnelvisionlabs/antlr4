@@ -7,7 +7,7 @@
 package org.antlr.v4.runtime.tree;
 
 import org.antlr.v4.runtime.ParserRuleContext;
-import org.antlr.v4.runtime.misc.NotNull;
+import org.antlr.v4.runtime.annotations.NotNull;
 
 /** This interface describes the minimal core of methods triggered
  *  by {@link ParseTreeWalker}. E.g.,

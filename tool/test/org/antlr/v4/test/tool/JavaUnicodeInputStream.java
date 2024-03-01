@@ -9,7 +9,7 @@ package org.antlr.v4.test.tool;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.misc.IntegerList;
 import org.antlr.v4.runtime.misc.Interval;
-import org.antlr.v4.runtime.misc.NotNull;
+import org.antlr.v4.runtime.annotations.NotNull;
 
 /**
  *

@@ -6,7 +6,7 @@
 
 package org.antlr.v4.runtime.tree.pattern;
 
-import org.antlr.v4.runtime.misc.NotNull;
+import org.antlr.v4.runtime.annotations.NotNull;
 
 /**
  * Represents a span of raw text (concrete syntax) between tags in a tree

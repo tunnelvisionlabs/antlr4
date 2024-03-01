@@ -7,8 +7,8 @@
 package org.antlr.v4.runtime.atn;
 
 import org.antlr.v4.runtime.TokenStream;
-import org.antlr.v4.runtime.misc.NotNull;
-import org.antlr.v4.runtime.misc.Nullable;
+import org.antlr.v4.runtime.annotations.NotNull;
+import org.antlr.v4.runtime.annotations.Nullable;
 
 /**
  * This is the base class for gathering detailed information about prediction

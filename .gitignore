@@ -30,3 +30,4 @@ nbactions*.xml
 #/tool/playground/
 
 .vscode/
+.boot

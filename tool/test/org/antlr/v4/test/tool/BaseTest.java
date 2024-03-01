@@ -33,8 +33,8 @@ import org.antlr.v4.runtime.atn.LexerATNSimulator;
 import org.antlr.v4.runtime.dfa.DFA;
 import org.antlr.v4.runtime.misc.IntegerList;
 import org.antlr.v4.runtime.misc.Interval;
-import org.antlr.v4.runtime.misc.NotNull;
-import org.antlr.v4.runtime.misc.Nullable;
+import org.antlr.v4.runtime.annotations.NotNull;
+import org.antlr.v4.runtime.annotations.Nullable;
 import org.antlr.v4.runtime.misc.Tuple;
 import org.antlr.v4.runtime.misc.Tuple2;
 import org.antlr.v4.runtime.misc.Utils;
@@ -500,9 +500,9 @@ public abstract class BaseTest {
 		List<String> compileOptions = new ArrayList<String>();
 		compileOptions.add("-g");
 		compileOptions.add("-source");
-		compileOptions.add("1.6");
+		compileOptions.add("11");
 		compileOptions.add("-target");
-		compileOptions.add("1.6");
+		compileOptions.add("11");
 		compileOptions.add("-implicit:class");
 		compileOptions.add("-Xlint:-options");
 

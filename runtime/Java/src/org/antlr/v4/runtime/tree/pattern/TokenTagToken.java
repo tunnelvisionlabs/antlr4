@@ -8,8 +8,8 @@ package org.antlr.v4.runtime.tree.pattern;
 
 import org.antlr.v4.runtime.CommonToken;
 import org.antlr.v4.runtime.Token;
-import org.antlr.v4.runtime.misc.NotNull;
-import org.antlr.v4.runtime.misc.Nullable;
+import org.antlr.v4.runtime.annotations.NotNull;
+import org.antlr.v4.runtime.annotations.Nullable;
 
 /**
  * A {@link Token} object representing a token of a particular type; e.g.,

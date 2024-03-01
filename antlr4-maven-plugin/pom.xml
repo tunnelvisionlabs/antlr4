@@ -13,7 +13,7 @@
     <parent>
         <groupId>com.tunnelvisionlabs</groupId>
         <artifactId>antlr4-master</artifactId>
-        <version>4.9.1-SNAPSHOT</version>
+        <version>4.10.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>antlr4-maven-plugin</artifactId>
@@ -21,13 +21,13 @@
 
     <name>ANTLR 4 Maven plugin</name>
     <description>Maven plugin for ANTLR 4 grammars</description>
-    <url>http://www.antlr.org</url>
+    <url>https://www.antlr.org</url>
 
     <prerequisites>
         <maven>3.0</maven>
     </prerequisites>
     
-    <!-- Ancilliary information for completeness
+    <!-- Ancillary information for completeness
       -->
     <inceptionYear>2009</inceptionYear>
 
@@ -48,20 +48,17 @@
         <dependency>
             <groupId>org.apache.maven</groupId>
             <artifactId>maven-plugin-api</artifactId>
-            <version>3.0.5</version>
-            <scope>compile</scope>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>
             <groupId>org.codehaus.plexus</groupId>
             <artifactId>plexus-compiler-api</artifactId>
-            <version>2.2</version>
         </dependency>
 
         <dependency>
             <groupId>org.sonatype.plexus</groupId>
             <artifactId>plexus-build-api</artifactId>
-            <version>0.0.7</version>
         </dependency>
 
         <!--
@@ -79,47 +76,40 @@
           Testing requirements...
           -->
         <dependency>
-
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.13.1</version>
             <scope>test</scope>
-
         </dependency>
 
         <dependency>
             <groupId>io.takari.maven.plugins</groupId>
             <artifactId>takari-plugin-testing</artifactId>
-            <version>2.9.0</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>org.apache.maven.plugin-tools</groupId>
             <artifactId>maven-plugin-annotations</artifactId>
-            <version>3.2</version>
             <scope>provided</scope>
         </dependency>
 
         <dependency>
             <groupId>org.apache.maven</groupId>
             <artifactId>maven-compat</artifactId>
-            <version>3.0.5</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>org.codehaus.plexus</groupId>
             <artifactId>plexus-utils</artifactId>
-            <version>3.0.15</version>
-            <scope>provided</scope>
+            <scope>test</scope>
         </dependency>
 
         <!-- Must be last or tests will fail -->
         <dependency>
             <groupId>org.apache.maven</groupId>
             <artifactId>maven-project</artifactId>
-            <version>2.2.1</version>
+            <scope>provided</scope>
         </dependency>
 
     </dependencies>
@@ -127,9 +117,6 @@
     <profiles>
         <profile>
             <id>maven-plugin-no-tests</id>
-            <activation>
-                <jdk>1.6</jdk>
-            </activation>
             <properties>
                 <skipTests>true</skipTests>
             </properties>
@@ -137,15 +124,12 @@
 
         <profile>
             <id>maven-plugin-tests</id>
-            <activation>
-                <jdk>!1.6</jdk>
-            </activation>
             <build>
                 <plugins>
                     <plugin>
                         <groupId>io.takari.maven.plugins</groupId>
                         <artifactId>takari-lifecycle-plugin</artifactId>
-                        <version>1.11.12</version>
+                        <extensions>true</extensions>
                         <executions>
                             <execution>
                                 <id>testProperties</id>
@@ -184,7 +168,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-plugin-plugin</artifactId>
-                <version>3.6.0</version>
                 <configuration>
                     <!-- see http://jira.codehaus.org/browse/MNG-5346 -->
                     <skipErrorNoDescriptorsFound>true</skipErrorNoDescriptorsFound>
@@ -208,13 +191,11 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-site-plugin</artifactId>
-                <version>3.3</version>
             </plugin>
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-project-info-reports-plugin</artifactId>
-                <version>2.7</version>
                 <configuration>
                     <dependencyLocationsEnabled>false</dependencyLocationsEnabled>
                 </configuration>
@@ -229,13 +210,11 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-plugin-plugin</artifactId>
-                <version>3.3</version>
             </plugin>
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>2.9</version>
                 <configuration>
                     <quiet>true</quiet>
                 </configuration>
@@ -244,7 +223,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jxr-plugin</artifactId>
-                <version>2.3</version>
             </plugin>
         </plugins>
     </reporting>

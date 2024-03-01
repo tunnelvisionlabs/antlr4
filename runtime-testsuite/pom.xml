@@ -10,7 +10,7 @@
     <parent>
         <groupId>com.tunnelvisionlabs</groupId>
         <artifactId>antlr4-master</artifactId>
-        <version>4.9.1-SNAPSHOT</version>
+        <version>4.10.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>runtime-testsuite</artifactId>
@@ -18,11 +18,7 @@
 
     <name>ANTLR 4 Runtime Test Generator</name>
     <description>A collection of tests for ANTLR 4 Runtime libraries.</description>
-    <url>http://www.antlr.org</url>
-
-    <prerequisites>
-        <maven>3.0</maven>
-    </prerequisites>
+    <url>https://www.antlr.org</url>
 
     <inceptionYear>2009</inceptionYear>
 

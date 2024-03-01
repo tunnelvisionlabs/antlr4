@@ -5,7 +5,7 @@
  */
 package org.antlr.v4.runtime;
 
-import org.antlr.v4.runtime.misc.Nullable;
+import org.antlr.v4.runtime.annotations.Nullable;
 
 /**
  * This class extends {@link ParserRuleContext} by allowing the value of

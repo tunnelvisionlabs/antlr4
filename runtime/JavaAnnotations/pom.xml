@@ -5,8 +5,8 @@
     <parent>
         <groupId>com.tunnelvisionlabs</groupId>
         <artifactId>antlr4-master</artifactId>
-        <version>4.9.1-SNAPSHOT</version>
-        <relativePath>../..</relativePath>
+        <version>4.10.0-SNAPSHOT</version>
+        <relativePath>../../pom.xml</relativePath>
     </parent>
 
     <artifactId>antlr4-annotations</artifactId>
@@ -31,9 +31,10 @@
                     <compilerArgs>
                         <compilerArg>-proc:none</compilerArg>
                     </compilerArgs>
+                    <source>11</source>
+                    <target>11</target>
                 </configuration>
             </plugin>
         </plugins>
     </build>
-
 </project>

@@ -7,7 +7,7 @@
 package org.antlr.v4.runtime.atn;
 
 import org.antlr.v4.runtime.atn.PredictionContextCache.IdentityCommutativePredictionContextOperands;
-import org.antlr.v4.runtime.misc.NotNull;
+import org.antlr.v4.runtime.annotations.NotNull;
 
 import java.util.ArrayDeque;
 import java.util.Arrays;
@@ -110,7 +110,7 @@ public class ArrayPredictionContext extends PredictionContext {
 				if (context.hasEmpty()) {
 					return EMPTY_LOCAL;
 				}
-				
+
 				throw new UnsupportedOperationException("what to do here?");
 			}
 

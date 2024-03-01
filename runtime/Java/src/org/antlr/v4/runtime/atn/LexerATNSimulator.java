@@ -15,8 +15,8 @@ import org.antlr.v4.runtime.dfa.AcceptStateInfo;
 import org.antlr.v4.runtime.dfa.DFA;
 import org.antlr.v4.runtime.dfa.DFAState;
 import org.antlr.v4.runtime.misc.Interval;
-import org.antlr.v4.runtime.misc.NotNull;
-import org.antlr.v4.runtime.misc.Nullable;
+import org.antlr.v4.runtime.annotations.NotNull;
+import org.antlr.v4.runtime.annotations.Nullable;
 
 import java.util.Locale;
 
@@ -511,9 +511,9 @@ public class LexerATNSimulator extends ATNSimulator {
 			else {
 				c = null;
 			}
-			
+
 			break;
-			
+
 		case Transition.ACTION:
 			if (config.getContext().hasEmpty()) {
 				// execute actions anywhere in the start rule for a token.

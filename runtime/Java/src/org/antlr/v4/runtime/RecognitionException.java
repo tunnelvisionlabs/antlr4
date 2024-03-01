@@ -7,7 +7,7 @@ package org.antlr.v4.runtime;
 
 import org.antlr.v4.runtime.atn.DecisionState;
 import org.antlr.v4.runtime.misc.IntervalSet;
-import org.antlr.v4.runtime.misc.Nullable;
+import org.antlr.v4.runtime.annotations.Nullable;
 
 /** The root of the ANTLR exception hierarchy. In general, ANTLR tracks just
  *  3 kinds of errors: prediction errors, failed predicate errors, and

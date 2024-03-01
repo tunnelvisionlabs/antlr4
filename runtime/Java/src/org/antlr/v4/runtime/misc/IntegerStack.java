@@ -5,6 +5,8 @@
  */
 package org.antlr.v4.runtime.misc;
 
+import org.antlr.v4.runtime.annotations.NotNull;
+
 /**
  *
  * @author Sam Harwell

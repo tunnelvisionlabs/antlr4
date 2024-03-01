@@ -6,7 +6,7 @@
 
 package org.antlr.v4.runtime.tree;
 
-import org.antlr.v4.runtime.misc.NotNull;
+import org.antlr.v4.runtime.annotations.NotNull;
 
 public abstract class AbstractParseTreeVisitor<Result> implements ParseTreeVisitor<Result> {
 	/**

@@ -6,7 +6,7 @@
 
 package org.antlr.v4.runtime.tree;
 
-import org.antlr.v4.runtime.misc.NotNull;
+import org.antlr.v4.runtime.annotations.NotNull;
 
 /**
  * This interface defines the basic notion of a parse tree visitor. Generated
